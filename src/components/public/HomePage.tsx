@@ -196,7 +196,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </h1>
 
           <p className="text-sm sm:text-base text-slate-300 max-w-xl mx-auto font-normal leading-relaxed">
-            Direct 11, 14 & 16-seater executive shuttles with live telemetry, guaranteed seat choice, and instant M-Pesa confirmation.
+            Daily express shuttles with instant seat selection and M-Pesa booking.
           </p>
         </div>
 
