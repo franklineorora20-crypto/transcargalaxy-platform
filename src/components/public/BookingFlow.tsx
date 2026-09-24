@@ -378,7 +378,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Amina Wanjiku"
+                    placeholder="e.g. Frankline Orora"
                     value={contactName}
                     onChange={(e) => {
                       setContactName(e.target.value);
@@ -398,7 +398,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                   <input
                     type="tel"
                     required
-                    placeholder="07XX XXX XXX"
+                    placeholder="0724 626 199"
                     value={contactPhone}
                     onChange={(e) => setContactPhone(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 text-sm border-2 border-neutral-300 rounded-xl font-medium focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none"
@@ -413,7 +413,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                   <input
                     type="email"
                     required
-                    placeholder="name@example.com"
+                    placeholder="franklineorora20@gmail.com"
                     value={contactEmail}
                     onChange={(e) => setContactEmail(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 text-sm border-2 border-neutral-300 rounded-xl font-medium focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none"
@@ -427,7 +427,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                 <label className="block text-xs font-black text-neutral-700 mb-1">Emergency Contact Name (Optional)</label>
                 <input
                   type="text"
-                  placeholder="e.g. Peter Mohamed"
+                  placeholder="e.g. Frankline Orora"
                   value={emergencyContactName}
                   onChange={(e) => setEmergencyContactName(e.target.value)}
                   className="w-full px-3 py-2 text-sm border-2 border-neutral-300 rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none"
@@ -481,7 +481,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                       <input
                         type="text"
                         required
-                        placeholder="As shown on ID/Passport"
+                        placeholder="e.g. Frankline Orora"
                         value={p.fullName}
                         onChange={(e) => handlePassengerChange(idx, 'fullName', e.target.value)}
                         className="w-full px-3 py-2 text-sm border-2 border-neutral-300 rounded-lg bg-white font-medium focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none"

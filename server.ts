@@ -451,9 +451,9 @@ async function authenticateUser(
     accessToken.includes('admin')
   ) {
     const devManagerUser: AuthUser = {
-      userId: 'mgr-transcar-david',
-      name: 'Director David Kiprop',
-      email: 'manager@transcarrongai.co.ke',
+      userId: 'mgr-transcar-frankline',
+      name: 'Director Frankline Orora',
+      email: 'franklineorora20@gmail.com',
       role: 'MANAGER',
     };
     localSessions.set(accessToken, {
@@ -2158,7 +2158,7 @@ app.post(
                   profile?.full_name ||
                   data.user.user_metadata?.full_name ||
                   data.user.email ||
-                  'Director David Kiprop',
+                  'Director Frankline Orora',
                 email: data.user.email,
                 role: 'MANAGER',
               },
@@ -2201,8 +2201,8 @@ app.post(
 
     if (isRecognizedManagerUser && isValidPassword) {
       const managerUser: AuthUser = {
-        userId: 'mgr-transcar-david',
-        name: 'Director David Kiprop',
+        userId: 'mgr-transcar-frankline',
+        name: 'Director Frankline Orora',
         email: authEmail,
         role: 'MANAGER',
       };

@@ -43,7 +43,7 @@ export default function App() {
       const storedId = localStorage.getItem('safariline_driver_id') || 'drv-frankline';
       setDriverData({ id: storedId, name: storedName, licenseNumber: 'DL-8492019', email: '' });
     } else if (ApiService.getUserRole() === 'MANAGER') {
-      setManagerData({ name: 'Director David Kiprop', email: 'manager@transcarrongai.co.ke' });
+      setManagerData({ name: 'Director Frankline Orora', email: 'manager@transcarrongai.co.ke' });
     }
   }, []);
 
@@ -132,7 +132,7 @@ export default function App() {
             onTrackBus={handleTrackBusFromRef}
             onOpenDriverPortal={() => {
               if (!driverData) {
-                setDriverData({ name: 'John Mwangi', licenseNumber: 'DL-8492019' });
+                setDriverData({ name: 'Frankline Orora', licenseNumber: 'DL-8492019' });
                 setUserRole('DRIVER');
               }
               setCurrentView('driver-portal');

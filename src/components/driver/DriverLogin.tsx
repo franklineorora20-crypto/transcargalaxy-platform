@@ -85,7 +85,7 @@ export const DriverLogin: React.FC<DriverLoginProps> = ({ onLoginSuccess, onCanc
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. john.mwangi"
+              placeholder="e.g. frankline.orora"
               className="w-full px-3.5 py-2.5 text-sm font-semibold border-2 border-neutral-300 rounded-xl focus:border-black focus:ring-1 focus:ring-black focus:outline-none transition-all"
             />
           </div>

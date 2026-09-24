@@ -118,7 +118,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
   const [inspectingVehicle, setInspectingVehicle] = React.useState<Vehicle | null>(null);
   const [inspectionForm, setInspectionForm] = React.useState({
     status: 'PASS' as 'PASS' | 'FAIL_NEEDS_MAINTENANCE',
-    inspectorName: managerData?.name || 'Director David Kiprop',
+    inspectorName: managerData?.name || 'Director Frankline Orora',
     odometerKm: 142800,
     speedGovernorSeal: 'INTACT_CALIBRATED_80KMH',
     brakesAndSteering: 'PASS',
@@ -308,7 +308,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
         recipient: 'Shell / Total Energies Station',
         receiptNumber: newExpense.receiptReference || `RCP-${Date.now().toString().slice(-5)}`,
         vehicleRegistration: newExpense.vehicleRegistration || undefined,
-        approvedBy: managerData?.name || 'Director David Kiprop',
+        approvedBy: managerData?.name || 'Director Frankline Orora',
       });
       setShowAddExpenseModal(false);
       addToast(
@@ -404,7 +404,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
     setInspectingVehicle(vehicle);
     setInspectionForm({
       status: 'PASS',
-      inspectorName: managerData?.name || 'Director David Kiprop',
+      inspectorName: managerData?.name || 'Director Frankline Orora',
       odometerKm: 145000 + Math.floor(Math.random() * 5000),
       speedGovernorSeal: 'INTACT_CALIBRATED_80KMH',
       brakesAndSteering: 'PASS',
@@ -845,7 +845,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
               Operations Dashboard
             </h1>
             <p className="text-sm text-slate-400 mt-1 font-medium">
-              Welcome, <strong className="text-white">{managerData?.name || 'David Kiprop'}</strong>
+              Welcome, <strong className="text-white">{managerData?.name || 'Frankline Orora'}</strong>
             </p>
           </div>
         </div>
@@ -1191,7 +1191,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
                         {new Date(t.departureTime).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
                       </td>
                       <td className="py-3 px-2 text-slate-700">
-                        <span className="font-mono font-semibold">{t.vehicle?.registrationNumber || 'KDA 123A'}</span> (Captain {t.driverName || 'Mwangi'})
+                        <span className="font-mono font-semibold">{t.vehicle?.registrationNumber || 'KDA 123A'}</span> (Captain {t.driverName || 'Frankline Orora'})
                       </td>
                       <td className="py-3 px-2 font-bold">
                         <span className="text-emerald-700">{t.totalSeats - t.availableSeats}</span> / {t.totalSeats}

@@ -495,7 +495,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
               <span className="text-xs text-slate-400 font-mono">ID: {driverData?.licenseNumber || 'DL-8492019'}</span>
             </div>
             <h1 className="text-2xl font-black text-white mt-1">
-              Captain {driverData?.name || 'John Mwangi'}
+              Captain {driverData?.name || 'Frankline Orora'}
             </h1>
             <p className="text-xs text-slate-400">
               Assigned Bus:{' '}
