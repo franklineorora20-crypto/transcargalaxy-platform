@@ -1,0 +1,12 @@
+node_modules/
+dist/
+server.js
+server.js.map
+build/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+.vercel
+.aistudio

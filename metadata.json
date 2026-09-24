@@ -1,0 +1,6 @@
+{
+  "name": "TransCar rongai",
+  "description": "Long-distance transport management and booking platform featuring public passenger booking, seat selection, M-Pesa payments, live bus tracking, driver operations portal, manual pricing controls, and route management.",
+  "requestFramePermissions": ["geolocation", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
