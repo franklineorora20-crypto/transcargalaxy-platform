@@ -2,9 +2,8 @@
 
 @layer base {
   :root {
-    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    --font-display: 'Plus Jakarta Sans', 'Syne', -apple-system, sans-serif;
-    --font-heading: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-display: 'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 
@@ -13,16 +12,50 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    font-feature-settings: 'cv02' 1, 'cv03' 1, 'cv04' 1, 'cv11' 1;
+    font-feature-settings: 'cv02' 1, 'cv03' 1, 'cv04' 1, 'cv11' 1, 'ss01' 1, 'ss02' 1;
   }
 
-  /* Enterprise typography display classes */
-  h1, h2, h3, h4, h5, h6 {
+  body {
+    font-family: var(--font-sans);
+    font-weight: 400;
+    line-height: 1.5;
+    color: #0f172a;
+  }
+
+  /* Enterprise hierarchy & optical weights */
+  h1 {
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+    line-height: 1.15;
+  }
+
+  h2 {
+    font-weight: 700;
     letter-spacing: -0.025em;
     text-wrap: balance;
+    line-height: 1.2;
   }
 
-  /* Tabular numbers for clean aligned fares, timestamps, plate numbers, and seat matrices */
+  h3 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    line-height: 1.25;
+  }
+
+  h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    line-height: 1.3;
+  }
+
+  p, span, label, input, select, textarea, button {
+    letter-spacing: -0.011em;
+  }
+
+  /* Monospace & Tabular figures for fares, ticket codes, dates, and seat labels */
   .tabular-nums,
   [data-tabular-nums="true"],
   .font-mono {
