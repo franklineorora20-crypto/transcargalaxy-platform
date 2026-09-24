@@ -445,7 +445,37 @@ export class ApiService {
         recentInspectionsCount: 12,
         failedInspectionsCount: 0,
       },
+      performance: {
+        tripCompletionRatePercent: 97.4,
+        onTimeDepartureRatePercent: 95.8,
+        averageSeatOccupancyPercent: 88.5,
+        totalSeatCapacityAcrossTrips: 184,
+        totalOccupiedSeatsAcrossTrips: 163,
+        completedTripsCount: 8,
+        inTransitTripsCount: 4,
+        scheduledTripsCount: 6,
+        delayedTripsCount: 0,
+        cancelledTripsCount: 0,
+        fleetUtilizationRatePercent: 60.0,
+        fleetReadinessRatePercent: 90.0,
+        avgRevenuePerTripKsh: 49444,
+        avgRevenuePerPassengerKsh: 3588,
+        totalPassengerVolume: 248,
+      },
     };
+  }
+
+  static async getPerformanceMetrics() {
+    try {
+      const res = await fetch(`${API_BASE}/manager/performance-metrics`, { headers: this.getHeaders('MANAGER') });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fall through
+    }
+    const stats = await this.getManagerDashboardStats();
+    return stats.performance;
   }
 
   static async getFleet(): Promise<Vehicle[]> {
