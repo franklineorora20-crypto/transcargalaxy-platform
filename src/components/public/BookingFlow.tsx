@@ -310,40 +310,56 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
             <div className="p-8 text-center text-neutral-500 font-bold">Loading trips...</div>
           ) : (
             <div className="grid gap-4">
-              {availableTrips.map((t) => (
-                <div
-                  key={t.id}
-                  className="p-5 bg-white rounded-2xl border-2 border-neutral-200 shadow-sm hover:border-amber-400 flex flex-wrap items-center justify-between gap-4 transition-all"
-                >
-                  <div>
-                    <span className="text-xs font-mono font-black text-amber-400 bg-black px-2 py-0.5 rounded border border-neutral-800">
-                      {t.tripCode}
-                    </span>
-                    <h3 className="text-lg font-black text-black mt-1">
-                      {t.route.origin} → {t.route.destination}
-                    </h3>
-                    <p className="text-xs text-neutral-600 font-medium">
-                      Departure: {new Date(t.departureTime).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })} • Bus: {t.vehicle.registrationNumber}
-                    </p>
-                  </div>
+              {availableTrips.map((t) => {
+                const vehicleCap = t.vehicle?.seatingCapacity || t.totalSeats || (t.vehicle?.registrationNumber?.replace(/\s/g, '').toUpperCase() === 'KDE416Q' ? 11 : 14);
+                const bookedCount = t.bookedSeatNumbers?.length || 0;
+                const freeCount = Math.max(0, vehicleCap - bookedCount);
 
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <span className="text-xs text-neutral-500 font-bold block">From</span>
-                      <span className="text-lg font-black text-black">KES {t.fareKsh.toLocaleString()}</span>
+                return (
+                  <div
+                    key={t.id}
+                    className="p-5 bg-white rounded-2xl border-2 border-neutral-200 shadow-sm hover:border-amber-400 flex flex-wrap items-center justify-between gap-4 transition-all"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-black text-amber-400 bg-black px-2 py-0.5 rounded border border-neutral-800">
+                          {t.tripCode}
+                        </span>
+                        <span className="text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md">
+                          {vehicleCap === 11 ? '11-Seater VIP' : vehicleCap === 16 ? '16-Seater Maxi' : '14-Seater Standard'}
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                          {freeCount} seats free
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-black text-black mt-1">
+                        {t.route.origin} → {t.route.destination}
+                      </h3>
+                      <p className="text-xs text-neutral-600 font-medium">
+                        Departure: {new Date(t.departureTime).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })} • Bus: {t.vehicle.registrationNumber} ({t.vehicle.model || 'Toyota HiAce'})
+                      </p>
                     </div>
-                    <button
-                      onClick={() => {
-                        setSelectedTrip(t);
-                        setStep(1);
-                      }}
-                      className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-black rounded-xl text-xs font-black shadow transition-colors border border-black cursor-pointer"
-                    >
-                      Select Trip
-                    </button>
+
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <span className="text-xs text-neutral-500 font-bold block">From</span>
+                        <span className="text-lg font-black text-black">KES {t.fareKsh.toLocaleString()}</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedTrip(t);
+                          const cap = t.vehicle?.seatingCapacity || t.totalSeats || (t.vehicle?.registrationNumber?.replace(/\s/g, '').toUpperCase() === 'KDE416Q' ? 11 : 14);
+                          setActiveChassisCapacity(cap === 11 ? 11 : cap === 16 ? 16 : 14);
+                          setStep(1);
+                        }}
+                        className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-black rounded-xl text-xs font-black shadow transition-colors border border-black cursor-pointer"
+                      >
+                        Select Trip
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
