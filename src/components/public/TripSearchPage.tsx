@@ -101,47 +101,43 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
     });
   }, [trips, onlyAvailable, maxPrice, serviceTypeFilter, timeFilter]);
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    fetchTrips();
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Search Header Bar */}
-      <div className="bg-black rounded-3xl p-6 sm:p-8 text-white shadow-2xl border-2 border-amber-400/40">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="bg-amber-400 text-black text-[11px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded">
-            Scheduled Departures
+      {/* Top Search Filter Header (Emil Kowalski Tactile Surface) */}
+      <div className="bg-slate-950 text-white rounded-2xl p-6 shadow-2xl border border-slate-800">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
+          <div className="flex items-center gap-2">
+            <Bus className="w-5 h-5 text-amber-400" />
+            <h1 className="text-xl font-extrabold text-white tracking-tight">Available Departures</h1>
+          </div>
+          <span className="text-xs font-mono text-slate-400 bg-slate-900 border border-slate-700 px-3 py-1 rounded-full">
+            {filteredTrips.length} shuttles scheduled
           </span>
-          <span className="text-neutral-400 text-xs font-semibold">NTSA Verified Fleet</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black font-serif tracking-tight text-white mb-2">
-          Search Scheduled Departures
-        </h1>
-        <p className="text-sm text-neutral-300 mb-6">
-          Check live seat availability and reserve your seats with instant M-Pesa confirmation.
-        </p>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            fetchTrips();
-          }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3"
-        >
+        <form onSubmit={handleFormSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
           {/* Origin */}
-          <div className="relative">
-            <label className="block text-[11px] font-black text-amber-400 uppercase tracking-wider mb-1">
-              From (Origin)
+          <div>
+            <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+              From
             </label>
             <div className="relative">
-              <MapPin className="w-4 h-4 text-amber-400 absolute left-3 top-3" />
+              <MapPin className="w-4 h-4 text-amber-400 absolute left-3.5 top-3" />
               <select
                 id="search-origin"
                 value={origin}
                 onChange={(e) => setOrigin(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-sm bg-neutral-900 border border-neutral-700 rounded-xl text-white font-medium focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none"
+                className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all cursor-pointer"
               >
                 <option value="">All Origins</option>
-                {uniqueOrigins.map((o) => (
-                  <option key={o} value={o} className="bg-neutral-900 text-white">
-                    {o}
+                {uniqueOrigins.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
                   </option>
                 ))}
               </select>
@@ -149,60 +145,59 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
           </div>
 
           {/* Destination */}
-          <div className="relative">
-            <label className="block text-[11px] font-black text-amber-400 uppercase tracking-wider mb-1">
-              To (Destination)
+          <div>
+            <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+              To
             </label>
             <div className="relative">
-              <MapPin className="w-4 h-4 text-amber-400 absolute left-3 top-3" />
+              <MapPin className="w-4 h-4 text-amber-400 absolute left-3.5 top-3" />
               <select
                 id="search-destination"
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-sm bg-neutral-900 border border-neutral-700 rounded-xl text-white font-medium focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none"
+                className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all cursor-pointer"
               >
                 <option value="">All Destinations</option>
-                {uniqueDestinations.map((d) => (
-                  <option key={d} value={d} className="bg-neutral-900 text-white">
-                    {d}
+                {uniqueDestinations.map((city) => (
+                  <option key={city} value={city}>
+                    {city}
                   </option>
                 ))}
               </select>
             </div>
           </div>
 
-          {/* Date */}
+          {/* Travel Date */}
           <div>
-            <label className="block text-[11px] font-black text-amber-400 uppercase tracking-wider mb-1">
-              Travel Date
+            <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+              Date
             </label>
             <div className="relative">
-              <Calendar className="w-4 h-4 text-amber-400 absolute left-3 top-3" />
+              <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
               <input
                 id="search-date"
                 type="date"
                 value={travelDate}
                 onChange={(e) => setTravelDate(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-sm bg-neutral-900 border border-neutral-700 rounded-xl text-white font-medium focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none"
+                className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all cursor-pointer"
               />
             </div>
           </div>
 
           {/* Passengers */}
           <div>
-            <label className="block text-[11px] font-black text-amber-400 uppercase tracking-wider mb-1">
+            <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
               Passengers
             </label>
             <div className="relative">
-              <Users className="w-4 h-4 text-amber-400 absolute left-3 top-3" />
+              <Users className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
               <select
-                id="search-passengers"
                 value={passengers}
                 onChange={(e) => setPassengers(Number(e.target.value))}
-                className="w-full pl-9 pr-3 py-2 text-sm bg-neutral-900 border border-neutral-700 rounded-xl text-white font-medium focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none"
+                className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all cursor-pointer"
               >
                 {[1, 2, 3, 4, 5, 6].map((num) => (
-                  <option key={num} value={num} className="bg-neutral-900 text-white">
+                  <option key={num} value={num}>
                     {num} {num === 1 ? 'Passenger' : 'Passengers'}
                   </option>
                 ))}
@@ -215,10 +210,10 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
             <button
               id="search-submit-btn"
               type="submit"
-              className="w-full py-2.5 px-4 bg-amber-400 hover:bg-amber-300 text-black font-black text-sm rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2 cursor-pointer border border-black"
+              className="craft-btn-amber w-full py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5"
             >
-              <Search className="w-4 h-4 text-black stroke-[3]" />
-              <span>Update Search</span>
+              <Search className="w-4 h-4 text-slate-950 stroke-[2.5]" />
+              <span>Update Results</span>
             </button>
           </div>
         </form>
@@ -227,18 +222,18 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
       {/* Main Results Grid with Left Filter Sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Left Filters Sidebar */}
-        <div className="lg:col-span-1 space-y-6 bg-white p-6 rounded-2xl border-2 border-neutral-200 shadow-sm h-fit">
-          <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
-            <h3 className="font-black text-sm text-black flex items-center gap-2">
+        <div className="lg:col-span-1 space-y-6 craft-card p-6 h-fit">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 className="font-bold text-xs uppercase tracking-wider text-slate-900 flex items-center gap-2">
               <SlidersHorizontal className="w-4 h-4 text-amber-500" />
-              <span>Filter Results</span>
+              <span>Filters</span>
             </h3>
-            <span className="text-xs font-bold text-neutral-500">{filteredTrips.length} Available</span>
+            <span className="text-xs font-mono font-bold text-slate-500">{filteredTrips.length} Available</span>
           </div>
 
           {/* Time of Day */}
           <div className="space-y-2">
-            <label className="text-xs font-black text-black uppercase tracking-wider block">Departure Window</label>
+            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">Departure Window</label>
             <div className="grid grid-cols-2 gap-1.5">
               {[
                 { id: 'ALL', label: 'All Times' },
@@ -250,10 +245,10 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
                   key={t.id}
                   type="button"
                   onClick={() => setTimeFilter(t.id as any)}
-                  className={`p-2 text-xs rounded-lg font-black border text-left transition-all ${
+                  className={`p-2 text-xs rounded-lg font-semibold border text-left transition-all ${
                     timeFilter === t.id
-                      ? 'bg-black text-amber-400 border-black shadow'
-                      : 'bg-neutral-100 text-neutral-700 border-neutral-200 hover:bg-neutral-200'
+                      ? 'bg-slate-950 text-amber-400 border-slate-950 shadow-sm'
+                      : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
                   {t.label}
@@ -262,13 +257,13 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
             </div>
           </div>
 
-          {/* Coach Class / Bus Type */}
+          {/* Coach Class */}
           <div className="space-y-2">
-            <label className="text-xs font-black text-black uppercase tracking-wider block">Coach Class</label>
+            <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">Coach Class</label>
             <select
               value={serviceTypeFilter}
               onChange={(e) => setServiceTypeFilter(e.target.value)}
-              className="w-full text-xs p-2.5 rounded-lg border-2 border-neutral-300 bg-white font-bold text-black focus:ring-2 focus:ring-amber-400 focus:border-amber-400"
+              className="w-full text-xs p-2.5 rounded-lg border border-slate-200 bg-slate-50 font-medium text-slate-900 focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none"
             >
               <option value="ALL">All Coach Classes</option>
               <option value="hiace-16">Toyota HiAce 16-Seater</option>
@@ -277,22 +272,14 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
             </select>
           </div>
 
-          {/* Maximum Fare */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-black text-black uppercase tracking-wider">MAX FARE</span>
-              <span className="font-mono font-black text-black bg-amber-400 px-2 py-0.5 rounded">KES 3,000</span>
-            </div>
-          </div>
-
           {/* Availability toggle */}
-          <div className="pt-2 border-t border-neutral-200">
-            <label className="flex items-center gap-2 text-xs font-bold text-black cursor-pointer">
+          <div className="pt-2 border-t border-slate-100">
+            <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={onlyAvailable}
                 onChange={(e) => setOnlyAvailable(e.target.checked)}
-                className="rounded text-amber-500 focus:ring-amber-400"
+                className="rounded text-amber-500 focus:ring-amber-400 w-4 h-4"
               />
               <span>Hide sold-out departures</span>
             </label>
@@ -302,14 +289,14 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
         {/* Right Search Results Cards */}
         <div className="lg:col-span-3 space-y-4">
           {loading ? (
-            <div className="bg-white rounded-2xl border-2 border-neutral-200 p-12 text-center text-neutral-600">
-              <Bus className="w-8 h-8 text-amber-500 mx-auto mb-3" />
-              <p className="font-bold text-black">Checking scheduled departures...</p>
+            <div className="craft-card p-12 text-center text-slate-600">
+              <div className="w-8 h-8 rounded-full border-2 border-amber-400 border-t-transparent animate-spin mx-auto mb-3"></div>
+              <p className="font-bold text-slate-900 text-sm">Checking scheduled departures...</p>
             </div>
           ) : filteredTrips.length === 0 ? (
-            <div className="bg-white rounded-2xl border-2 border-neutral-200 p-12 text-center text-neutral-600">
-              <p className="font-black text-black text-lg">No trips found matching your criteria.</p>
-              <p className="text-xs text-neutral-500 mt-1">Try broadening your date or city filter.</p>
+            <div className="craft-card p-12 text-center text-slate-600">
+              <p className="font-bold text-slate-900 text-lg">No trips found matching your criteria.</p>
+              <p className="text-xs text-slate-500 mt-1">Try broadening your date or city filter.</p>
               {!demoMode && (
                 <button
                   type="button"
@@ -317,7 +304,7 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
                     setDemoMode(true);
                     fetchTrips(true);
                   }}
-                  className="mt-5 px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-black text-sm font-black border border-black shadow-sm"
+                  className="craft-btn-amber text-xs mt-5"
                 >
                   Load demo trips
                 </button>
@@ -334,14 +321,14 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
                 <div
                   key={trip.id}
                   id={`trip-card-${trip.id}`}
-                  className="bg-white rounded-2xl border-2 border-neutral-200 shadow-sm hover:border-amber-400 hover:shadow-lg transition-all p-5 sm:p-6"
+                  className="craft-card-interactive p-5 sm:p-6"
                 >
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-4 border-b border-neutral-200">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-4 border-b border-slate-100">
                     {/* Vehicle Photo + Time & Corridor */}
                     <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
                       {/* Vehicle Thumbnail */}
                       {trip.vehicle.imageUrl && (
-                        <div className="relative w-28 h-20 rounded-xl overflow-hidden border border-neutral-300 flex-shrink-0 bg-neutral-950 group">
+                        <div className="relative w-28 h-20 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 bg-slate-950 group">
                           <img
                             src={trip.vehicle.imageUrl}
                             alt={trip.vehicle.model}
@@ -351,7 +338,7 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
                             }}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
-                          <span className="absolute bottom-1 right-1 text-[9px] font-mono font-black bg-black/90 text-amber-400 px-1.5 py-0.5 rounded">
+                          <span className="absolute bottom-1 right-1 text-[9px] font-mono font-bold bg-slate-950/90 text-amber-400 px-1.5 py-0.5 rounded">
                             {trip.vehicle.registrationNumber}
                           </span>
                         </div>
@@ -360,27 +347,27 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
                       {/* Time & Corridor */}
                       <div className="flex items-center gap-6">
                         <div className="text-center">
-                          <span className="text-2xl font-black text-black font-mono">{formattedDep}</span>
-                          <span className="text-xs text-neutral-600 block font-bold">{trip.route.origin}</span>
+                          <span className="text-2xl font-extrabold text-slate-950 font-mono">{formattedDep}</span>
+                          <span className="text-xs text-slate-600 block font-semibold">{trip.route.origin}</span>
                         </div>
 
                         <div className="flex-1 min-w-[120px] text-center px-3">
-                          <span className="text-[11px] font-bold text-neutral-500 flex items-center justify-center gap-1">
+                          <span className="text-[11px] font-semibold text-slate-500 flex items-center justify-center gap-1">
                             <Clock className="w-3.5 h-3.5 text-amber-500" />
                             <span>{trip.route.estimatedDurationHours}h trip</span>
                           </span>
                           <div className="relative my-1.5 flex items-center justify-center">
-                            <div className="w-full h-0.5 bg-neutral-300" />
+                            <div className="w-full h-0.5 bg-slate-200" />
                             <Bus className="w-4 h-4 text-amber-500 absolute bg-white px-0.5" />
                           </div>
-                          <span className="text-[10px] text-amber-400 font-black bg-black px-2 py-0.5 rounded border border-amber-400/40">
+                          <span className="text-[10px] text-amber-400 font-bold font-mono bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
                             {trip.route.distanceKm} KM Express
                           </span>
                         </div>
 
                         <div className="text-center">
-                          <span className="text-2xl font-black text-black font-mono">{formattedArr}</span>
-                          <span className="text-xs text-neutral-600 block font-bold">{trip.route.destination}</span>
+                          <span className="text-2xl font-extrabold text-slate-950 font-mono">{formattedArr}</span>
+                          <span className="text-xs text-slate-600 block font-semibold">{trip.route.destination}</span>
                         </div>
                       </div>
                     </div>
@@ -388,27 +375,27 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
                     {/* Price & Booking Action */}
                     <div className="flex md:flex-col items-center md:items-end justify-between gap-2 border-t md:border-t-0 pt-3 md:pt-0 w-full md:w-auto">
                       <div>
-                        <span className="text-[10px] text-neutral-500 uppercase font-black block md:text-right">Per Seat</span>
-                        <span className="text-2xl font-black text-black font-mono">
+                        <span className="text-[10px] text-slate-500 uppercase font-bold block md:text-right">Per Seat</span>
+                        <span className="text-2xl font-extrabold text-slate-950 tabular-nums font-mono">
                           KES {trip.fareKsh.toLocaleString()}
                         </span>
                       </div>
 
                       <div className="flex flex-col items-end gap-2">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${
                           trip.availableSeats <= 3 
                             ? 'bg-red-50 text-red-600 border-red-200' 
-                            : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         }`}>
-                          Available Seats {trip.availableSeats}/{trip.totalSeats}
+                          {trip.availableSeats}/{trip.totalSeats} seats open
                         </span>
                         <button
                           onClick={() => onSelectTrip(trip)}
                           disabled={trip.availableSeats === 0}
-                          className="px-5 py-2.5 bg-amber-400 hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed text-black font-black text-xs rounded-xl shadow-md transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-black w-full"
+                          className="craft-btn-amber text-xs py-2 px-4 w-full flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <span>{trip.availableSeats === 0 ? 'Sold Out' : 'Select Seats'}</span>
-                          <ArrowRight className="w-4 h-4 stroke-[3]" />
+                          <ArrowRight className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -417,21 +404,21 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
                   {/* Amenities & Fleet Meta */}
                   <div className="pt-3 flex flex-wrap items-center justify-between gap-3 text-xs">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-black text-amber-400 font-mono bg-black px-2.5 py-0.5 rounded border border-neutral-800">
+                      <span className="font-bold text-amber-400 font-mono bg-slate-950 px-2.5 py-0.5 rounded border border-slate-800 text-[11px]">
                         {trip.vehicle.registrationNumber}
                       </span>
                       {trip.vehicle.specialEdition && (
-                        <span className="bg-amber-400 text-black font-extrabold text-[11px] px-2 py-0.5 rounded">
+                        <span className="bg-amber-400 text-slate-950 font-bold text-[11px] px-2 py-0.5 rounded">
                           {trip.vehicle.specialEdition}
                         </span>
                       )}
-                      <span className="text-neutral-700 font-bold">
+                      <span className="text-slate-700 font-medium">
                         {trip.vehicle.model}
                       </span>
-                      <span className="text-neutral-300">|</span>
-                      <div className="flex items-center gap-2 text-neutral-700">
+                      <span className="text-slate-300">|</span>
+                      <div className="flex items-center gap-2 text-slate-700">
                         {trip.amenities.slice(0, 3).map((amenity, i) => (
-                          <span key={i} className="flex items-center gap-1 text-[11px] bg-neutral-100 text-black font-medium px-2 py-0.5 rounded border border-neutral-200">
+                          <span key={i} className="flex items-center gap-1 text-[11px] bg-slate-100 text-slate-700 font-medium px-2 py-0.5 rounded border border-slate-200">
                             <Sparkles className="w-3 h-3 text-amber-500" />
                             {amenity}
                           </span>
@@ -439,16 +426,8 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 font-bold">
-                      <span
-                        className={`text-xs px-2.5 py-0.5 rounded border ${
-                          trip.availableSeats <= 5
-                            ? 'bg-black text-amber-400 border-amber-400 font-black'
-                            : 'bg-neutral-100 text-black border-neutral-300'
-                        }`}
-                      >
-                        {trip.availableSeats} of {trip.totalSeats} seats remaining
-                      </span>
+                    <div className="flex items-center gap-2 font-mono text-[11px]">
+                      <span className="text-slate-500">Speed Governed (80 km/h) • GPS Live</span>
                     </div>
                   </div>
                 </div>

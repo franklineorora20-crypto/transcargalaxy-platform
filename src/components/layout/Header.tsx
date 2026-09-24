@@ -14,6 +14,10 @@ import {
   X,
   FileText,
   Info,
+  ChevronDown,
+  Sparkles,
+  ArrowUpRight,
+  Heart,
 } from 'lucide-react';
 import { BrandName } from '../common/BrandName';
 import { ApiService } from '../../services/api';
@@ -45,343 +49,303 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-neutral-200 text-neutral-900 shadow-sm">
-      <div className="bg-neutral-950 text-neutral-200 text-[11px] sm:text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex items-center justify-center sm:justify-between gap-3 text-center">
-          <span>Call: <a href="tel:+254724626199" className="font-bold text-white hover:text-amber-300">+254 724 626199</a></span>
-          <span className="hidden sm:inline text-neutral-600">|</span>
-          <span className="hidden sm:inline">M-Pesa Till: XXXXX</span>
-          <span className="hidden sm:inline text-neutral-600">|</span>
-          <span className="font-semibold text-amber-300">Departure 1AM Daily</span>
+    <header className="sticky top-0 z-50 glass-surface border-b border-slate-200/80 transition-colors">
+      {/* Precision Top Telemetry Bar */}
+      <div className="bg-slate-950 text-slate-300 text-[11px] sm:text-xs border-b border-slate-800/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <span className="craft-badge-pulse text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5">
+              <span className="dot bg-emerald-400"></span>
+              Live Operations
+            </span>
+            <span className="hidden md:inline text-slate-500 font-mono">|</span>
+            <span className="hidden md:inline text-slate-300">Daily Departures: <strong className="text-amber-400 font-mono">1:00 AM</strong> & <strong className="text-amber-400 font-mono">Hourly</strong></span>
+          </div>
+
+          <div className="flex items-center gap-3 sm:gap-4 font-mono text-[11px]">
+            <a href="tel:+254724626199" className="hover:text-amber-400 transition-colors flex items-center gap-1">
+              <PhoneCall className="w-3 h-3 text-amber-400" />
+              <span>+254 724 626199</span>
+            </a>
+            <span className="text-slate-700">/</span>
+            <a href="tel:+254717747626" className="hover:text-amber-400 transition-colors hidden sm:inline">
+              +254 717 747626
+            </a>
+          </div>
         </div>
       </div>
+
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="flex items-center justify-between h-20">
-          {/* Brand Logo */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-18">
+          {/* Brand Logo with Tactile Lift */}
           <button
             id="brand-logo-btn"
             onClick={() => handleNav('home')}
-            className="flex items-center gap-3 text-left group focus:outline-none"
+            className="flex items-center gap-3 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-xl p-1 -ml-1 transition-transform active:scale-[0.98]"
           >
-            <div className="flex flex-col group-hover:scale-[1.02] transition-transform">
-              <BrandName className="font-extrabold text-2xl tracking-tight text-neutral-950 font-serif" />
-              <p className="text-[11px] text-neutral-500 font-medium tracking-wide mt-1">
+            <div className="flex flex-col">
+              <BrandName className="font-extrabold text-2xl tracking-tight text-slate-950" />
+              <p className="text-[11px] text-slate-500 font-medium tracking-wide flex items-center gap-1.5 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                 Intercity & Rongai Regional Express
               </p>
             </div>
           </button>
 
           {/* Right Side Navigation & Actions */}
-          <div className="flex items-center gap-4 lg:gap-8">
-            {/* Desktop Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-1">
+          <div className="flex items-center gap-3 lg:gap-6">
+            {/* Desktop Navigation Segmented Pill */}
+            <nav className="hidden lg:flex items-center bg-slate-100/90 p-1 rounded-xl border border-slate-200/70 craft-shadow-sm">
               <button
-              id="nav-home"
-              onClick={() => handleNav('home')}
-              className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                currentView === 'home'
-                  ? 'bg-amber-400 text-black font-bold shadow-md shadow-amber-400/20'
-                  : 'text-neutral-700 hover:text-amber-700 hover:bg-amber-50'
-              }`}
-            >
-              Home
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleNav('routes')}
-              className={`px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                currentView === 'routes' ? 'bg-amber-400 text-black font-bold' : 'text-neutral-700 hover:text-amber-700 hover:bg-amber-50'
-              }`}
-            >
-              Routes
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleNav('services')}
-              className="px-3 py-2 rounded-lg text-sm font-semibold text-neutral-700 hover:text-amber-700 hover:bg-amber-50 transition-all"
-            >
-              Fleet
-            </button>
-
-            <a
-              href="tel:+254724626199"
-              className="px-3 py-2 rounded-lg text-sm font-semibold text-neutral-700 hover:text-amber-700 hover:bg-amber-50 transition-all"
-            >
-              Contact
-            </a>
-
-            <div className="relative group">
-              <button
-                type="button"
-                aria-haspopup="menu"
-                aria-expanded={servicesOpen}
-                onClick={() => setServicesOpen((open) => !open)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                  ['search', 'booking', 'tracking', 'retrieve-ticket', 'routes', 'services', 'about'].includes(currentView)
-                    ? 'bg-amber-400 text-black font-bold shadow-md shadow-amber-400/20'
-                    : 'text-neutral-700 hover:text-amber-700 hover:bg-amber-50'
+                id="nav-home"
+                onClick={() => handleNav('home')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 ${
+                  currentView === 'home'
+                    ? 'bg-white text-slate-950 shadow-sm border border-slate-200/90 font-bold'
+                    : 'text-slate-600 hover:text-slate-950 hover:bg-white/60'
                 }`}
               >
-                Services
-                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                Home
               </button>
-              
-              <div className={`absolute top-full left-0 w-56 pt-2 transition-all duration-200 z-50 ${servicesOpen ? 'opacity-100 visible' : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible'}`}>
-                <div className="bg-white border border-neutral-200 rounded-xl shadow-xl overflow-hidden flex flex-col py-2">
-                  <button
-                    onClick={() => handleNav('search')}
-                    className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold transition-colors w-full text-left ${
-                      currentView === 'search' || currentView === 'booking'
-                        ? 'bg-neutral-900 text-amber-400'
-                        : 'text-neutral-700 hover:bg-amber-50 hover:text-amber-700'
-                    }`}
-                  >
-                    <Search className={`w-4 h-4 ${currentView === 'search' || currentView === 'booking' ? 'text-amber-400' : 'text-neutral-400'}`} />
-                    Book Journey
-                  </button>
 
-                  <button
-                    onClick={() => handleNav('tracking')}
-                    className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold transition-colors w-full text-left ${
-                      currentView === 'tracking'
-                        ? 'bg-neutral-900 text-amber-400'
-                        : 'text-neutral-700 hover:bg-amber-50 hover:text-amber-700'
-                    }`}
-                  >
-                    <Navigation className={`w-4 h-4 ${currentView === 'tracking' ? 'text-amber-400' : 'text-neutral-400'}`} />
-                    Track Bus
-                  </button>
+              <button
+                type="button"
+                onClick={() => handleNav('routes')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 ${
+                  currentView === 'routes'
+                    ? 'bg-white text-slate-950 shadow-sm border border-slate-200/90 font-bold'
+                    : 'text-slate-600 hover:text-slate-950 hover:bg-white/60'
+                }`}
+              >
+                Routes
+              </button>
 
-                  <button
-                    onClick={() => handleNav('retrieve-ticket')}
-                    className={`flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold transition-colors w-full text-left ${
-                      currentView === 'retrieve-ticket'
-                        ? 'bg-neutral-900 text-amber-400'
-                        : 'text-neutral-700 hover:bg-amber-50 hover:text-amber-700'
-                    }`}
-                  >
-                    <Ticket className={`w-4 h-4 ${currentView === 'retrieve-ticket' ? 'text-amber-400' : 'text-neutral-400'}`} />
-                    My Trips & Tickets
-                  </button>
+              <button
+                type="button"
+                onClick={() => handleNav('services')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 ${
+                  currentView === 'services'
+                    ? 'bg-white text-slate-950 shadow-sm border border-slate-200/90 font-bold'
+                    : 'text-slate-600 hover:text-slate-950 hover:bg-white/60'
+                }`}
+              >
+                Fleet
+              </button>
 
-                  <div className="h-px bg-neutral-800 my-1 mx-2"></div>
+              <button
+                type="button"
+                onClick={() => handleNav('about')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 ${
+                  currentView === 'about'
+                    ? 'bg-white text-slate-950 shadow-sm border border-slate-200/90 font-bold'
+                    : 'text-slate-600 hover:text-slate-950 hover:bg-white/60'
+                }`}
+              >
+                About
+              </button>
 
-                  <button
-                    onClick={() => handleNav('routes')}
-                    className={`px-4 py-2.5 text-sm font-semibold transition-colors w-full text-left ${
-                      currentView === 'routes'
-                        ? 'bg-neutral-900 text-amber-400'
-                        : 'text-neutral-700 hover:bg-amber-50 hover:text-amber-700'
-                    }`}
-                  >
-                    Routes & Fares
-                  </button>
+              {/* Services Dropdown */}
+              <div className="relative">
+                <button
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={servicesOpen}
+                  onClick={() => setServicesOpen((open) => !open)}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 ${
+                    ['search', 'booking', 'tracking', 'retrieve-ticket', 'terms', 'privacy'].includes(currentView)
+                      ? 'bg-white text-slate-950 shadow-sm border border-slate-200/90 font-bold'
+                      : 'text-slate-600 hover:text-slate-950 hover:bg-white/60'
+                  }`}
+                >
+                  Services
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-150 ${servicesOpen ? 'rotate-180' : ''}`} />
+                </button>
 
-                  <button
-                    onClick={() => handleNav('services')}
-                    className={`px-4 py-2.5 text-sm font-semibold transition-colors w-full text-left ${
-                      currentView === 'services'
-                        ? 'bg-neutral-900 text-amber-400'
-                        : 'text-neutral-700 hover:bg-amber-50 hover:text-amber-700'
-                    }`}
-                  >
-                    Our Services
-                  </button>
+                {servicesOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-56 p-1.5 bg-white border border-slate-200/90 rounded-xl shadow-xl z-50 animate-in fade-in zoom-in-95 duration-100">
+                    <button
+                      onClick={() => handleNav('search')}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold tracking-tight w-full text-left transition-colors ${
+                        currentView === 'search' || currentView === 'booking'
+                          ? 'bg-slate-900 text-amber-400'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Search className="w-3.5 h-3.5 text-amber-500" />
+                      Book Journey
+                    </button>
 
+                    <button
+                      onClick={() => handleNav('tracking')}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold tracking-tight w-full text-left transition-colors ${
+                        currentView === 'tracking'
+                          ? 'bg-slate-900 text-amber-400'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Navigation className="w-3.5 h-3.5 text-amber-500" />
+                      Live Bus Radar
+                    </button>
+
+                    <button
+                      onClick={() => handleNav('retrieve-ticket')}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold tracking-tight w-full text-left transition-colors ${
+                        currentView === 'retrieve-ticket'
+                          ? 'bg-slate-900 text-amber-400'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Ticket className="w-3.5 h-3.5 text-amber-500" />
+                      Retrieve Boarding Pass
+                    </button>
+
+                    <div className="h-px bg-slate-100 my-1"></div>
+
+                    <button
+                      onClick={() => handleNav('terms')}
+                      className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 w-full text-left"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-slate-400" />
+                      Booking Terms
+                    </button>
+                  </div>
+                )}
+              </div>
+            </nav>
+
+            {/* Quick Action CTA Button */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleNav('search')}
+                className="craft-btn-amber text-xs px-3.5 py-2 hidden sm:inline-flex"
+              >
+                <Search className="w-3.5 h-3.5 mr-1.5" />
+                Book Seats
+              </button>
+
+              {userRole !== 'CUSTOMER_PUBLIC' ? (
+                <div className="flex items-center gap-2">
+                  <div className="hidden sm:flex flex-col text-right">
+                    <span className="text-xs font-bold text-slate-900 font-mono">
+                      {userRole === 'DRIVER' ? driverName || 'Driver' : managerName || 'Manager'}
+                    </span>
+                    <span className="text-[10px] text-amber-600 uppercase font-semibold">
+                      {userRole === 'DRIVER' ? 'Captain' : 'Ops Admin'}
+                    </span>
+                  </div>
                   <button
-                    onClick={() => handleNav('about')}
-                    className={`px-4 py-2.5 text-sm font-semibold transition-colors w-full text-left ${
-                      currentView === 'about'
-                        ? 'bg-neutral-900 text-amber-400'
-                        : 'text-neutral-700 hover:bg-amber-50 hover:text-amber-700'
-                    }`}
+                    onClick={onLogout}
+                    className="craft-btn-secondary text-xs p-2 sm:px-3 text-red-600 hover:bg-red-50 hover:border-red-200"
+                    title="Sign Out"
                   >
-                    About Us
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline ml-1">Sign Out</span>
                   </button>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleNav('driver-login')}
+                    className="craft-btn-secondary text-xs px-2.5 py-1.5 hidden md:inline-flex"
+                    title="Driver Portal"
+                  >
+                    <UserCheck className="w-3.5 h-3.5 mr-1" />
+                    Driver
+                  </button>
+                  <button
+                    onClick={() => handleNav('manager-login')}
+                    className="craft-btn-primary text-xs px-2.5 py-1.5"
+                    title="Manager Portal"
+                  >
+                    <Lock className="w-3.5 h-3.5 mr-1" />
+                    Manager
+                  </button>
+                </div>
+              )}
+
+              {/* Mobile Menu Toggle */}
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 focus:outline-none active:scale-95"
+                aria-label="Toggle menu"
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
             </div>
-          </nav>
-
-          {/* User Role Portals & Action Buttons */}
-          <div className="hidden sm:flex items-center gap-2.5">
-            {userRole === 'DRIVER' ? (
-              <div className="flex items-center gap-2">
-                <button
-                  id="driver-portal-btn"
-                  onClick={() => handleNav('driver-portal')}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-100 hover:bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold shadow-sm transition-all"
-                >
-                  <UserCheck className="w-4 h-4 text-amber-400" />
-                  <span>Driver Cockpit ({driverName || 'John Mwangi'})</span>
-                </button>
-                <button
-                  id="header-logout-btn"
-                  onClick={onLogout}
-                  title="Logout"
-                  className="p-2 rounded-lg bg-neutral-100 hover:bg-amber-50 text-neutral-500 hover:text-amber-700 transition-colors border border-neutral-200"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            ) : userRole === 'MANAGER' ? (
-              <div className="flex items-center gap-2">
-                <button
-                  id="manager-portal-btn"
-                  onClick={() => handleNav('manager-portal')}
-                  className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-black text-sm font-black shadow-md shadow-amber-400/20 transition-all"
-                >
-                  <Lock className="w-4 h-4 text-black" />
-                  <span>Manager Portal</span>
-                </button>
-                <button
-                  id="header-logout-btn"
-                  onClick={onLogout}
-                  title="Logout"
-                  className="p-2 rounded-lg bg-neutral-100 hover:bg-amber-50 text-neutral-500 hover:text-amber-700 transition-colors border border-neutral-200"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button
-                  id="header-book-now-btn"
-                  onClick={() => handleNav('search')}
-                  className="px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-black text-sm font-black shadow-sm transition-all"
-                >
-                  Book Now
-                </button>
-                <button
-                  id="login-driver-btn"
-                  onClick={() => handleNav('driver-login')}
-                  className="px-2 py-1 text-neutral-600 hover:text-amber-700 text-xs font-semibold transition-colors flex items-center gap-1.5"
-                >
-                  <UserCheck className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Driver Login</span>
-                </button>
-                <button
-                  id="login-manager-btn"
-                  onClick={() => handleNav('manager-login')}
-                  className="px-2 py-1 text-neutral-600 hover:text-amber-700 text-xs font-semibold transition-colors flex items-center gap-1.5"
-                >
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>Manager Login</span>
-                </button>
-              </div>
-            )}
-          </div>
-          </div>
-
-          {/* Mobile Menu Toggle */}
-          <div className="lg:hidden flex items-center gap-2">
-            <button
-              id="mobile-menu-toggle"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg bg-neutral-100 text-neutral-700 hover:text-amber-700 border border-neutral-200 focus:outline-none"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-b border-neutral-200 px-4 pt-2 pb-6 space-y-2 shadow-lg">
-          <button
-            onClick={() => handleNav('home')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-neutral-800 hover:bg-amber-50 hover:text-amber-700"
-          >
-            Home
-          </button>
-          <button
-            onClick={() => handleNav('search')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-amber-700 hover:bg-amber-50 flex items-center gap-2"
-          >
-            <Search className="w-4 h-4 text-amber-400" /> Book Journey
-          </button>
-          <button
-            onClick={() => handleNav('tracking')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-neutral-800 hover:bg-amber-50 hover:text-amber-700 flex items-center gap-2"
-          >
-            <Navigation className="w-4 h-4 text-amber-400" /> Track My Bus
-          </button>
-          <button
-            onClick={() => handleNav('retrieve-ticket')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-neutral-800 hover:bg-amber-50 hover:text-amber-700 flex items-center gap-2"
-          >
-            <Ticket className="w-4 h-4 text-amber-400" /> My Trips & Tickets
-          </button>
-          <button
-            onClick={() => handleNav('routes')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-neutral-800 hover:bg-amber-50 hover:text-amber-700"
-          >
-            Routes & Schedules
-          </button>
-          <button
-            onClick={() => handleNav('services')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-neutral-800 hover:bg-amber-50 hover:text-amber-700"
-          >
-            Services & Parcel Cargo
-          </button>
-          <button
-            onClick={() => handleNav('about')}
-            className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold text-white hover:bg-neutral-900 hover:text-amber-400"
-          >
-            About & Corporate
-          </button>
+        <div className="lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-2 shadow-2xl animate-in slide-in-from-top-2 duration-150">
+          <div className="grid grid-cols-2 gap-2 pb-2">
+            <button
+              onClick={() => handleNav('search')}
+              className="craft-btn-amber text-xs py-2.5 w-full"
+            >
+              <Search className="w-3.5 h-3.5 mr-1.5" />
+              Book Seats
+            </button>
+            <button
+              onClick={() => handleNav('tracking')}
+              className="craft-btn-secondary text-xs py-2.5 w-full"
+            >
+              <Navigation className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
+              Live Radar
+            </button>
+          </div>
 
-          <div className="pt-4 border-t border-neutral-800 space-y-2">
-            {userRole === 'DRIVER' ? (
-              <div className="space-y-2">
-                <button
-                  onClick={() => handleNav('driver-portal')}
-                  className="w-full py-2.5 px-4 bg-neutral-900 border border-amber-400/50 text-amber-400 rounded-lg font-bold text-sm text-center"
-                >
-                  Driver Cockpit ({driverName})
-                </button>
-                <button
-                  onClick={onLogout}
-                  className="w-full py-2 px-4 bg-neutral-900 text-neutral-300 rounded-lg font-semibold text-sm text-center"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : userRole === 'MANAGER' ? (
-              <div className="space-y-2">
-                <button
-                  onClick={() => handleNav('manager-portal')}
-                  className="w-full py-2.5 px-4 bg-amber-400 text-black rounded-lg font-extrabold text-sm text-center shadow-md"
-                >
-                  Manager Portal
-                </button>
-                <button
-                  onClick={onLogout}
-                  className="w-full py-2 px-4 bg-neutral-900 text-neutral-300 rounded-lg font-semibold text-sm text-center"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2 pt-2">
-                <button
-                  onClick={() => handleNav('driver-login')}
-                  className="py-2.5 px-3 bg-neutral-900 border border-neutral-700 text-white rounded-lg text-xs font-semibold text-center hover:border-amber-400"
-                >
-                  Driver Login
-                </button>
-                <button
-                  onClick={() => handleNav('manager-login')}
-                  className="py-2.5 px-3 bg-amber-400 text-black font-black rounded-lg text-xs text-center shadow-sm"
-                >
-                  Manager Login
-                </button>
-              </div>
-            )}
+          <div className="space-y-1 pt-2 border-t border-slate-100">
+            <button
+              onClick={() => handleNav('home')}
+              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
+                currentView === 'home' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              Home
+            </button>
+            <button
+              onClick={() => handleNav('routes')}
+              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
+                currentView === 'routes' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              Scheduled Routes & Fares
+            </button>
+            <button
+              onClick={() => handleNav('services')}
+              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
+                currentView === 'services' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              Executive Fleet Showcase
+            </button>
+            <button
+              onClick={() => handleNav('retrieve-ticket')}
+              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
+                currentView === 'retrieve-ticket' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              Retrieve Ticket / Boarding Pass
+            </button>
+            <button
+              onClick={() => handleNav('about')}
+              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
+                currentView === 'about' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              About TransCar Galaxy
+            </button>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-mono text-slate-500">
+            <span>Direct Dispatch:</span>
+            <a href="tel:+254724626199" className="font-bold text-slate-900">
+              +254 724 626199
+            </a>
           </div>
         </div>
       )}
@@ -391,127 +355,96 @@ export const Header: React.FC<HeaderProps> = ({
 
 export const Footer: React.FC<{ onNavigate: (view: string) => void }> = ({ onNavigate }) => {
   return (
-    <footer className="bg-black text-neutral-300 border-t-2 border-amber-500/30 pt-14 pb-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
-          {/* Company Bio */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center gap-3">
-              <BrandName className="font-extrabold text-2xl tracking-tight text-white font-serif" />
-            </div>
-            <p className="text-sm text-neutral-300 leading-relaxed pr-6">
-              East Africa's premier scheduled passenger coach and Rongai regional express service.
-              Connecting Rongai, Kiserian, Ngong, Suswa, Kisii, Kisumu with speed-governed,
-              telematics-monitored executive vehicles.
+    <footer className="bg-slate-950 text-slate-400 border-t border-slate-800 text-xs mt-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b border-slate-800/80">
+          {/* Brand Info */}
+          <div className="space-y-3 md:col-span-1">
+            <BrandName className="font-extrabold text-xl tracking-tight text-white" />
+            <p className="text-slate-400 leading-relaxed text-xs">
+              Kenya’s premier intercity and regional passenger shuttle network servicing Rongai, Kiserian, Narok, Bomet, Kisii and beyond.
             </p>
-            <div className="flex flex-wrap items-center gap-2.5 pt-2">
-              <div className="px-3 py-1.5 rounded-md bg-amber-400 text-black text-xs font-black shadow-sm">
-                NTSA Compliant
-              </div>
-              <div className="px-3 py-1.5 rounded-md bg-white text-black text-xs font-black shadow-sm">
-                M-Pesa 247247 Paybill
-              </div>
-              <div className="px-3 py-1.5 rounded-md bg-neutral-900 border border-amber-400 text-amber-400 text-xs font-black shadow-sm">
-                GPS Live Telematics
-              </div>
+            <div className="flex items-center gap-2 pt-1 font-mono text-[11px] text-amber-400">
+              <Shield className="w-3.5 h-3.5" />
+              <span>NTSA Licensed PSV Operator</span>
             </div>
           </div>
 
           {/* Quick Links */}
-          <div className="space-y-3">
-            <h4 className="text-amber-400 font-extrabold text-xs uppercase tracking-widest">Passenger Services</h4>
-            <ul className="space-y-2 text-sm">
+          <div className="space-y-2">
+            <h4 className="text-white font-bold text-xs uppercase tracking-wider">Quick Navigation</h4>
+            <ul className="space-y-1.5">
               <li>
-                <button onClick={() => onNavigate('search')} className="text-white hover:text-amber-400 transition-colors">
-                  Search & Book Seats
+                <button onClick={() => onNavigate('home')} className="hover:text-amber-400 transition-colors">
+                  Home
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('tracking')} className="text-white hover:text-amber-400 transition-colors">
+                <button onClick={() => onNavigate('search')} className="hover:text-amber-400 transition-colors">
+                  Book Seats
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate('routes')} className="hover:text-amber-400 transition-colors">
+                  Routes & Schedules
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate('services')} className="hover:text-amber-400 transition-colors">
+                  Fleet Showcase
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate('tracking')} className="hover:text-amber-400 transition-colors">
                   Live Bus Tracking
                 </button>
               </li>
+            </ul>
+          </div>
+
+          {/* Passenger Support */}
+          <div className="space-y-2">
+            <h4 className="text-white font-bold text-xs uppercase tracking-wider">Passenger Support</h4>
+            <ul className="space-y-1.5">
               <li>
-                <button onClick={() => onNavigate('retrieve-ticket')} className="text-white hover:text-amber-400 transition-colors">
-                  My Trips & Tickets
+                <button onClick={() => onNavigate('retrieve-ticket')} className="hover:text-amber-400 transition-colors">
+                  Retrieve Digital Ticket
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('routes')} className="text-white hover:text-amber-400 transition-colors">
-                  Timetables & Fares
+                <button onClick={() => onNavigate('terms')} className="hover:text-amber-400 transition-colors">
+                  Terms & Conditions
                 </button>
               </li>
               <li>
-                <button onClick={() => onNavigate('services')} className="text-white hover:text-amber-400 transition-colors">
-                  Parcel & Cargo Logistics
+                <button onClick={() => onNavigate('privacy')} className="hover:text-amber-400 transition-colors">
+                  Privacy Policy
+                </button>
+              </li>
+              <li>
+                <button onClick={() => onNavigate('about')} className="hover:text-amber-400 transition-colors">
+                  About the Company
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Regional Terminals */}
-          <div className="space-y-3">
-            <h4 className="text-amber-400 font-extrabold text-xs uppercase tracking-widest">Main Terminals</h4>
-            <ul className="space-y-2 text-xs text-neutral-300">
-              <li>
-                <span className="text-white font-bold">Rongai Terminal:</span> Maasai Mall Stage
-              </li>
-              <li>
-                <span className="text-white font-bold">Kisii Central:</span> Kisii Central Shuttle Station
-              </li>
-              <li>
-                <span className="text-white font-bold">Kisumu Western:</span> Mega Plaza Station
-              </li>
-            </ul>
-          </div>
-
-          {/* Portals & Governance */}
-          <div className="space-y-3">
-            <h4 className="text-amber-400 font-extrabold text-xs uppercase tracking-widest">Internal Portals</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <button onClick={() => onNavigate('driver-login')} className="text-white hover:text-amber-400 transition-colors flex items-center gap-1.5 font-medium">
-                  <UserCheck className="w-3.5 h-3.5 text-amber-400" /> Driver Operations Portal
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('manager-login')} className="text-white hover:text-amber-400 transition-colors flex items-center gap-1.5 font-medium">
-                  <Lock className="w-3.5 h-3.5 text-amber-400" /> Manager Executive Portal
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('about')} className="text-neutral-300 hover:text-white transition-colors">
-                  Fleet Safety Standards
-                </button>
-              </li>
-              <li>
-                <button onClick={() => onNavigate('policies')} className="text-neutral-300 hover:text-white transition-colors">
-                  Luggage & Refund Policies
-                </button>
-              </li>
-            </ul>
+          {/* Contact Details */}
+          <div className="space-y-2">
+            <h4 className="text-white font-bold text-xs uppercase tracking-wider">Direct Dispatch</h4>
+            <div className="space-y-2 text-slate-300 font-mono text-[11px]">
+              <p>Hotline: <a href="tel:+254724626199" className="text-amber-400 font-bold hover:underline">+254 724 626199</a></p>
+              <p>Logistics: <a href="tel:+254717747626" className="text-amber-400 font-bold hover:underline">+254 717 747626</a></p>
+              <p className="text-slate-400 font-sans text-xs pt-1">Terminals in Rongai, Kiserian & Kisii Main Stage.</p>
+            </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-400">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-neutral-300">© {new Date().getFullYear()} TransCar rongai Ltd. All rights reserved.</p>
-            <span className="hidden sm:inline text-neutral-600">•</span>
-            <span className="text-amber-400 font-mono text-[11px] bg-neutral-900 px-2.5 py-0.5 rounded-md border border-amber-400/40 font-bold">
-              Domain: transcarrongai.co.ke
-            </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-5">
-            <button onClick={() => onNavigate('policies')} className="text-neutral-300 hover:text-amber-400 transition-colors">
-              Policies
-            </button>
-            <button onClick={() => onNavigate('terms')} className="text-white hover:text-amber-400 font-bold transition-colors">
-              Terms & Conditions
-            </button>
-            <button onClick={() => onNavigate('privacy')} className="text-white hover:text-amber-400 font-bold transition-colors">
-              Privacy Policy
-            </button>
+        <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-[11px]">
+          <p>© {new Date().getFullYear()} TransCar Galaxy Shuttle Transport. All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            <span className="font-mono">Engineered with precision for Kenyan transit</span>
           </div>
         </div>
       </div>
