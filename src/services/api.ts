@@ -251,6 +251,22 @@ export class ApiService {
     return res.json();
   }
 
+  static async updateTripTelemetry(
+    tripId: string,
+    payload: { lat?: number; lng?: number; speedKmH?: number; currentStop?: string }
+  ) {
+    const res = await fetch(`${API_BASE}/driver/trips/${tripId}/status`, {
+      method: 'PATCH',
+      headers: this.getHeaders(),
+      body: JSON.stringify({
+        status: 'IN_TRANSIT',
+        ...payload,
+      }),
+    });
+    if (!res.ok) throw new Error('Failed to update trip telemetry');
+    return res.json();
+  }
+
   static async getTripManifest(tripId: string) {
     const res = await fetch(`${API_BASE}/driver/passengers/${tripId}`, { headers: this.getHeaders() });
     if (!res.ok) throw new Error('Failed to load manifest');
