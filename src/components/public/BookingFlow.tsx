@@ -12,6 +12,8 @@ import {
   Loader2,
   Clock,
   Sparkles,
+  X,
+  RefreshCw,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trip, Booking } from '../../types';
@@ -37,9 +39,78 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
   const [availableTrips, setAvailableTrips] = React.useState<Trip[]>([]);
   const [loadingTrips, setLoadingTrips] = React.useState(!initialTrip);
 
-  // Seat selection
+  // Seat selection & real-time configuration
   const [selectedSeats, setSelectedSeats] = React.useState<string[]>([]);
   const [passengersCount, setPassengersCount] = React.useState<number>(1);
+  const [activeChassisCapacity, setActiveChassisCapacity] = React.useState<11 | 14 | 16>(14);
+  const [isSyncingAvailability, setIsSyncingAvailability] = React.useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = React.useState<Date>(new Date());
+  const [realtimeNotification, setRealtimeNotification] = React.useState<string | null>(null);
+
+  // Dynamic initialization of chassis capacity when selectedTrip changes
+  React.useEffect(() => {
+    if (selectedTrip) {
+      const cap = selectedTrip.vehicle?.seatingCapacity || selectedTrip.totalSeats;
+      if (cap === 11) setActiveChassisCapacity(11);
+      else if (cap === 16) setActiveChassisCapacity(16);
+      else if (selectedTrip.vehicle?.registrationNumber?.replace(/\s/g, '').toUpperCase() === 'KDE416Q') setActiveChassisCapacity(11);
+      else setActiveChassisCapacity(14);
+    }
+  }, [selectedTrip?.id, selectedTrip?.vehicle?.seatingCapacity, selectedTrip?.totalSeats, selectedTrip?.vehicle?.registrationNumber]);
+
+  // Real-time availability status tracking & polling
+  const syncTripAvailability = React.useCallback(async (tripId: string, showSpinner = false) => {
+    if (showSpinner) setIsSyncingAvailability(true);
+    try {
+      const refreshed = await ApiService.getTripDetails(tripId);
+      if (refreshed) {
+        setSelectedTrip((prev) => {
+          if (!prev) return refreshed;
+          return {
+            ...prev,
+            ...refreshed,
+            bookedSeatNumbers: refreshed.bookedSeatNumbers || prev.bookedSeatNumbers,
+            availableSeats: refreshed.availableSeats ?? prev.availableSeats,
+          };
+        });
+        setLastSyncedAt(new Date());
+
+        // Check if any currently selected seat has been booked by another user
+        const newBookedSet = new Set(refreshed.bookedSeatNumbers || []);
+        setSelectedSeats((currSelected) => {
+          const conflicts = currSelected.filter((s) => newBookedSet.has(s));
+          if (conflicts.length > 0) {
+            setRealtimeNotification(
+              `Seat ${conflicts.join(', ')} was just booked by another traveler in real-time and has been released.`
+            );
+            setTimeout(() => setRealtimeNotification(null), 6000);
+            setPassengersData((pData) => pData.filter((p) => !conflicts.includes(p.seatNumber)));
+            return currSelected.filter((s) => !conflicts.includes(s));
+          }
+          return currSelected;
+        });
+      }
+    } catch (err) {
+      console.warn('Real-time trip availability sync check failed:', err);
+    } finally {
+      if (showSpinner) setIsSyncingAvailability(false);
+    }
+  }, []);
+
+  // Periodic real-time background sync when on Seat Selection step (step 1)
+  React.useEffect(() => {
+    if (step !== 1 || !selectedTrip?.id) return;
+
+    // Initial sync
+    syncTripAvailability(selectedTrip.id, false);
+
+    // Poll every 6.5 seconds
+    const interval = setInterval(() => {
+      syncTripAvailability(selectedTrip.id, false);
+    }, 6500);
+
+    return () => clearInterval(interval);
+  }, [step, selectedTrip?.id, syncTripAvailability]);
 
   // Passenger & contact form
   const [passengersData, setPassengersData] = React.useState<
@@ -281,34 +352,70 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
       {/* STEP 1: Seat Selection */}
       {step === 1 && selectedTrip && (
         <div className="space-y-6">
+          {/* Real-Time Notification Alert */}
+          {realtimeNotification && (
+            <div className="p-4 bg-amber-50 border-2 border-amber-400 rounded-2xl flex items-center justify-between gap-3 text-amber-950 text-xs font-bold shadow-md animate-in fade-in zoom-in-95">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                <span>{realtimeNotification}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRealtimeNotification(null)}
+                className="p-1 hover:bg-amber-200/60 rounded-lg cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           <div className="p-4 bg-black text-white rounded-2xl flex flex-wrap items-center justify-between gap-4 shadow-xl border-2 border-amber-400/40">
             <div>
-              <span className="text-xs font-mono text-black bg-amber-400 font-black px-2 py-0.5 rounded mr-2">
-                {selectedTrip.tripCode}
-              </span>
-              <span className="text-xs text-neutral-300 font-bold">Express Scheduled Shuttle</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono text-black bg-amber-400 font-black px-2 py-0.5 rounded">
+                  {selectedTrip.tripCode}
+                </span>
+                <span className="text-xs text-neutral-300 font-bold">Express Scheduled Shuttle</span>
+                <span className="bg-emerald-500/20 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/30 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Live Sync
+                </span>
+              </div>
               <h2 className="text-xl font-black font-serif text-white mt-1">
                 {selectedTrip.route.origin} → {selectedTrip.route.destination}
               </h2>
               <p className="text-xs text-neutral-400 font-medium">
                 Departure: {new Date(selectedTrip.departureTime).toLocaleDateString('en-KE', { weekday: 'short', month: 'short', day: 'numeric' })} at{' '}
-                {new Date(selectedTrip.departureTime).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
+                {new Date(selectedTrip.departureTime).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })} • Bus: {selectedTrip.vehicle?.registrationNumber || 'KDA 123A'}
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              <label className="text-xs font-bold text-amber-400">Passengers:</label>
-              <select
-                value={passengersCount}
-                onChange={(e) => setPassengersCount(Number(e.target.value))}
-                className="bg-neutral-900 border border-neutral-700 text-white font-bold text-xs rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-amber-400 focus:outline-none"
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => syncTripAvailability(selectedTrip.id, true)}
+                disabled={isSyncingAvailability}
+                className="px-3 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 text-amber-400 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Refresh real-time seat availability"
               >
-                {[1, 2, 3, 4, 5, 6].map((n) => (
-                  <option key={n} value={n}>
-                    {n} {n === 1 ? 'Seat' : 'Seats'}
-                  </option>
-                ))}
-              </select>
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingAvailability ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Sync Seats</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-bold text-amber-400">Passengers:</label>
+                <select
+                  value={passengersCount}
+                  onChange={(e) => setPassengersCount(Number(e.target.value))}
+                  className="bg-neutral-900 border border-neutral-700 text-white font-bold text-xs rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-amber-400 focus:outline-none"
+                >
+                  {[1, 2, 3, 4, 5, 6].map((n) => (
+                    <option key={n} value={n}>
+                      {n} {n === 1 ? 'Seat' : 'Seats'}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -317,6 +424,11 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
             selectedSeats={selectedSeats}
             onSeatToggle={handleSeatToggle}
             maxSeats={passengersCount}
+            configCapacity={activeChassisCapacity}
+            onConfigChange={(newCap) => setActiveChassisCapacity(newCap)}
+            isSyncing={isSyncingAvailability}
+            onRefreshAvailability={() => syncTripAvailability(selectedTrip.id, true)}
+            lastSyncedAt={lastSyncedAt}
           />
 
           <div className="p-5 bg-white rounded-2xl border-2 border-neutral-200 shadow-sm flex flex-wrap items-center justify-between gap-4">

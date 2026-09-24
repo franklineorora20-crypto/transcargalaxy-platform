@@ -1,13 +1,33 @@
-import React, { useState } from 'react';
-import { ShieldCheck, Check, Armchair, X, Sparkles, User, AlertCircle, Info, CheckCircle2, ChevronRight, Lock, Compass, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  ShieldCheck,
+  Check,
+  Armchair,
+  X,
+  Sparkles,
+  User,
+  AlertCircle,
+  Info,
+  CheckCircle2,
+  Compass,
+  Zap,
+  RefreshCw,
+  Radio,
+  Eye,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trip } from '../../types';
 
-interface SeatSelectorProps {
+export interface SeatSelectorProps {
   trip: Trip;
   selectedSeats: string[];
   onSeatToggle: (seatNumber: string, isExecutive?: boolean) => void;
   maxSeats: number;
+  configCapacity?: 11 | 14 | 16;
+  onConfigChange?: (capacity: 11 | 14 | 16) => void;
+  isSyncing?: boolean;
+  onRefreshAvailability?: () => void;
+  lastSyncedAt?: Date;
 }
 
 export const SeatSelector: React.FC<SeatSelectorProps> = ({
@@ -15,39 +35,72 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
   selectedSeats,
   onSeatToggle,
   maxSeats,
+  configCapacity,
+  onConfigChange,
+  isSyncing = false,
+  onRefreshAvailability,
+  lastSyncedAt,
 }) => {
   const bookedSet = React.useMemo(() => new Set(trip.bookedSeatNumbers || []), [trip.bookedSeatNumbers]);
-  
-  // Real or selected capacity
-  const detectedCapacity = trip.vehicle.seatingCapacity || (trip.vehicle.registrationNumber.replace(/\s/g, '').toUpperCase() === 'KDE416Q' ? 11 : 14);
-  const [activeConfigTab, setActiveConfigTab] = useState<11 | 14 | 16>(
-    detectedCapacity === 16 ? 16 : detectedCapacity === 11 ? 11 : 14
-  );
+
+  // Determine initial capacity dynamically from trip vehicle specs or prop
+  const detectedCapacity: 11 | 14 | 16 = React.useMemo(() => {
+    if (configCapacity && [11, 14, 16].includes(configCapacity)) return configCapacity;
+    const cap = trip.vehicle?.seatingCapacity || trip.totalSeats;
+    if (cap === 11) return 11;
+    if (cap === 16) return 16;
+    if (trip.vehicle?.registrationNumber?.replace(/\s/g, '').toUpperCase() === 'KDE416Q') return 11;
+    return 14;
+  }, [configCapacity, trip.vehicle?.seatingCapacity, trip.totalSeats, trip.vehicle?.registrationNumber]);
+
+  const [activeConfigTab, setActiveConfigTab] = useState<11 | 14 | 16>(detectedCapacity);
+  const [hoveredSeat, setHoveredSeat] = useState<string | null>(null);
+
+  // Sync state if detected capacity changes externally
+  useEffect(() => {
+    setActiveConfigTab(detectedCapacity);
+  }, [detectedCapacity]);
+
+  const handleTabChange = (cap: 11 | 14 | 16) => {
+    setActiveConfigTab(cap);
+    if (onConfigChange) {
+      onConfigChange(cap);
+    }
+  };
 
   const isElevenSeater = activeConfigTab === 11;
   const isSixteenSeater = activeConfigTab === 16;
   const isFourteenSeater = activeConfigTab === 14;
 
   const totalSeatsInConfig = activeConfigTab;
-  const availableCount = Math.max(0, totalSeatsInConfig - bookedSet.size);
+  const occupiedCount = bookedSet.size;
+  const availableCount = Math.max(0, totalSeatsInConfig - occupiedCount);
+  const occupancyPercentage = Math.min(100, Math.round((occupiedCount / totalSeatsInConfig) * 100));
 
   const getCoachConfigTitle = () => {
     if (isSixteenSeater) return '16-Seater Toyota HiAce Grand Cabin (High-Roof Long Wheelbase)';
     if (isElevenSeater) return '11-Seater Toyota HiAce Custom (Executive VIP Class)';
-    return '14-Seater Toyota HiAce Commuter (Standard Intercity)';
+    return '14-Seater Toyota HiAce Commuter (Standard Intercity Shuttle)';
   };
 
   const getSeatDescription = (seatNum: string) => {
-    if (seatNum === '1A') return 'Front Co-Driver Panoramic Window';
-    if (seatNum === '1B') return 'Front Center Passenger Seat';
-    if (seatNum.endsWith('A')) return 'Left Window Seat (Scenic Mountain/Valley View)';
-    if (seatNum.endsWith('C')) return 'Right Window Seat (Driverside Window)';
-    if (seatNum === '4B' || seatNum === '5B') return 'Central Bench Seat (Direct Aisle Access)';
-    if (seatNum === '6A' || seatNum === '6B') return 'Rear High-Capacity Cabin Seat';
-    return 'Comfort Aisle Seat';
+    if (seatNum === '1A') return 'Front Co-Driver Panoramic Window (Scenic View & Extra Legroom)';
+    if (seatNum === '1B') return 'Front Center Passenger Seat (Direct Dash Access & Extra Legroom)';
+    if (seatNum === '2A') return 'Forward Left Window Seat (Direct Sliding Door Entry Access)';
+    if (seatNum.endsWith('A')) return 'Left Window Seat (Scenic Mountain & Valley Panorama)';
+    if (seatNum.endsWith('C')) return 'Right Window Seat (Driver-side Scenic Highway View)';
+    if (seatNum === '4B' || seatNum === '5B') return 'Central Bench Seat (Direct Aisle Walkway Access)';
+    if (seatNum === '6A' || seatNum === '6B') return 'Rear High-Capacity Cabin Seat (Comfort Rear Row)';
+    return 'Comfort Ergonomic Aisle Seat';
   };
 
-  const renderSeatButton = (seatNum: string, isOccupied: boolean, isWindow = false, isBench = false, isExtraLegroom = false) => {
+  const renderSeatButton = (
+    seatNum: string,
+    isOccupied: boolean,
+    isWindow = false,
+    isBench = false,
+    isExtraLegroom = false
+  ) => {
     const isSelected = selectedSeats.includes(seatNum);
 
     return (
@@ -62,6 +115,8 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
         type="button"
         id={`seat-${seatNum}`}
         disabled={isOccupied}
+        onMouseEnter={() => setHoveredSeat(seatNum)}
+        onMouseLeave={() => setHoveredSeat((curr) => (curr === seatNum ? null : curr))}
         onClick={() => onSeatToggle(seatNum, isElevenSeater)}
         title={
           isOccupied
@@ -158,8 +213,8 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
         <div className="flex items-center gap-4 relative z-10">
           <div className="w-20 h-16 sm:w-24 sm:h-20 rounded-xl overflow-hidden border-2 border-amber-400/50 flex-shrink-0 bg-slate-900 shadow-xl">
             <img
-              src={trip.vehicle.imageUrl || '/images/transcar_highway_kde4160.jpg'}
-              alt={trip.vehicle.model}
+              src={trip.vehicle?.imageUrl || '/images/transcar_highway_kde4160.jpg'}
+              alt={trip.vehicle?.model || 'Toyota HiAce'}
               referrerPolicy="no-referrer"
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src = '/images/transcar_highway_kde4160.jpg';
@@ -171,14 +226,14 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono font-black text-amber-400 text-xs bg-slate-900/90 px-2.5 py-0.5 rounded-md border border-amber-400/40 shadow-inner">
-                {trip.vehicle.registrationNumber}
+                {trip.vehicle?.registrationNumber || 'KDA 123A'}
               </span>
               <span className="bg-amber-400 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-md uppercase tracking-wider shadow-sm">
-                {isSixteenSeater ? '16-Seater Van' : isElevenSeater ? '11-Seater VIP' : '14-Seater Shuttle'}
+                {isSixteenSeater ? '16-Seater Maxi' : isElevenSeater ? '11-Seater VIP' : '14-Seater Standard'}
               </span>
               <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live Telemetry Active
+                Live Availability Sync
               </span>
             </div>
             <h4 className="text-base font-black text-white tracking-tight">{getCoachConfigTitle()}</h4>
@@ -189,29 +244,61 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
           </div>
         </div>
 
-        <div className="lg:border-l lg:border-slate-800 lg:pl-6 text-left lg:text-right space-y-1 relative z-10 flex-shrink-0">
-          <span className="text-[10px] text-slate-400 uppercase font-black tracking-wider block">
-            Real-Time Availability
-          </span>
+        <div className="lg:border-l lg:border-slate-800 lg:pl-6 text-left lg:text-right space-y-1.5 relative z-10 flex-shrink-0">
+          <div className="flex items-center justify-between lg:justify-end gap-2">
+            <span className="text-[10px] text-slate-400 uppercase font-black tracking-wider block">
+              Real-Time Availability Status
+            </span>
+            {onRefreshAvailability && (
+              <button
+                type="button"
+                onClick={onRefreshAvailability}
+                disabled={isSyncing}
+                title="Refresh real-time availability"
+                className="p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-amber-400 transition-colors cursor-pointer"
+              >
+                <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin text-amber-300' : ''}`} />
+              </button>
+            )}
+          </div>
           <p className="text-xl font-black text-amber-400 font-mono tracking-tight">
-            {availableCount} / {totalSeatsInConfig} Seats Free
+            {availableCount} / {totalSeatsInConfig} Seats Available
           </p>
-          <span className="text-xs text-slate-300 block font-bold">
+          <div className="w-full lg:w-44 bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                occupancyPercentage > 80
+                  ? 'bg-rose-500'
+                  : occupancyPercentage > 50
+                  ? 'bg-amber-400'
+                  : 'bg-emerald-400'
+              }`}
+              style={{ width: `${occupancyPercentage}%` }}
+            />
+          </div>
+          <span className="text-[11px] text-slate-300 block font-bold">
             KES {trip.fareKsh.toLocaleString()} <span className="text-slate-500 font-normal">per passenger</span>
           </span>
+          {lastSyncedAt && (
+            <span className="text-[9px] text-slate-500 font-mono block">
+              Synced: {lastSyncedAt.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Configuration Class Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-100 rounded-2xl border border-slate-200">
+      {/* Dynamic Chassis Configuration Selector */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-slate-100 rounded-2xl border border-slate-200">
         <div className="flex items-center gap-2">
           <Compass className="w-4 h-4 text-amber-600" />
-          <span className="text-xs font-black text-slate-900 uppercase tracking-wider">Coach Seating Architecture:</span>
+          <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
+            Vehicle Chassis Architecture:
+          </span>
         </div>
         <div className="grid grid-cols-3 gap-1.5 sm:w-auto w-full">
           <button
             type="button"
-            onClick={() => setActiveConfigTab(11)}
+            onClick={() => handleTabChange(11)}
             className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
               activeConfigTab === 11
                 ? 'bg-slate-950 text-amber-400 shadow-md border border-amber-400/40'
@@ -222,7 +309,7 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => setActiveConfigTab(14)}
+            onClick={() => handleTabChange(14)}
             className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
               activeConfigTab === 14
                 ? 'bg-slate-950 text-amber-400 shadow-md border border-amber-400/40'
@@ -233,7 +320,7 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => setActiveConfigTab(16)}
+            onClick={() => handleTabChange(16)}
             className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
               activeConfigTab === 16
                 ? 'bg-slate-950 text-amber-400 shadow-md border border-amber-400/40'
@@ -321,6 +408,19 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
           )}
         </div>
       </div>
+
+      {/* Hovered Seat Detail Inspection Bar */}
+      {hoveredSeat && (
+        <div className="px-4 py-2 bg-slate-900 text-amber-300 text-xs rounded-xl border border-slate-800 flex items-center gap-2 animate-in fade-in duration-150 shadow-inner">
+          <Eye className="w-4 h-4 text-amber-400 flex-shrink-0" />
+          <span>
+            <strong className="text-white font-mono font-bold">Seat {hoveredSeat}:</strong> {getSeatDescription(hoveredSeat)}
+            {bookedSet.has(hoveredSeat) && (
+              <span className="text-rose-400 ml-2 font-bold">• Occupied (Unavailable)</span>
+            )}
+          </span>
+        </div>
+      )}
 
       {/* COACH CHASSIS HIGH-FIDELITY VISUALIZATION */}
       <div className="max-w-md mx-auto my-6 p-6 sm:p-8 bg-slate-950 rounded-3xl border-4 border-slate-800 shadow-2xl relative overflow-hidden">

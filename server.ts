@@ -780,45 +780,47 @@ app.get('/api/trips/:id', (req, res) => {
     });
   }
 
-  const rows = Math.ceil(trip.totalSeats / 4);
+  const capacity = trip.totalSeats || trip.vehicle?.seatingCapacity || 14;
+  const bookedSet = new Set(trip.bookedSeatNumbers || []);
 
-  const seats: Array<{
-    seatNumber: string;
-    row: number;
-    column: number;
-    seatClass: string;
-    fareMultiplier: number;
-    isOccupied: boolean;
-    isAccessible: boolean;
-  }> = [];
+  const seatConfigs: { [key: number]: string[] } = {
+    11: ['1A', '1B', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '4C'],
+    14: ['1A', '1B', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '4C', '5A', '5B', '5C'],
+    16: ['1A', '1B', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '4C', '5A', '5B', '5C', '6A', '6B'],
+  };
 
-  const bookedSet = new Set(
-    trip.bookedSeatNumbers,
-  );
+  const targetConfig = capacity === 11 || capacity === 16 ? capacity : 14;
+  const seatList = seatConfigs[targetConfig] || seatConfigs[14];
 
-  for (let r = 1; r <= rows; r++) {
-    const letters = ['A', 'B', 'C', 'D'];
+  const seats = seatList.map((seatNum) => {
+    const row = parseInt(seatNum[0], 10);
+    const isWindow = seatNum.endsWith('A') || seatNum.endsWith('C');
+    const isExecutive = targetConfig === 11 || row === 1;
 
-    for (let c = 0; c < letters.length; c++) {
-      const seatNum = `${r}${letters[c]}`;
-
-      if (seats.length < trip.totalSeats) {
-        seats.push({
-          seatNumber: seatNum,
-          row: r,
-          column: c + 1,
-          seatClass: 'STANDARD',
-          fareMultiplier: 1.0,
-          isOccupied: bookedSet.has(seatNum),
-          isAccessible: r === 1,
-        });
-      }
-    }
-  }
+    return {
+      seatNumber: seatNum,
+      row,
+      column: seatNum.endsWith('A') ? 1 : seatNum.endsWith('B') ? 2 : 3,
+      seatClass: isExecutive ? 'EXECUTIVE' : 'STANDARD',
+      fareMultiplier: isExecutive ? 1.15 : 1.0,
+      isOccupied: bookedSet.has(seatNum),
+      isAccessible: row === 1 || seatNum === '2A',
+      isWindow,
+      description:
+        seatNum === '1A'
+          ? 'Front Co-Driver Panoramic Window'
+          : seatNum === '1B'
+          ? 'Front Center Passenger Seat'
+          : isWindow
+          ? 'Scenic Highway Window View'
+          : 'Comfort Aisle Seat',
+    };
+  });
 
   res.json({
     ...trip,
     seats,
+    chassisConfiguration: targetConfig === 11 ? '11_SEATER_VIP' : targetConfig === 16 ? '16_SEATER_MAXI' : '14_SEATER_STANDARD',
   });
 });
 
