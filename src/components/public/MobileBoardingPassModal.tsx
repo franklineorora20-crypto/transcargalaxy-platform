@@ -178,42 +178,42 @@ export const MobileBoardingPassModal: React.FC<MobileBoardingPassModalProps> = (
   const isBoarded = currentPassenger.hasBoarded;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
-      <div className="relative w-full max-w-lg bg-neutral-950 text-white rounded-3xl border-2 border-amber-400 shadow-2xl overflow-hidden my-auto animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md flex items-center justify-center p-2.5 sm:p-4">
+      <div className="relative w-full max-w-lg bg-neutral-950 text-white rounded-2xl sm:rounded-3xl border-2 border-amber-400 shadow-2xl overflow-hidden my-auto max-h-[94vh] flex flex-col animate-in fade-in duration-200">
         {/* Top App Bar with Controls */}
-        <div className="p-4 sm:p-5 bg-black border-b border-neutral-800 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-400 flex items-center justify-center text-black shadow-md border border-black">
-              <Smartphone className="w-5 h-5 stroke-[2.5]" />
+        <div className="p-3.5 sm:p-5 bg-black border-b border-neutral-800 flex items-center justify-between gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-400 flex items-center justify-center text-black shadow-md border border-black flex-shrink-0">
+              <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
             </div>
-            <div>
-              <h3 className="text-sm font-black text-white flex items-center gap-1.5">
-                <span>Mobile Boarding Pass</span>
-                <span className="bg-amber-400 text-black text-[10px] font-black px-1.5 py-0.5 rounded uppercase">
-                  Driver Quick Scan
+            <div className="min-w-0">
+              <h3 className="text-xs sm:text-sm font-black text-white flex items-center gap-1.5 truncate">
+                <span className="truncate">Boarding Pass</span>
+                <span className="bg-amber-400 text-black text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded uppercase flex-shrink-0">
+                  Driver Scan
                 </span>
               </h3>
-              <p className="text-[11px] text-neutral-400">Present this screen to the driver at boarding</p>
+              <p className="text-[10px] sm:text-[11px] text-neutral-400 truncate">Present to driver at boarding</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <button
               onClick={() => setHighBrightness(!highBrightness)}
               title={highBrightness ? 'Normal Contrast' : 'Max Contrast for Scanner'}
-              className={`p-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1 ${
+              className={`p-1.5 sm:p-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1 ${
                 highBrightness
                   ? 'bg-amber-400 text-black border-amber-400 shadow-sm'
                   : 'bg-neutral-900 text-neutral-400 border-neutral-700 hover:text-white'
               }`}
             >
-              <Sun className="w-4 h-4" />
+              <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="text-[10px] hidden sm:inline">Bright</span>
             </button>
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-neutral-900 border border-neutral-700 text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+              className="p-1.5 sm:p-2 rounded-xl bg-neutral-900 border border-neutral-700 text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -222,15 +222,15 @@ export const MobileBoardingPassModal: React.FC<MobileBoardingPassModalProps> = (
 
         {/* Passenger Switcher Tabs (If multiple passengers) */}
         {livePassengers.length > 1 && (
-          <div className="p-2 bg-neutral-900 border-b border-neutral-800 flex items-center gap-1 overflow-x-auto">
-            <span className="text-[10px] uppercase font-black tracking-wider text-neutral-400 px-2">
+          <div className="p-2 bg-neutral-900 border-b border-neutral-800 flex items-center gap-1 overflow-x-auto flex-shrink-0">
+            <span className="text-[10px] uppercase font-black tracking-wider text-neutral-400 px-2 flex-shrink-0">
               Passengers:
             </span>
             {livePassengers.map((p, idx) => (
               <button
                 key={idx}
                 onClick={() => setSelectedPassengerIndex(idx)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 flex-shrink-0 ${
                   selectedPassengerIndex === idx
                     ? 'bg-amber-400 text-black shadow font-black'
                     : 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700'
@@ -244,7 +244,7 @@ export const MobileBoardingPassModal: React.FC<MobileBoardingPassModalProps> = (
           </div>
         )}
 
-        <div className="p-5 sm:p-6 space-y-5">
+        <div className="p-3.5 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto flex-1">
           {/* Real-time Boarding Status Indicator */}
           <div
             className={`p-3.5 rounded-2xl border-2 flex items-center justify-between transition-all ${
@@ -331,10 +331,10 @@ export const MobileBoardingPassModal: React.FC<MobileBoardingPassModalProps> = (
                   <img
                     src={qrDataUrl}
                     alt={`QR Code Boarding Pass for ${booking.bookingReference} Seat ${currentPassenger.seatNumber}`}
-                    className="w-56 h-56 sm:w-64 sm:h-64 object-contain rounded-xl"
+                    className="w-44 h-44 xs:w-56 xs:h-56 sm:w-64 sm:h-64 object-contain rounded-xl"
                   />
                 ) : (
-                  <div className="w-56 h-56 bg-neutral-200 animate-pulse rounded-xl flex items-center justify-center">
+                  <div className="w-44 h-44 xs:w-56 xs:h-56 sm:w-64 sm:h-64 bg-neutral-200 animate-pulse rounded-xl flex items-center justify-center">
                     <QrIcon className="w-10 h-10 text-neutral-400" />
                   </div>
                 )}
@@ -405,14 +405,14 @@ export const MobileBoardingPassModal: React.FC<MobileBoardingPassModalProps> = (
             </div>
 
             {/* Action buttons: Download QR, Copy details, and Driver Portal switch */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-800">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2.5 pt-2 border-t border-neutral-800">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   id="modal-download-pdf-ticket-btn"
                   onClick={handleDownloadPdf}
                   disabled={isDownloadingPdf}
-                  className="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-black text-xs font-black border border-black flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-black text-xs font-black border border-black flex items-center gap-1.5 cursor-pointer disabled:opacity-50 min-h-[38px]"
                   title="Download Official PDF Ticket with QR Code for offline use"
                 >
                   {isDownloadingPdf ? (
@@ -427,7 +427,7 @@ export const MobileBoardingPassModal: React.FC<MobileBoardingPassModalProps> = (
                   type="button"
                   id="download-qr-ticket-btn"
                   onClick={handleDownloadQr}
-                  className="px-3 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 text-xs font-bold border border-neutral-800 flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 text-xs font-bold border border-neutral-800 flex items-center gap-1.5 cursor-pointer min-h-[38px]"
                   title="Save QR Code Image to Phone"
                 >
                   <Download className="w-3.5 h-3.5 text-amber-400" />
@@ -437,7 +437,7 @@ export const MobileBoardingPassModal: React.FC<MobileBoardingPassModalProps> = (
                 <button
                   type="button"
                   onClick={handleCopyShare}
-                  className="px-3 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 text-xs font-bold border border-neutral-800 flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 text-xs font-bold border border-neutral-800 flex items-center gap-1.5 cursor-pointer min-h-[38px]"
                 >
                   <Share2 className="w-3.5 h-3.5" />
                   <span>{copied ? 'Copied!' : 'Share Pass'}</span>
@@ -451,9 +451,9 @@ export const MobileBoardingPassModal: React.FC<MobileBoardingPassModalProps> = (
                     onClose();
                     onOpenDriverPortal();
                   }}
-                  className="text-xs text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"
+                  className="text-xs text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer pt-1 xs:pt-0"
                 >
-                  <span>Open Driver Scanner Cockpit</span>
+                  <span>Open Driver Cockpit</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </button>
               )}

@@ -57,15 +57,15 @@ export const TripTrackingPage: React.FC<TripTrackingPageProps> = ({
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6 sm:space-y-8">
       {/* Tracker Banner */}
-      <div className="bg-black p-6 sm:p-8 rounded-3xl text-white shadow-xl border-2 border-amber-400/40">
+      <div className="bg-black p-4 sm:p-8 rounded-2xl sm:rounded-3xl text-white shadow-xl border-2 border-amber-400/40">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-amber-400 text-black text-xs font-black mb-3 border border-black">
             <Navigation className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>LIVE TRACKING</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black font-serif tracking-tight text-white">
+          <h1 className="text-xl sm:text-3xl font-black font-serif tracking-tight text-white">
             Track Your Journey Live
           </h1>
           <p className="text-xs sm:text-sm text-neutral-300 mt-1 font-medium">
@@ -74,7 +74,7 @@ export const TripTrackingPage: React.FC<TripTrackingPageProps> = ({
         </div>
 
         {/* Tracking Input Form */}
-        <form onSubmit={handleSearch} className="mt-6 flex flex-col sm:flex-row gap-2 max-w-xl">
+        <form onSubmit={handleSearch} className="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-2 max-w-xl">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-amber-400 absolute left-3.5 top-3.5" />
             <input
@@ -84,14 +84,14 @@ export const TripTrackingPage: React.FC<TripTrackingPageProps> = ({
               placeholder="e.g. TRP-48291 or KDA 123A"
               value={searchCode}
               onChange={(e) => setSearchCode(e.target.value.toUpperCase())}
-              className="w-full pl-10 pr-4 py-3 bg-neutral-900 border-2 border-neutral-700 rounded-xl text-white placeholder:text-neutral-500 font-mono font-bold text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none"
+              className="w-full pl-10 pr-4 py-2.5 sm:py-3 bg-neutral-900 border-2 border-neutral-700 rounded-xl text-white placeholder:text-neutral-500 font-mono font-bold text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none min-h-[44px]"
             />
           </div>
           <button
             id="tracking-search-btn"
             type="submit"
             disabled={loading}
-            className="px-6 py-3 bg-amber-400 hover:bg-amber-300 text-black font-black text-xs rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 border border-black cursor-pointer"
+            className="px-6 py-2.5 sm:py-3 bg-amber-400 hover:bg-amber-300 text-black font-black text-xs rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 border border-black cursor-pointer min-h-[44px]"
           >
             {loading ? <RefreshCw className="w-4 h-4 animate-spin text-black" /> : <Navigation className="w-4 h-4 text-black stroke-[2.5]" />}
             <span>Track Status</span>
@@ -134,11 +134,11 @@ export const TripTrackingPage: React.FC<TripTrackingPageProps> = ({
 
       {/* Live Tracking Status Dashboard */}
       {trackingData && (
-        <div className="bg-white rounded-3xl border-2 border-neutral-200 shadow-sm overflow-hidden space-y-6 p-6 sm:p-8">
+        <div className="bg-white rounded-2xl sm:rounded-3xl border-2 border-neutral-200 shadow-sm overflow-hidden space-y-5 sm:space-y-6 p-4 sm:p-8">
           {/* Top Status Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b-2 border-neutral-200">
+          <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 pb-4 sm:pb-6 border-b-2 border-neutral-200">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-mono font-black text-black bg-amber-400 px-2.5 py-0.5 rounded border border-black">
                   {trackingData.tripCode}
                 </span>
@@ -146,20 +146,20 @@ export const TripTrackingPage: React.FC<TripTrackingPageProps> = ({
                   Bus: {trackingData.busRegistration}
                 </span>
               </div>
-              <h2 className="text-2xl font-black text-black mt-1 font-serif">
+              <h2 className="text-xl sm:text-2xl font-black text-black mt-1 font-serif">
                 {trackingData.route}
               </h2>
             </div>
 
-            <div className="flex items-center gap-3">
-              <span className="px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm bg-black text-amber-400 border border-amber-400">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                <span>{trackingData.status.replace('_', ' ')}</span>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <span className="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm bg-black text-amber-400 border border-amber-400">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping flex-shrink-0" />
+                <span className="truncate">{trackingData.status.replace('_', ' ')}</span>
               </span>
 
               <button
                 onClick={() => fetchTracking(searchCode)}
-                className="p-2 rounded-xl border-2 border-neutral-300 text-black hover:bg-neutral-100 transition-colors cursor-pointer"
+                className="p-2 rounded-xl border-2 border-neutral-300 text-black hover:bg-neutral-100 transition-colors cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
                 title="Refresh Telematics"
               >
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -168,26 +168,26 @@ export const TripTrackingPage: React.FC<TripTrackingPageProps> = ({
           </div>
 
           {/* Telematics Metrics Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="p-4 rounded-2xl bg-neutral-50 border-2 border-neutral-200">
-              <span className="text-[11px] font-black text-neutral-500 uppercase tracking-wider block">Current Location</span>
-              <p className="text-base font-black text-black mt-1 flex items-center gap-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-neutral-50 border-2 border-neutral-200">
+              <span className="text-[10px] sm:text-[11px] font-black text-neutral-500 uppercase tracking-wider block">Current Location</span>
+              <p className="text-sm sm:text-base font-black text-black mt-0.5 sm:mt-1 flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-black flex-shrink-0" />
                 <span className="truncate">{trackingData.currentStop}</span>
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-neutral-50 border-2 border-neutral-200">
-              <span className="text-[11px] font-black text-neutral-500 uppercase tracking-wider block">Next Scheduled Stop</span>
-              <p className="text-base font-black text-black mt-1 flex items-center gap-1.5">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-neutral-50 border-2 border-neutral-200">
+              <span className="text-[10px] sm:text-[11px] font-black text-neutral-500 uppercase tracking-wider block">Next Scheduled Stop</span>
+              <p className="text-sm sm:text-base font-black text-black mt-0.5 sm:mt-1 flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-amber-500 flex-shrink-0" />
                 <span className="truncate">{trackingData.nextStop}</span>
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-neutral-50 border-2 border-neutral-200">
-              <span className="text-[11px] font-black text-neutral-500 uppercase tracking-wider block">Estimated Arrival</span>
-              <p className="text-base font-black text-black mt-1 flex items-center gap-1.5">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-neutral-50 border-2 border-neutral-200">
+              <span className="text-[10px] sm:text-[11px] font-black text-neutral-500 uppercase tracking-wider block">Estimated Arrival</span>
+              <p className="text-sm sm:text-base font-black text-black mt-0.5 sm:mt-1 flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-amber-500 flex-shrink-0" />
                 <span>
                   {new Date(trackingData.estimatedArrivalTime).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
@@ -195,9 +195,9 @@ export const TripTrackingPage: React.FC<TripTrackingPageProps> = ({
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-neutral-50 border-2 border-neutral-200">
-              <span className="text-[11px] font-black text-neutral-500 uppercase tracking-wider block">Governed Speed</span>
-              <p className="text-base font-black text-black mt-1 flex items-center gap-1.5">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-neutral-50 border-2 border-neutral-200">
+              <span className="text-[10px] sm:text-[11px] font-black text-neutral-500 uppercase tracking-wider block">Governed Speed</span>
+              <p className="text-sm sm:text-base font-black text-black mt-0.5 sm:mt-1 flex items-center gap-1.5">
                 <Gauge className="w-4 h-4 text-black flex-shrink-0" />
                 <span>{trackingData.speedKmH} km/h (Max 80)</span>
               </p>
@@ -214,37 +214,37 @@ export const TripTrackingPage: React.FC<TripTrackingPageProps> = ({
               </div>
             </div>
           ) : (
-            <div className="p-3.5 bg-neutral-950 text-white border-2 border-amber-400/50 rounded-2xl text-xs flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-amber-400" />
-              <span className="font-medium">Journey is running strictly on schedule with verified satellite telematics.</span>
+            <div className="p-3 sm:p-3.5 bg-neutral-950 text-white border-2 border-amber-400/50 rounded-2xl text-xs flex items-center gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <span className="font-medium">Journey running on schedule with verified satellite telematics.</span>
             </div>
           )}
 
           {/* Visual Interactive Corridor Progress Bar */}
-          <div className="p-6 bg-black text-white rounded-2xl space-y-4 border-2 border-amber-400/40">
-            <div className="flex items-center justify-between text-xs text-neutral-300 font-bold">
+          <div className="p-4 sm:p-6 bg-black text-white rounded-2xl space-y-3 sm:space-y-4 border-2 border-amber-400/40">
+            <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-1 text-xs text-neutral-300 font-bold">
               <span>Origin: <strong className="text-white">{trackingData.origin}</strong></span>
               <span>Progress: <strong className="text-amber-400 font-mono font-black">{trackingData.percentCompleted}%</strong></span>
               <span>Destination: <strong className="text-white">{trackingData.destination}</strong></span>
             </div>
 
-            <div className="relative w-full h-3 bg-neutral-800 rounded-md overflow-hidden border border-neutral-700">
+            <div className="relative w-full h-2.5 sm:h-3 bg-neutral-800 rounded-md overflow-hidden border border-neutral-700">
               <div
                 className="h-full bg-amber-400 rounded-md transition-all duration-700"
                 style={{ width: `${trackingData.percentCompleted}%` }}
               />
             </div>
 
-            <div className="flex items-center justify-between text-[11px] text-neutral-400 pt-2 font-medium">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1.5 text-[10px] sm:text-[11px] text-neutral-400 pt-1 font-medium">
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-white" />
+                <span className="w-2 h-2 rounded-full bg-white flex-shrink-0" />
                 Departed: {new Date(trackingData.departureTime).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
               </span>
               <span className="text-amber-400 font-black">
-                Current Position: {trackingData.currentStop}
+                Position: {trackingData.currentStop}
               </span>
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span className="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0" />
                 ETA: {new Date(trackingData.estimatedArrivalTime).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>

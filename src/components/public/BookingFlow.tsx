@@ -273,9 +273,9 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
   }
 
   return (
-    <div className="max-w-4xl mx-auto my-8 px-4">
+    <div className="max-w-4xl mx-auto my-4 sm:my-8 px-3 sm:px-4">
       {/* Step Indicator - Black, Gold, and White */}
-      <div className="mb-8 bg-white p-4 rounded-2xl border-2 border-neutral-200 shadow-sm">
+      <div className="mb-6 sm:mb-8 bg-white p-3 sm:p-4 rounded-2xl border-2 border-neutral-200 shadow-sm">
         <div className="flex items-center justify-between max-w-2xl mx-auto">
           {[
             { num: 1, label: 'Trip & Route' },
@@ -283,22 +283,39 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
             { num: 3, label: 'Passenger Info' },
             { num: 4, label: 'Payment & M-Pesa' },
           ].map((s, idx) => (
-            <div key={s.num} className="flex items-center gap-2">
+            <div key={s.num} className="flex items-center gap-1.5 sm:gap-2">
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs transition-colors ${
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-black text-xs transition-colors ${
                   step === s.num
-                    ? 'bg-amber-400 text-black ring-4 ring-amber-400/30 border border-black'
+                    ? 'bg-amber-400 text-black ring-3 sm:ring-4 ring-amber-400/30 border border-black'
                     : step > s.num
                     ? 'bg-black text-amber-400 border border-amber-400'
                     : 'bg-neutral-100 text-neutral-400 border border-neutral-200'
                 }`}
               >
-                {step > s.num ? <CheckCircle2 className="w-4 h-4 stroke-[3]" /> : s.num}
+                {step > s.num ? <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" /> : s.num}
               </div>
               <span className="hidden sm:block text-xs font-bold text-neutral-700">{s.label}</span>
-              {idx < 3 && <div className="hidden sm:block w-8 h-px bg-neutral-200" />}
+              {idx < 3 && <div className="hidden sm:block w-6 sm:w-8 h-px bg-neutral-200" />}
             </div>
           ))}
+        </div>
+        {/* Mobile Step Label Banner */}
+        <div className="sm:hidden text-center mt-2.5 pt-2 border-t border-neutral-100 text-xs font-bold text-neutral-800 flex items-center justify-center gap-1.5">
+          <span className="text-[10px] font-black uppercase text-amber-600 bg-amber-100 px-2 py-0.5 rounded">
+            Step {step} of 4
+          </span>
+          <span>
+            {step === 0
+              ? 'Select Departure'
+              : step === 1
+              ? 'Select Coach Seats'
+              : step === 2
+              ? 'Passenger Details'
+              : step === 3
+              ? 'Payment & M-Pesa'
+              : 'Digital Boarding Pass'}
+          </span>
         </div>
       </div>
 
@@ -447,7 +464,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
             lastSyncedAt={lastSyncedAt}
           />
 
-          <div className="p-5 bg-white rounded-2xl border-2 border-neutral-200 shadow-sm flex flex-wrap items-center justify-between gap-4">
+          <div className="p-4 sm:p-5 bg-white rounded-2xl border-2 border-neutral-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <div>
               <span className="text-xs font-bold text-neutral-600">Selected Seats: </span>
               <span className="text-sm font-black text-black font-mono">
@@ -461,11 +478,11 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2.5 sm:gap-3">
               {!initialTrip && (
                 <button
                   onClick={() => setStep(0)}
-                  className="px-4 py-2.5 border-2 border-neutral-300 rounded-xl text-xs font-bold text-black hover:bg-neutral-100 cursor-pointer"
+                  className="px-4 py-2.5 border-2 border-neutral-300 rounded-xl text-xs font-bold text-black hover:bg-neutral-100 cursor-pointer min-h-[44px] flex items-center justify-center"
                 >
                   Change Trip
                 </button>
@@ -473,7 +490,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
               <button
                 disabled={selectedSeats.length === 0}
                 onClick={() => setStep(2)}
-                className={`px-6 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 shadow-md transition-all ${
+                className={`px-6 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow-md transition-all min-h-[44px] ${
                   selectedSeats.length > 0
                     ? 'bg-amber-400 hover:bg-amber-300 text-black border border-black cursor-pointer'
                     : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
@@ -636,10 +653,10 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
           </div>
 
           {/* Navigation Controls */}
-          <div className="flex items-center justify-between pt-2">
+          <div className="flex flex-col-reverse xs:flex-row items-stretch xs:items-center justify-between gap-3 pt-2">
             <button
               onClick={() => setStep(1)}
-              className="flex items-center gap-1.5 px-4 py-2 border-2 border-neutral-300 rounded-xl text-xs font-bold text-black hover:bg-neutral-100 cursor-pointer"
+              className="flex items-center justify-center gap-1.5 px-4 py-2.5 border-2 border-neutral-300 rounded-xl text-xs font-bold text-black hover:bg-neutral-100 cursor-pointer min-h-[44px]"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Seats</span>
@@ -649,7 +666,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
               onClick={() => {
                 if (validatePassengerDetails()) setStep(3);
               }}
-              className="px-6 py-2.5 bg-amber-400 hover:bg-amber-300 text-black font-black text-xs rounded-xl shadow-md flex items-center gap-2 transition-all border border-black cursor-pointer"
+              className="px-6 py-2.5 bg-amber-400 hover:bg-amber-300 text-black font-black text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition-all border border-black cursor-pointer min-h-[44px]"
             >
               <span>Review & Pay (KES {calculateTotalFare().toLocaleString()})</span>
               <ArrowRight className="w-4 h-4 stroke-[3]" />

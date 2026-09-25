@@ -201,20 +201,20 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         {/* Clean Tactile Quick-Search Card */}
-        <div className="max-w-5xl mx-auto mt-10 craft-card p-5 sm:p-7 shadow-2xl relative z-10 bg-white/95 backdrop-blur-xl border border-slate-200/90">
-          <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
+        <div className="max-w-5xl mx-auto mt-6 sm:mt-10 craft-card p-4 sm:p-7 shadow-2xl relative z-10 bg-white/95 backdrop-blur-xl border border-slate-200/90">
+          <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             {/* Origin */}
             <div>
               <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 From (Origin)
               </label>
               <div className="relative">
-                <MapPin className="w-4 h-4 text-amber-500 absolute left-3.5 top-3" />
+                <MapPin className="w-4 h-4 text-amber-500 absolute left-3.5 top-3.5" />
                 <select
                   id="hero-origin"
                   value={selectedOrigin}
                   onChange={(e) => setSelectedOrigin(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer"
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer min-h-[44px]"
                 >
                   {uniqueOrigins.map((city) => (
                     <option key={city} value={city}>
@@ -231,12 +231,12 @@ export const HomePage: React.FC<HomePageProps> = ({
                 To (Destination)
               </label>
               <div className="relative">
-                <MapPin className="w-4 h-4 text-amber-500 absolute left-3.5 top-3" />
+                <MapPin className="w-4 h-4 text-amber-500 absolute left-3.5 top-3.5" />
                 <select
                   id="hero-destination"
                   value={selectedDestination}
                   onChange={(e) => setSelectedDestination(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer"
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer min-h-[44px]"
                 >
                   {uniqueDestinations.map((city) => (
                     <option key={city} value={city}>
@@ -253,13 +253,13 @@ export const HomePage: React.FC<HomePageProps> = ({
                 Travel Date
               </label>
               <div className="relative">
-                <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                 <input
                   id="hero-date"
                   type="date"
                   value={travelDate}
                   onChange={(e) => setTravelDate(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer"
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer min-h-[44px]"
                 />
               </div>
             </div>
@@ -270,11 +270,11 @@ export const HomePage: React.FC<HomePageProps> = ({
                 Passengers
               </label>
               <div className="relative">
-                <Users className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <Users className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                 <select
                   value={passengers}
                   onChange={(e) => setPassengers(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer"
+                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer min-h-[44px]"
                 >
                   {[1, 2, 3, 4, 5, 6].map((count) => (
                     <option key={count} value={count}>
@@ -286,11 +286,11 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             {/* Search Button (Tactile Craft Amber) */}
-            <div className="flex items-end">
+            <div className="flex items-end sm:col-span-2 lg:col-span-1">
               <button
                 id="hero-search-btn"
                 type="submit"
-                className="craft-btn-amber w-full py-2.5 px-4 text-sm font-bold flex items-center justify-center gap-2"
+                className="craft-btn-amber w-full py-2.5 px-4 text-sm font-bold flex items-center justify-center gap-2 min-h-[44px]"
               >
                 <Search className="w-4 h-4 text-slate-950 stroke-[2.5]" />
                 <span>Search Trips</span>
@@ -299,26 +299,26 @@ export const HomePage: React.FC<HomePageProps> = ({
           </form>
 
           {/* Quick Value Trust Bar */}
-          <div className="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-800 font-medium border border-emerald-200/60">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                Instant M-Pesa STK
+          <div className="mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs text-slate-600">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-800 font-medium border border-emerald-200/60 text-[11px]">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                <span>Instant M-Pesa STK</span>
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-blue-800 font-medium border border-blue-200/60">
-                <Clock className="w-3.5 h-3.5 text-blue-600" />
-                1:00 AM & Daytime Runs
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-blue-800 font-medium border border-blue-200/60 text-[11px]">
+                <Clock className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+                <span>1:00 AM & Hourly Runs</span>
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-amber-900 font-medium border border-amber-200/60">
-                <Shield className="w-3.5 h-3.5 text-amber-600" />
-                NTSA Speed Governors
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-amber-900 font-medium border border-amber-200/60 text-[11px]">
+                <Shield className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                <span>NTSA Speed Governors</span>
               </span>
             </div>
 
-            <div className="flex items-center gap-3 font-mono text-[11px] text-slate-500">
+            <div className="flex items-center justify-between sm:justify-end gap-3 font-mono text-[11px] text-slate-500 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100">
               <button
                 onClick={onTrackBus}
-                className="hover:text-slate-900 flex items-center gap-1 transition-colors"
+                className="hover:text-slate-900 flex items-center gap-1 transition-colors min-h-[36px]"
               >
                 <Navigation className="w-3.5 h-3.5 text-amber-500" />
                 <span>Track Bus</span>
@@ -326,7 +326,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               <span className="text-slate-300">|</span>
               <button
                 onClick={onRetrieveTicket}
-                className="hover:text-slate-900 flex items-center gap-1 transition-colors"
+                className="hover:text-slate-900 flex items-center gap-1 transition-colors min-h-[36px]"
               >
                 <Ticket className="w-3.5 h-3.5 text-amber-500" />
                 <span>My Ticket</span>
@@ -541,23 +541,23 @@ export const HomePage: React.FC<HomePageProps> = ({
       {/* Vehicle Inspection Lightbox Modal */}
       {inspectedVehicle && (
         <div
-          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
           onClick={() => setInspectedVehicle(null)}
         >
           <div
-            className="bg-slate-950 border border-slate-800 rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl relative text-white"
+            className="bg-slate-950 border border-slate-800 rounded-2xl sm:rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl relative text-white max-h-[90vh] flex flex-col my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close Button */}
             <button
               onClick={() => setInspectedVehicle(null)}
-              className="absolute top-4 right-4 z-20 w-9 h-9 bg-slate-900/80 hover:bg-slate-800 rounded-full flex items-center justify-center text-slate-300 hover:text-white transition-colors border border-slate-700 cursor-pointer"
+              className="absolute top-3.5 right-3.5 z-20 w-8 h-8 sm:w-9 sm:h-9 bg-slate-900/80 hover:bg-slate-800 rounded-full flex items-center justify-center text-slate-300 hover:text-white transition-colors border border-slate-700 cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
 
             {/* Photo Container */}
-            <div className="relative w-full bg-slate-900 flex items-center justify-center min-h-[260px] max-h-[60vh] overflow-hidden">
+            <div className="relative w-full bg-slate-900 flex items-center justify-center min-h-[200px] sm:min-h-[260px] max-h-[40vh] sm:max-h-[50vh] overflow-hidden flex-shrink-0">
               <img
                 src={inspectedVehicle.image}
                 alt={inspectedVehicle.title}
@@ -565,40 +565,40 @@ export const HomePage: React.FC<HomePageProps> = ({
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).src = '/images/transcar_white_highway.jpg';
                 }}
-                className="w-full h-auto max-h-[60vh] object-contain"
+                className="w-full h-auto max-h-[40vh] sm:max-h-[50vh] object-contain"
               />
-              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent p-4 flex items-center gap-2.5">
+              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent p-3 sm:p-4 flex items-center gap-2">
                 <span className="text-xs font-mono font-bold bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded">
                   {inspectedVehicle.reg}
                 </span>
-                <span className="text-xs font-medium text-slate-300">
+                <span className="text-xs font-medium text-slate-300 truncate">
                   {inspectedVehicle.category}
                 </span>
               </div>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 sm:p-7 space-y-5">
+            <div className="p-4 sm:p-7 space-y-4 sm:space-y-5 overflow-y-auto flex-1">
               <div>
-                <span className="text-[11px] font-mono text-amber-400 font-bold uppercase tracking-wider">
+                <span className="text-[10px] sm:text-[11px] font-mono text-amber-400 font-bold uppercase tracking-wider">
                   {inspectedVehicle.edition}
                 </span>
-                <h3 className="text-xl sm:text-2xl font-extrabold text-white mt-0.5 tracking-tight">
+                <h3 className="text-lg sm:text-2xl font-extrabold text-white mt-0.5 tracking-tight">
                   {inspectedVehicle.title}
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mt-2 font-normal">
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mt-1.5 sm:mt-2 font-normal">
                   {inspectedVehicle.description}
                 </p>
               </div>
 
               {/* Corridor & Contact */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
                   <span className="text-slate-400 uppercase text-[10px] font-bold">Assigned Corridor</span>
                   <span className="text-white font-semibold block">{inspectedVehicle.corridor}</span>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
                   <span className="text-slate-400 uppercase text-[10px] font-bold">Dispatch Assistance</span>
                   <span className="text-amber-400 font-semibold block font-mono">+254 724 626199</span>
                 </div>
@@ -606,24 +606,24 @@ export const HomePage: React.FC<HomePageProps> = ({
 
               {/* Amenities Grid */}
               <div className="space-y-2">
-                <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider block">
+                <span className="text-[10px] sm:text-[11px] font-bold uppercase text-slate-400 tracking-wider block">
                   Included Amenities & Telemetry
                 </span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-2 text-xs">
                   {inspectedVehicle.amenities.map((item, idx) => (
-                    <div key={idx} className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 flex items-center gap-2">
+                    <div key={idx} className="p-2 sm:p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 flex items-center gap-1.5 sm:gap-2">
                       <Check className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                      <span className="text-slate-200 text-[11px]">{item}</span>
+                      <span className="text-slate-200 text-[10px] sm:text-[11px] truncate">{item}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Modal Actions */}
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+              <div className="pt-3 sm:pt-4 border-t border-slate-800 flex flex-col-reverse xs:flex-row items-stretch xs:items-center justify-end gap-2.5 sm:gap-3">
                 <button
                   onClick={() => setInspectedVehicle(null)}
-                  className="craft-btn-secondary text-xs bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800"
+                  className="craft-btn-secondary text-xs bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800 min-h-[40px] flex items-center justify-center"
                 >
                   Close
                 </button>
@@ -633,7 +633,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     setInspectedVehicle(null);
                     handleBookVehicle(v);
                   }}
-                  className="craft-btn-amber text-xs font-bold flex items-center gap-1.5"
+                  className="craft-btn-amber text-xs font-bold flex items-center justify-center gap-1.5 min-h-[40px]"
                 >
                   <span>Search Departures For This Vehicle</span>
                   <ArrowRight className="w-3.5 h-3.5" />

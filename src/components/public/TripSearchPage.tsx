@@ -43,6 +43,7 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
   const [demoMode, setDemoMode] = React.useState(false);
 
   // Filters
+  const [showMobileFilters, setShowMobileFilters] = React.useState(false);
   const [timeFilter, setTimeFilter] = React.useState<'ALL' | 'MORNING' | 'AFTERNOON' | 'NIGHT'>('ALL');
   const [serviceTypeFilter, setServiceTypeFilter] = React.useState<string>('ALL');
   const [maxPrice, setMaxPrice] = React.useState<number>(3000);
@@ -219,10 +220,27 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
         </form>
       </div>
 
+      {/* Mobile Filters Toggle Button */}
+      <div className="lg:hidden">
+        <button
+          type="button"
+          onClick={() => setShowMobileFilters(!showMobileFilters)}
+          className="w-full craft-card p-3.5 flex items-center justify-between text-xs font-bold text-slate-800 shadow-sm"
+        >
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-amber-500" />
+            <span>Filter Departures & Coach Classes</span>
+          </div>
+          <span className="text-[11px] font-mono text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+            {showMobileFilters ? 'Hide Filters ▲' : 'Show Filters ▼'}
+          </span>
+        </button>
+      </div>
+
       {/* Main Results Grid with Left Filter Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
         {/* Left Filters Sidebar */}
-        <div className="lg:col-span-1 space-y-6 craft-card p-6 h-fit">
+        <div className={`lg:col-span-1 space-y-6 craft-card p-5 sm:p-6 h-fit ${showMobileFilters ? 'block' : 'hidden lg:block'}`}>
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="font-bold text-xs uppercase tracking-wider text-slate-900 flex items-center gap-2">
               <SlidersHorizontal className="w-4 h-4 text-amber-500" />
@@ -321,14 +339,14 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
                 <div
                   key={trip.id}
                   id={`trip-card-${trip.id}`}
-                  className="craft-card-interactive p-5 sm:p-6"
+                  className="craft-card-interactive p-4 sm:p-6"
                 >
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-4 border-b border-slate-100">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-5 pb-4 border-b border-slate-100">
                     {/* Vehicle Photo + Time & Corridor */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 min-w-0">
                       {/* Vehicle Thumbnail */}
                       {trip.vehicle.imageUrl && (
-                        <div className="relative w-28 h-20 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 bg-slate-950 group">
+                        <div className="relative w-24 h-16 sm:w-28 sm:h-20 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 bg-slate-950 group">
                           <img
                             src={trip.vehicle.imageUrl}
                             alt={trip.vehicle.model}
@@ -338,51 +356,51 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
                             }}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
-                          <span className="absolute bottom-1 right-1 text-[9px] font-mono font-bold bg-slate-950/90 text-amber-400 px-1.5 py-0.5 rounded">
+                          <span className="absolute bottom-1 right-1 text-[8px] sm:text-[9px] font-mono font-bold bg-slate-950/90 text-amber-400 px-1.5 py-0.5 rounded">
                             {trip.vehicle.registrationNumber}
                           </span>
                         </div>
                       )}
 
                       {/* Time & Corridor */}
-                      <div className="flex items-center gap-6">
-                        <div className="text-center">
-                          <span className="text-2xl font-extrabold text-slate-950 font-mono">{formattedDep}</span>
-                          <span className="text-xs text-slate-600 block font-semibold">{trip.route.origin}</span>
+                      <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-6 w-full sm:w-auto">
+                        <div className="text-left sm:text-center min-w-0">
+                          <span className="text-xl sm:text-2xl font-extrabold text-slate-950 font-mono block">{formattedDep}</span>
+                          <span className="text-xs text-slate-600 block font-semibold truncate max-w-[100px] sm:max-w-none">{trip.route.origin}</span>
                         </div>
 
-                        <div className="flex-1 min-w-[120px] text-center px-3">
-                          <span className="text-[11px] font-semibold text-slate-500 flex items-center justify-center gap-1">
-                            <Clock className="w-3.5 h-3.5 text-amber-500" />
-                            <span>{trip.route.estimatedDurationHours}h trip</span>
+                        <div className="flex-1 min-w-[70px] sm:min-w-[120px] text-center px-1.5 sm:px-3">
+                          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 flex items-center justify-center gap-1">
+                            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500 flex-shrink-0" />
+                            <span>{trip.route.estimatedDurationHours}h</span>
                           </span>
-                          <div className="relative my-1.5 flex items-center justify-center">
+                          <div className="relative my-1 sm:my-1.5 flex items-center justify-center">
                             <div className="w-full h-0.5 bg-slate-200" />
-                            <Bus className="w-4 h-4 text-amber-500 absolute bg-white px-0.5" />
+                            <Bus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 absolute bg-white px-0.5" />
                           </div>
-                          <span className="text-[10px] text-amber-400 font-bold font-mono bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
-                            {trip.route.distanceKm} KM Express
+                          <span className="text-[9px] sm:text-[10px] text-amber-400 font-bold font-mono bg-slate-950 px-1.5 sm:px-2 py-0.5 rounded border border-slate-800 whitespace-nowrap">
+                            {trip.route.distanceKm} KM
                           </span>
                         </div>
 
-                        <div className="text-center">
-                          <span className="text-2xl font-extrabold text-slate-950 font-mono">{formattedArr}</span>
-                          <span className="text-xs text-slate-600 block font-semibold">{trip.route.destination}</span>
+                        <div className="text-right sm:text-center min-w-0">
+                          <span className="text-xl sm:text-2xl font-extrabold text-slate-950 font-mono block">{formattedArr}</span>
+                          <span className="text-xs text-slate-600 block font-semibold truncate max-w-[100px] sm:max-w-none">{trip.route.destination}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Price & Booking Action */}
-                    <div className="flex md:flex-col items-center md:items-end justify-between gap-2 border-t md:border-t-0 pt-3 md:pt-0 w-full md:w-auto">
-                      <div>
-                        <span className="text-[10px] text-slate-500 uppercase font-bold block md:text-right">Per Seat</span>
-                        <span className="text-2xl font-extrabold text-slate-950 tabular-nums font-mono">
+                    <div className="flex flex-row md:flex-col items-center md:items-end justify-between gap-2 border-t lg:border-t-0 pt-3 lg:pt-0 w-full lg:w-auto">
+                      <div className="text-left md:text-right">
+                        <span className="text-[10px] text-slate-500 uppercase font-bold block">Per Seat</span>
+                        <span className="text-xl sm:text-2xl font-extrabold text-slate-950 tabular-nums font-mono">
                           KES {trip.fareKsh.toLocaleString()}
                         </span>
                       </div>
 
-                      <div className="flex flex-col items-end gap-2">
-                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${
+                      <div className="flex flex-col items-end gap-1.5">
+                        <span className={`text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded border ${
                           trip.availableSeats <= 3 
                             ? 'bg-red-50 text-red-600 border-red-200' 
                             : 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -392,7 +410,7 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
                         <button
                           onClick={() => onSelectTrip(trip)}
                           disabled={trip.availableSeats === 0}
-                          className="craft-btn-amber text-xs py-2 px-4 w-full flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="craft-btn-amber text-xs py-2 px-3.5 sm:px-4 w-full flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px]"
                         >
                           <span>{trip.availableSeats === 0 ? 'Sold Out' : 'Select Seats'}</span>
                           <ArrowRight className="w-3.5 h-3.5" />

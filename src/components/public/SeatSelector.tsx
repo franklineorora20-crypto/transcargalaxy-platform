@@ -125,19 +125,19 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
             ? `Seat ${seatNum} selected — Click to remove from your booking`
             : `Select Seat ${seatNum} (${getSeatDescription(seatNum)}) • KES ${trip.fareKsh.toLocaleString()}`
         }
-        className={`relative group flex flex-col items-center justify-between p-1.5 w-12 h-14 transition-all duration-200 ${
+        className={`relative group flex flex-col items-center justify-between p-1 sm:p-1.5 w-10 h-13 sm:w-12 sm:h-14 transition-all duration-200 ${
           isBench ? 'rounded-lg' : 'rounded-xl'
         } border-2 ${
           isOccupied
             ? 'bg-slate-900/60 border-slate-800/80 text-slate-600 cursor-not-allowed select-none shadow-inner opacity-45'
             : isSelected
-            ? 'bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 border-white text-slate-950 shadow-xl shadow-amber-500/30 ring-4 ring-amber-400/50 ring-offset-2 ring-offset-slate-950 z-20 font-black'
+            ? 'bg-gradient-to-b from-amber-300 via-amber-400 to-amber-500 border-white text-slate-950 shadow-xl shadow-amber-500/30 ring-3 sm:ring-4 ring-amber-400/50 ring-offset-1 sm:ring-offset-2 ring-offset-slate-950 z-20 font-black'
             : 'bg-slate-800/90 hover:bg-slate-700/90 border-slate-700 hover:border-amber-400 text-white shadow-md hover:shadow-amber-500/10 cursor-pointer'
         }`}
       >
         {/* Top Headrest Cushion Shape */}
         <div
-          className={`w-7 h-1.5 rounded-full transition-all duration-200 ${
+          className={`w-5 sm:w-7 h-1 sm:h-1.5 rounded-full transition-all duration-200 ${
             isSelected
               ? 'bg-slate-950 shadow-sm'
               : isOccupied
@@ -150,7 +150,7 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
         <div className="flex items-center justify-center my-auto">
           {isOccupied ? (
             <div className="flex items-center justify-center relative">
-              <X className="w-4 h-4 text-slate-600 stroke-[2.5]" />
+              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-600 stroke-[2.5]" />
             </div>
           ) : isSelected ? (
             <motion.div
@@ -159,10 +159,10 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
               transition={{ type: 'spring', stiffness: 500, damping: 20 }}
               className="flex items-center justify-center"
             >
-              <Check className="w-4 h-4 text-slate-950 stroke-[3.5]" />
+              <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-950 stroke-[3.5]" />
             </motion.div>
           ) : (
-            <span className="font-mono font-black text-xs tracking-tight group-hover:text-amber-300 transition-colors">
+            <span className="font-mono font-black text-[11px] sm:text-xs tracking-tight group-hover:text-amber-300 transition-colors">
               {seatNum}
             </span>
           )}
@@ -205,13 +205,13 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
   };
 
   return (
-    <div className="craft-card p-5 md:p-8 space-y-6">
+    <div className="craft-card p-3.5 sm:p-6 md:p-8 space-y-5 sm:space-y-6">
       {/* Vehicle Specification & Live Telemetry Banner */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 p-5 sm:p-6 rounded-2xl bg-slate-950 text-white border-2 border-slate-800 shadow-2xl relative overflow-hidden">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-5 p-4 sm:p-6 rounded-2xl bg-slate-950 text-white border-2 border-slate-800 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-amber-500/10 via-transparent to-transparent pointer-events-none" />
 
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="w-20 h-16 sm:w-24 sm:h-20 rounded-xl overflow-hidden border-2 border-amber-400/50 flex-shrink-0 bg-slate-900 shadow-xl">
+        <div className="flex items-center gap-3 sm:gap-4 relative z-10 min-w-0">
+          <div className="w-16 h-14 sm:w-24 sm:h-20 rounded-xl overflow-hidden border-2 border-amber-400/50 flex-shrink-0 bg-slate-900 shadow-xl">
             <img
               src={trip.vehicle?.imageUrl || '/images/transcar_highway_kde4160.jpg'}
               alt={trip.vehicle?.model || 'Toyota HiAce'}
@@ -223,23 +223,23 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
             />
           </div>
 
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono font-black text-amber-400 text-xs bg-slate-900/90 px-2.5 py-0.5 rounded-md border border-amber-400/40 shadow-inner">
+          <div className="space-y-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+              <span className="font-mono font-black text-amber-400 text-[11px] sm:text-xs bg-slate-900/90 px-2 sm:px-2.5 py-0.5 rounded-md border border-amber-400/40 shadow-inner">
                 {trip.vehicle?.registrationNumber || 'KDA 123A'}
               </span>
-              <span className="bg-amber-400 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-md uppercase tracking-wider shadow-sm">
+              <span className="bg-amber-400 text-slate-950 font-black text-[9px] sm:text-[10px] px-2 sm:px-2.5 py-0.5 rounded-md uppercase tracking-wider shadow-sm">
                 {isSixteenSeater ? '16-Seater Maxi' : isElevenSeater ? '11-Seater VIP' : '14-Seater Standard'}
               </span>
-              <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+              <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live Availability Sync
+                <span className="hidden xs:inline">Live</span> Sync
               </span>
             </div>
-            <h4 className="text-base font-black text-white tracking-tight">{getCoachConfigTitle()}</h4>
-            <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
+            <h4 className="text-sm sm:text-base font-black text-white tracking-tight truncate">{getCoachConfigTitle()}</h4>
+            <p className="text-[11px] sm:text-xs text-slate-400 font-medium flex items-center gap-1.5 truncate">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
-              NTSA Certified 80 km/h Governor • Reclining Plush Seats • Left Sliding Entry
+              <span>NTSA 80 km/h Governor • Reclining Plush Seats</span>
             </p>
           </div>
         </div>
@@ -423,7 +423,7 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
       )}
 
       {/* COACH CHASSIS HIGH-FIDELITY VISUALIZATION */}
-      <div className="max-w-md mx-auto my-6 p-6 sm:p-8 bg-slate-950 rounded-3xl border-4 border-slate-800 shadow-2xl relative overflow-hidden">
+      <div className="w-full max-w-md mx-auto my-4 sm:my-6 p-3.5 sm:p-6 md:p-8 bg-slate-950 rounded-2xl sm:rounded-3xl border-2 sm:border-4 border-slate-800 shadow-2xl relative overflow-hidden">
         {/* Subtle Ambient Interior Glow */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-36 bg-amber-500/10 blur-3xl pointer-events-none rounded-full" />
 
@@ -432,48 +432,48 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
         <div className="absolute top-16 bottom-16 right-1.5 w-1 bg-gradient-to-b from-sky-400/40 via-sky-300/60 to-sky-400/40 rounded-full" />
 
         {/* Coach Front Aerodynamic Nose & Curved Windshield */}
-        <div className="relative mb-6 pb-4 border-b border-slate-800 text-center">
-          <div className="w-44 h-4 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 rounded-full mx-auto mb-2 border border-slate-600 flex items-center justify-between px-3 shadow-inner">
+        <div className="relative mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-slate-800 text-center">
+          <div className="w-36 sm:w-44 h-3.5 sm:h-4 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 rounded-full mx-auto mb-2 border border-slate-600 flex items-center justify-between px-3 shadow-inner">
             <span className="w-2 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-            <div className="w-20 h-1 bg-amber-400/70 rounded-full" />
+            <div className="w-16 sm:w-20 h-1 bg-amber-400/70 rounded-full" />
             <span className="w-2 h-1.5 rounded-full bg-amber-400 animate-pulse" />
           </div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-300 font-mono flex items-center justify-center gap-1.5">
+          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-slate-300 font-mono flex items-center justify-center gap-1.5">
             <Sparkles className="w-3 h-3 text-amber-400" />
             FRONT CABIN • WINDSHIELD & DASHBOARD
           </span>
         </div>
 
         {/* Cabin Doors & Driver Cockpit Bar */}
-        <div className="mb-6 flex items-center justify-between text-xs font-bold gap-2">
+        <div className="mb-4 sm:mb-6 flex flex-col xs:flex-row items-stretch xs:items-center justify-between text-xs font-bold gap-1.5 sm:gap-2">
           {/* Left Passenger Entrance */}
-          <div className="flex items-center gap-2 bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 px-3 py-1.5 rounded-xl shadow-sm">
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-            <span className="text-[11px] font-black">Sliding Passenger Door</span>
+          <div className="flex items-center justify-center gap-1.5 sm:gap-2 bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl shadow-sm">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping flex-shrink-0" />
+            <span className="text-[10px] sm:text-[11px] font-black truncate">Sliding Passenger Door</span>
           </div>
 
           {/* Right Driver Cockpit */}
-          <div className="flex items-center gap-1.5 bg-amber-950/80 border border-amber-400/40 text-amber-300 px-3 py-1.5 rounded-xl shadow-sm">
-            <svg className="w-4 h-4 text-amber-400 animate-spin-slow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+          <div className="flex items-center justify-center gap-1.5 bg-amber-950/80 border border-amber-400/40 text-amber-300 px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl shadow-sm">
+            <svg className="w-3.5 h-3.5 text-amber-400 animate-spin-slow flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
               <circle cx="12" cy="12" r="9" />
               <path d="M12 3v18M3 12h18M7 7l10 10" />
             </svg>
-            <span className="text-[11px] font-black">Driver Cockpit (RHD)</span>
+            <span className="text-[10px] sm:text-[11px] font-black truncate">Driver Cockpit (RHD)</span>
           </div>
         </div>
 
         {/* SEATING MATRIX: Kenyan Right-Hand Drive (Driver on Right, Passenger entrance on Left) */}
-        <motion.div layout className="space-y-4">
+        <motion.div layout className="space-y-3 sm:space-y-4">
           {/* ROW 1: FRONT CABIN (Seats 1A, 1B on Left, Aisle Walkway, Driver Cockpit on Right) */}
-          <div className="flex items-center justify-between p-2 rounded-2xl bg-slate-900/80 border border-slate-800">
+          <div className="flex items-center justify-between p-1.5 sm:p-2 rounded-xl sm:rounded-2xl bg-slate-900/80 border border-slate-800">
             {/* Left Co-Driver Seats */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {renderSeatButton('1A', bookedSet.has('1A'), true, false, true)}
               {renderSeatButton('1B', bookedSet.has('1B'), false, false, true)}
             </div>
 
             {/* Center Console */}
-            <div className="text-[9px] font-mono text-slate-500 font-extrabold uppercase tracking-wider text-center">
+            <div className="text-[8px] sm:text-[9px] font-mono text-slate-500 font-extrabold uppercase tracking-wider text-center px-1">
               CONSOLE
             </div>
 
@@ -481,10 +481,10 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
             <div className="flex items-center justify-end">
               <div
                 aria-label="Captain Driver Cockpit Locked"
-                className="w-12 h-14 rounded-xl border-2 border-slate-700 bg-slate-900 text-[10px] font-black text-slate-400 flex flex-col items-center justify-center gap-1 select-none cursor-not-allowed shadow-inner"
+                className="w-10 h-13 sm:w-12 sm:h-14 rounded-xl border-2 border-slate-700 bg-slate-900 text-[9px] sm:text-[10px] font-black text-slate-400 flex flex-col items-center justify-center gap-0.5 sm:gap-1 select-none cursor-not-allowed shadow-inner"
               >
                 <User className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-[9px]">CAPTAIN</span>
+                <span className="text-[8px] sm:text-[9px]">CAPTAIN</span>
               </div>
             </div>
           </div>

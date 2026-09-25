@@ -951,10 +951,10 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Top Manager Banner */}
-      <div className="bg-slate-950 text-white rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-2xl flex flex-wrap items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500 flex items-center justify-center text-slate-950 shadow-md">
-            <Lock className="w-7 h-7" />
+      <div className="bg-slate-950 text-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-800 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-2xl bg-amber-500 flex items-center justify-center text-slate-950 shadow-md flex-shrink-0">
+            <Lock className="w-5 h-5 sm:w-7 sm:h-7" />
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -962,16 +962,16 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
                 Manager Portal
               </span>
             </div>
-            <h1 className="text-3xl font-black text-white font-serif">
+            <h1 className="text-xl sm:text-3xl font-black text-white font-serif">
               Operations Dashboard
             </h1>
-            <p className="text-sm text-slate-400 mt-1 font-medium">
+            <p className="text-xs sm:text-sm text-slate-400 mt-0.5 sm:mt-1 font-medium">
               Welcome, <strong className="text-white">{managerData?.name || 'Frankline Orora'}</strong>
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             id="export-csv-btn"
             onClick={handleExportCSV}

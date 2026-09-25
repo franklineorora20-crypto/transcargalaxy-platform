@@ -51,10 +51,10 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="sticky top-0 z-50 glass-surface border-b border-slate-200/80 transition-colors">
       {/* Precision Top Telemetry Bar */}
-      <div className="bg-slate-950 text-slate-300 text-[11px] sm:text-xs border-b border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="craft-badge-pulse text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5">
+      <div className="bg-slate-950 text-slate-300 text-[10px] sm:text-xs border-b border-slate-800/80">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-1.5 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="craft-badge-pulse text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 text-[10px] sm:text-xs">
               <span className="dot bg-emerald-400"></span>
               Live Operations
             </span>
@@ -62,12 +62,12 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="hidden md:inline text-slate-300">Daily Departures: <strong className="text-amber-400 font-mono">1:00 AM</strong> & <strong className="text-amber-400 font-mono">Hourly</strong></span>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4 font-mono text-[11px]">
+          <div className="flex items-center gap-2 sm:gap-4 font-mono text-[10px] sm:text-[11px]">
             <a href="tel:+254724626199" className="hover:text-amber-400 transition-colors flex items-center gap-1">
-              <PhoneCall className="w-3 h-3 text-amber-400" />
+              <PhoneCall className="w-3 h-3 text-amber-400 flex-shrink-0" />
               <span>+254 724 626199</span>
             </a>
-            <span className="text-slate-700">/</span>
+            <span className="text-slate-700 hidden xs:inline">/</span>
             <a href="tel:+254717747626" className="hover:text-amber-400 transition-colors hidden sm:inline">
               +254 717 747626
             </a>
@@ -76,19 +76,19 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-18">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-18">
           {/* Brand Logo with Tactile Lift */}
           <button
             id="brand-logo-btn"
             onClick={() => handleNav('home')}
-            className="flex items-center gap-3 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-xl p-1 -ml-1 transition-transform active:scale-[0.98]"
+            className="flex items-center gap-2 sm:gap-3 text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-xl p-1 -ml-1 transition-transform active:scale-[0.98] min-w-0"
           >
-            <div className="flex flex-col">
-              <BrandName className="font-extrabold text-2xl tracking-tight text-slate-950" />
-              <p className="text-[11px] text-slate-500 font-medium tracking-wide flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                Intercity & Rongai Regional Express
+            <div className="flex flex-col min-w-0">
+              <BrandName className="font-extrabold text-lg xs:text-xl sm:text-2xl tracking-tight text-slate-950 truncate" />
+              <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium tracking-wide flex items-center gap-1.5 mt-0.5 truncate">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0"></span>
+                <span className="truncate">Intercity & Rongai Express</span>
               </p>
             </div>
           </button>
@@ -278,76 +278,128 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile Drawer Menu & Backdrop */}
       {mobileMenuOpen && (
-        <div className="lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-2 shadow-2xl animate-in slide-in-from-top-2 duration-150">
-          <div className="grid grid-cols-2 gap-2 pb-2">
-            <button
-              onClick={() => handleNav('search')}
-              className="craft-btn-amber text-xs py-2.5 w-full"
-            >
-              <Search className="w-3.5 h-3.5 mr-1.5" />
-              Book Seats
-            </button>
-            <button
-              onClick={() => handleNav('tracking')}
-              className="craft-btn-secondary text-xs py-2.5 w-full"
-            >
-              <Navigation className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
-              Live Radar
-            </button>
-          </div>
+        <>
+          <div
+            className="fixed inset-0 top-[115px] sm:top-[125px] bg-slate-950/60 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="lg:hidden relative z-50 border-t border-slate-200 bg-white px-4 pt-3 pb-6 space-y-2.5 shadow-2xl animate-in slide-in-from-top-2 duration-150 max-h-[calc(100vh-120px)] overflow-y-auto">
+            <div className="grid grid-cols-2 gap-2 pb-2">
+              <button
+                onClick={() => handleNav('search')}
+                className="craft-btn-amber text-xs py-2.5 w-full min-h-[44px]"
+              >
+                <Search className="w-3.5 h-3.5 mr-1.5" />
+                Book Seats
+              </button>
+              <button
+                onClick={() => handleNav('tracking')}
+                className="craft-btn-secondary text-xs py-2.5 w-full min-h-[44px]"
+              >
+                <Navigation className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
+                Live Radar
+              </button>
+            </div>
 
-          <div className="space-y-1 pt-2 border-t border-slate-100">
-            <button
-              onClick={() => handleNav('home')}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
-                currentView === 'home' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              Home
-            </button>
-            <button
-              onClick={() => handleNav('routes')}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
-                currentView === 'routes' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              Scheduled Routes & Fares
-            </button>
-            <button
-              onClick={() => handleNav('services')}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
-                currentView === 'services' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              Executive Fleet Showcase
-            </button>
-            <button
-              onClick={() => handleNav('retrieve-ticket')}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
-                currentView === 'retrieve-ticket' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              Retrieve Ticket / Boarding Pass
-            </button>
-            <button
-              onClick={() => handleNav('about')}
-              className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
-                currentView === 'about' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              About TransCar Galaxy
-            </button>
-          </div>
+            <div className="space-y-1 pt-2 border-t border-slate-100">
+              <button
+                onClick={() => handleNav('home')}
+                className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold min-h-[44px] flex items-center ${
+                  currentView === 'home' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                Home
+              </button>
+              <button
+                onClick={() => handleNav('routes')}
+                className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold min-h-[44px] flex items-center ${
+                  currentView === 'routes' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                Scheduled Routes & Fares
+              </button>
+              <button
+                onClick={() => handleNav('services')}
+                className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold min-h-[44px] flex items-center ${
+                  currentView === 'services' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                Executive Fleet Showcase
+              </button>
+              <button
+                onClick={() => handleNav('retrieve-ticket')}
+                className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold min-h-[44px] flex items-center ${
+                  currentView === 'retrieve-ticket' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                Retrieve Ticket / Boarding Pass
+              </button>
+              <button
+                onClick={() => handleNav('about')}
+                className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold min-h-[44px] flex items-center ${
+                  currentView === 'about' ? 'bg-slate-900 text-amber-400' : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                About TransCar Galaxy
+              </button>
+            </div>
 
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-mono text-slate-500">
-            <span>Direct Dispatch:</span>
-            <a href="tel:+254724626199" className="font-bold text-slate-900">
-              +254 724 626199
-            </a>
+            {/* Portal Access for Mobile Users & Operators */}
+            <div className="pt-2 border-t border-slate-100 space-y-1.5">
+              <span className="text-[10px] uppercase font-bold text-slate-400 px-3 tracking-wider block">
+                Portals & Dispatch
+              </span>
+              {userRole === 'CUSTOMER_PUBLIC' ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => handleNav('driver-login')}
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-1.5 min-h-[44px]"
+                  >
+                    <UserCheck className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                    <span>Driver Portal</span>
+                  </button>
+                  <button
+                    onClick={() => handleNav('manager-login')}
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-amber-400 border border-slate-950 flex items-center gap-1.5 min-h-[44px]"
+                  >
+                    <Lock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                    <span>Manager</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-slate-900 block">
+                      {userRole === 'DRIVER' ? driverName || 'Captain' : managerName || 'Manager'}
+                    </span>
+                    <span className="text-[10px] text-amber-600 font-semibold uppercase">
+                      {userRole === 'DRIVER' ? 'Captain On Duty' : 'Operations Admin'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      onLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="craft-btn-secondary text-xs px-3 py-1.5 text-red-600 hover:bg-red-50 min-h-[40px]"
+                  >
+                    <LogOut className="w-3.5 h-3.5 mr-1" />
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-mono text-slate-500 px-1">
+              <span>Direct Hotline:</span>
+              <a href="tel:+254724626199" className="font-bold text-slate-900 hover:text-amber-600">
+                +254 724 626199
+              </a>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </header>
   );

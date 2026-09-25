@@ -202,32 +202,32 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
         </div>
 
         {/* Route Journey Bar */}
-        <div className="p-6 bg-neutral-50 border-b-2 border-neutral-200">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <span className="text-[11px] font-black text-neutral-500 uppercase tracking-wider">Departure City</span>
-              <h3 className="text-2xl font-black text-black">{booking.routeOrigin}</h3>
-              <p className="text-xs text-neutral-600 font-medium flex items-center gap-1">
+        <div className="p-4 sm:p-6 bg-neutral-50 border-b-2 border-neutral-200">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="space-y-0.5 sm:space-y-1 text-center sm:text-left w-full sm:w-auto">
+              <span className="text-[10px] sm:text-[11px] font-black text-neutral-500 uppercase tracking-wider">Departure City</span>
+              <h3 className="text-xl sm:text-2xl font-black text-black">{booking.routeOrigin}</h3>
+              <p className="text-xs text-neutral-600 font-medium flex items-center gap-1 justify-center sm:justify-start">
                 <MapPin className="w-3.5 h-3.5 text-black" />
                 <span>Central Bus Terminal</span>
               </p>
             </div>
 
-            <div className="flex-1 max-w-[200px] px-4 text-center">
-              <span className="text-[11px] font-mono font-black text-black bg-amber-400 px-2.5 py-0.5 rounded-md border border-black">
+            <div className="flex-1 max-w-[200px] w-full px-2 sm:px-4 text-center">
+              <span className="text-[10px] sm:text-[11px] font-mono font-black text-black bg-amber-400 px-2.5 py-0.5 rounded-md border border-black inline-block">
                 {booking.tripCode}
               </span>
-              <div className="relative my-2 flex items-center justify-center">
+              <div className="relative my-1.5 sm:my-2 flex items-center justify-center">
                 <div className="w-full h-0.5 bg-neutral-300" />
-                <Bus className="w-5 h-5 text-amber-500 absolute bg-neutral-50 px-0.5" />
+                <Bus className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 absolute bg-neutral-50 px-0.5" />
               </div>
-              <span className="text-[11px] text-neutral-600 font-bold">Direct Express</span>
+              <span className="text-[10px] sm:text-[11px] text-neutral-600 font-bold block">Direct Express</span>
             </div>
 
-            <div className="space-y-1 text-right">
-              <span className="text-[11px] font-black text-neutral-500 uppercase tracking-wider">Destination</span>
-              <h3 className="text-2xl font-black text-black">{booking.routeDestination}</h3>
-              <p className="text-xs text-neutral-600 font-medium flex items-center gap-1 justify-end">
+            <div className="space-y-0.5 sm:space-y-1 text-center sm:text-right w-full sm:w-auto">
+              <span className="text-[10px] sm:text-[11px] font-black text-neutral-500 uppercase tracking-wider">Destination</span>
+              <h3 className="text-xl sm:text-2xl font-black text-black">{booking.routeDestination}</h3>
+              <p className="text-xs text-neutral-600 font-medium flex items-center gap-1 justify-center sm:justify-end">
                 <MapPin className="w-3.5 h-3.5 text-amber-500" />
                 <span>City Commercial Stage</span>
               </p>
