@@ -54,6 +54,7 @@ import {
   VehicleInspection,
 } from '../../types';
 import { ApiService } from '../../services/api';
+import { ManagerAnalyticsComponent } from './ManagerAnalyticsComponent';
 
 interface ManagerPortalProps {
   managerData: any;
@@ -1413,6 +1414,29 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
             </div>
           )}
 
+          {/* Interactive Recharts Analytics Callout Banner */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-900 to-amber-950 p-5 rounded-2xl border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold flex-shrink-0 shadow">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-white">Visual Fleet & Revenue Analytics Ready</h4>
+                <p className="text-xs text-slate-300">
+                  Track daily ticket sales velocity, corridor capacity utilization, and Lipa Na M-Pesa collection volume trends.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('reports')}
+              className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs rounded-xl shadow transition-colors flex items-center justify-center gap-2 cursor-pointer self-start sm:self-auto flex-shrink-0"
+            >
+              <span>Open Analytics Visualizations</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+
           {/* Quick Dispatch Announcement Widget */}
           <div className="bg-slate-900 text-white p-6 rounded-3xl border border-slate-800 space-y-4">
             <h3 className="font-bold text-sm uppercase tracking-wider text-amber-400 flex items-center gap-2">
@@ -2341,49 +2365,18 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
         </div>
       )}
 
-      {/* TAB: OPERATIONAL & FINANCIAL REPORTS */}
+      {/* TAB: OPERATIONAL & FINANCIAL REPORTS (ANALYTICS) */}
       {activeTab === 'reports' && (
         <div className="space-y-6">
-          {/* Top Performance KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Average Seat Load Factor</span>
-              <p className="text-3xl font-black text-slate-900 font-mono">
-                {performanceMetrics?.averageSeatOccupancyPercent ?? summary?.passengerLoadFactorPercent ?? 88.5}%
-              </p>
-              <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                <TrendingUp className="w-3.5 h-3.5" /> {performanceMetrics?.totalOccupiedSeatsAcrossTrips ?? 163} / {performanceMetrics?.totalSeatCapacityAcrossTrips ?? 184} seats booked
-              </span>
-            </div>
-
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Trip Completion Rate</span>
-              <p className="text-3xl font-black text-slate-900 font-mono">
-                {performanceMetrics?.tripCompletionRatePercent ?? 98.4}%
-              </p>
-              <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> {performanceMetrics?.onTimeDepartureRatePercent ?? 96.2}% On-Time Reliability
-              </span>
-            </div>
-
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Gross Ticket Sales</span>
-              <p className="text-2xl font-black text-slate-900 font-mono">
-                KES {(summary?.totalRevenueKsh || 0).toLocaleString()}
-              </p>
-              <span className="text-xs text-slate-500 font-semibold">{bookings.length} confirmed reservations</span>
-            </div>
-
-            <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Net Operating Profit</span>
-              <p className="text-2xl font-black text-emerald-600 font-mono">
-                KES {(summary?.netProfitKsh || 0).toLocaleString()}
-              </p>
-              <span className="text-xs text-emerald-600 font-semibold">
-                Margin: {summary?.operatingMarginPercent || 36.2}% of revenue
-              </span>
-            </div>
-          </div>
+          {/* Real-time Recharts Interactive Analytics Module */}
+          <ManagerAnalyticsComponent
+            bookings={bookings}
+            trips={trips}
+            routes={routes}
+            vehicles={vehicles}
+            summary={summary}
+            performanceMetrics={performanceMetrics}
+          />
 
           {/* Corridor Revenue Performance */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-6">

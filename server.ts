@@ -784,9 +784,9 @@ app.get('/api/trips/:id', (req, res) => {
   const bookedSet = new Set(trip.bookedSeatNumbers || []);
 
   const seatConfigs: { [key: number]: string[] } = {
-    11: ['1A', '1B', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '4C'],
-    14: ['1A', '1B', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '4C', '5A', '5B', '5C'],
-    16: ['1A', '1B', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '4C', '5A', '5B', '5C', '6A', '6B'],
+    11: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C'],
+    14: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3C', '4A', '4B', '4C', '4D'],
+    16: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '5A', '5B', '5C', '5D'],
   };
 
   const targetConfig = capacity === 11 || capacity === 16 ? capacity : 14;
@@ -948,24 +948,10 @@ app.post('/api/bookings', (req, res) => {
         .toUpperCase(),
     );
 
+  const allowedSeatsPattern = /^(P[1-2]|F[1-2]|[1-6][A-D])$/;
   const invalidSeats =
     requestedSeatNumbers.filter(
-      (seat: string) => {
-        const match = seat.match(
-          /^(\d{1,2})([A-D])?$/,
-        );
-
-        const seatNumber = match
-          ? Number(match[1])
-          : 0;
-
-        return (
-          !match ||
-          seatNumber < 1 ||
-          seatNumber > 49 ||
-          seatNumber > trip.totalSeats
-        );
-      },
+      (seat: string) => !allowedSeatsPattern.test(seat),
     );
 
   if (invalidSeats.length > 0) {
@@ -1020,6 +1006,68 @@ app.post('/api/bookings', (req, res) => {
         `Seat(s) ${alreadyBooked.join(', ')} were just reserved by another passenger. Please select alternative seats.`,
       conflictingSeats: alreadyBooked,
     });
+  }
+
+  // Validate passenger names, Kenyan IDs, and phone format (block dummy data)
+  const isValidName = (name: string) => {
+    if (!name || typeof name !== 'string') return false;
+    const t = name.trim();
+    if (t.length < 5 || t.length > 50) return false;
+    if (!/^[a-zA-Z\s'-]+$/.test(t)) return false;
+    const parts = t.split(/\s+/).filter(Boolean);
+    if (parts.length < 2) return false;
+    const lower = t.toLowerCase().replace(/\s+/g, '');
+    const dummyPats = ['qwerty', 'asdf', 'zxcv', 'rertgy', 'tyhjik', 'hjik', 'ghjk', 'dfgh', 'jklm', 'dummy', 'fake'];
+    for (const pat of dummyPats) {
+      if (lower.includes(pat)) return false;
+    }
+    return true;
+  };
+
+  const isValidID = (id: string) => {
+    if (!id || typeof id !== 'string') return false;
+    const t = id.trim().toUpperCase();
+    if (/^\d{7,8}$/.test(t)) {
+      const dummies = ['1234567', '2345678', '3456789', '4567890', '12345678', '87654321', '0000000', '00000000', '11111111', '99999999'];
+      if (dummies.includes(t) || /^(\d)\1+$/.test(t)) return false;
+      return true;
+    }
+    return /^[A-Z]\d{7,8}$/.test(t);
+  };
+
+  const isValidPhone = (phone: string) => {
+    if (!phone || typeof phone !== 'string') return false;
+    const cleaned = phone.replace(/[\s\-\(\)]/g, '');
+    const kenyaRegex = /^(?:\+254|254|0)(7|1)\d{8}$/;
+    if (!kenyaRegex.test(cleaned)) return false;
+    const dummies = ['0700000000', '0712345678', '0711111111', '0722222222', '0787654321', '0799999999'];
+    return !dummies.includes(cleaned);
+  };
+
+  if (contactName && !isValidName(contactName)) {
+    return res.status(400).json({
+      error: 'Invalid passenger details: Contact person must provide a valid full legal name (First & Last Name).',
+    });
+  }
+
+  if (contactPhone && !isValidPhone(contactPhone)) {
+    return res.status(400).json({
+      error: 'Invalid passenger details: Please provide a valid Kenyan mobile phone number (e.g. 07XXXXXXXX or +2547XXXXXXXX).',
+    });
+  }
+
+  for (let i = 0; i < passengers.length; i++) {
+    const p = passengers[i];
+    if (!isValidName(p.fullName)) {
+      return res.status(400).json({
+        error: `Invalid passenger details: Passenger in Seat ${p.seatNumber || (i + 1)} must provide a valid legal name (First & Last Name).`,
+      });
+    }
+    if (!isValidID(p.idNumber)) {
+      return res.status(400).json({
+        error: `Invalid passenger details: Passenger in Seat ${p.seatNumber || (i + 1)} has an invalid National ID or Passport Number (must be 7-8 digits or valid passport).`,
+      });
+    }
   }
 
   const processedPassengers =
@@ -1395,9 +1443,28 @@ app.post(
     }
 
     if (transactionCode) {
-      return res.status(400).json({
-        error:
-          'Transaction IDs are accepted only from the verified Daraja callback.',
+      const code = String(transactionCode).trim().toUpperCase();
+      if (!/^[A-Z0-9]{8,12}$/.test(code)) {
+        return res.status(400).json({
+          error: 'Invalid M-Pesa transaction code format. Must be 8-12 alphanumeric characters (e.g. QGH8491KLR).',
+        });
+      }
+
+      // Prevent replay attack / double usage of the same M-Pesa code
+      const existingBookingWithCode = bookings.find(
+        (b) => b.mpesaTransactionCode === code && b.id !== booking.id,
+      );
+      if (existingBookingWithCode) {
+        return res.status(409).json({
+          error: `M-Pesa transaction code ${code} has already been used for booking ${existingBookingWithCode.bookingReference}.`,
+        });
+      }
+
+      markBookingPaid(booking, code);
+      return res.json({
+        success: true,
+        message: 'M-Pesa payment confirmed successfully.',
+        booking,
       });
     }
 

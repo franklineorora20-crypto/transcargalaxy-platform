@@ -523,7 +523,7 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({ page, routes, onBook
               <h3 className="font-black text-sm text-black">2. Ticketing, Payments & M-Pesa Validation</h3>
               <p>
                 All tickets must be booked and paid in full prior to departure. Automated M-Pesa transactions via
-                Paybill 174379 generate a unique Booking Reference and SMS confirmation. Tickets are issued specifically
+                Paybill 400200 (Account 867845) generate a unique Booking Reference and SMS confirmation. Tickets are issued specifically
                 for the named traveler and assigned seat number; tickets are strictly non-transferable without prior
                 counter authorization.
               </p>
