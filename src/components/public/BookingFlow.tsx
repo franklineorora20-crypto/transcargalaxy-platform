@@ -359,21 +359,21 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
   const accountRef = activeBooking?.bookingReference || (selectedTrip ? `TRANSCAR-${selectedTrip.tripCode.split('-')[1] || 'GALAXY'}` : 'TRANSCAR');
 
   return (
-    <div className="max-w-4xl mx-auto my-4 sm:my-8 px-3 sm:px-4">
+    <div className="max-w-4xl mx-auto my-3 sm:my-8 px-2.5 sm:px-4">
       {/* Step Indicator */}
-      <div className="mb-6 sm:mb-8 bg-white p-3 sm:p-4 rounded-2xl border-2 border-neutral-200 shadow-sm">
-        <div className="flex items-center justify-between max-w-2xl mx-auto">
+      <div className="mb-4 sm:mb-8 bg-white p-3 sm:p-4 rounded-2xl border border-neutral-200 shadow-sm overflow-x-auto">
+        <div className="flex items-center justify-between min-w-[280px] sm:min-w-0 max-w-2xl mx-auto gap-2">
           {[
-            { num: 1, label: 'Trip & Route' },
-            { num: 2, label: 'Seat Selection' },
-            { num: 3, label: 'Passenger Info' },
-            { num: 4, label: 'M-Pesa Payment' },
+            { num: 1, label: 'Trip' },
+            { num: 2, label: 'Seats' },
+            { num: 3, label: 'Details' },
+            { num: 4, label: 'Payment' },
           ].map((s, idx) => (
             <div key={s.num} className="flex items-center gap-1.5 sm:gap-2">
               <div
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-black text-xs transition-colors ${
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-black text-xs transition-colors flex-shrink-0 ${
                   step === s.num
-                    ? 'bg-amber-400 text-black ring-3 sm:ring-4 ring-amber-400/30 border border-black'
+                    ? 'bg-amber-400 text-black ring-2 sm:ring-4 ring-amber-400/30 border border-black'
                     : step > s.num
                     ? 'bg-black text-amber-400 border border-amber-400'
                     : 'bg-neutral-100 text-neutral-400 border border-neutral-200'
@@ -381,8 +381,8 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
               >
                 {step > s.num ? <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" /> : s.num}
               </div>
-              <span className="hidden sm:block text-xs font-bold text-neutral-700">{s.label}</span>
-              {idx < 3 && <div className="hidden sm:block w-6 sm:w-8 h-px bg-neutral-200" />}
+              <span className="text-[11px] sm:text-xs font-bold text-neutral-700 whitespace-nowrap">{s.label}</span>
+              {idx < 3 && <div className="hidden sm:block w-4 sm:w-8 h-px bg-neutral-200 flex-shrink-0" />}
             </div>
           ))}
         </div>

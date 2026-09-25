@@ -589,35 +589,36 @@ export const ManagerAnalyticsComponent: React.FC<ManagerAnalyticsComponentProps>
         </div>
 
         {/* The Peak Route Demand Bar Chart */}
-        <div className="h-72 w-full pt-1">
+        <div className="h-72 w-full pt-1 overflow-hidden min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={top5WeeklyRoutesData}
-              margin={{ top: 15, right: 15, left: 0, bottom: 25 }}
+              margin={{ top: 15, right: 10, left: -15, bottom: 25 }}
               barGap={4}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis
                 dataKey="routeName"
                 stroke="#64748b"
-                fontSize={11}
+                fontSize={10}
                 tickLine={false}
                 interval={0}
                 tick={({ x, y, payload }) => {
                   const item = top5WeeklyRoutesData.find((r) => r.routeName === payload.value);
                   const isTop = item?.isTop1;
+                  const label = item?.shortName || payload.value;
                   return (
                     <g transform={`translate(${x},${y})`}>
                       <text
                         x={0}
-                        y={12}
+                        y={10}
                         dy={4}
                         textAnchor="middle"
                         fill={isTop ? '#d97706' : '#334155'}
-                        fontSize={11}
+                        fontSize={10}
                         fontWeight={isTop ? '800' : '600'}
                       >
-                        {item?.rankLabel} {payload.value}
+                        {item?.rankLabel} {label}
                       </text>
                     </g>
                   );
@@ -625,28 +626,28 @@ export const ManagerAnalyticsComponent: React.FC<ManagerAnalyticsComponentProps>
               />
               <YAxis
                 stroke="#94a3b8"
-                fontSize={11}
+                fontSize={10}
                 tickLine={false}
-                label={{ value: 'Passenger Seats', angle: -90, position: 'insideLeft', fill: '#94a3b8', fontSize: 10 }}
+                width={35}
               />
               <Tooltip content={<CustomTop5RouteTooltip />} />
               <Legend
                 verticalAlign="top"
                 align="right"
-                wrapperStyle={{ paddingBottom: '12px', fontSize: '11px' }}
+                wrapperStyle={{ paddingBottom: '12px', fontSize: '10px' }}
               />
               <Bar
                 dataKey="totalCapacity"
-                name="Scheduled Fleet Capacity"
+                name="Fleet Capacity"
                 fill="#e2e8f0"
                 radius={[4, 4, 0, 0]}
-                barSize={28}
+                barSize={window.innerWidth < 640 ? 16 : 26}
               />
               <Bar
                 dataKey="bookedSeats"
-                name="Passenger Demand (Booked Seats)"
+                name="Passenger Demand"
                 radius={[4, 4, 0, 0]}
-                barSize={28}
+                barSize={window.innerWidth < 640 ? 16 : 26}
               >
                 {top5WeeklyRoutesData.map((entry, index) => (
                   <Cell
