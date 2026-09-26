@@ -307,9 +307,50 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
         {/* Right Search Results Cards */}
         <div className="lg:col-span-3 space-y-4">
           {loading ? (
-            <div className="craft-card p-12 text-center text-slate-600">
-              <div className="w-8 h-8 rounded-full border-2 border-amber-400 border-t-transparent animate-spin mx-auto mb-3"></div>
-              <p className="font-bold text-slate-900 text-sm">Checking scheduled departures...</p>
+            <div className="space-y-4" aria-label="Loading trips">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={`trip-skeleton-${i}`} className="craft-card p-4 sm:p-6 space-y-4">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-5 pb-4 border-b border-slate-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 min-w-0">
+                      {/* Vehicle Thumbnail Skeleton */}
+                      <div className="w-24 h-16 sm:w-28 sm:h-20 rounded-xl skeleton-shimmer flex-shrink-0" />
+
+                      {/* Route & Times Skeleton */}
+                      <div className="space-y-2.5 flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <div className="h-4 w-16 rounded-md skeleton-shimmer" />
+                          <div className="h-4 w-28 rounded-full skeleton-shimmer" />
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="h-6 w-16 rounded-md skeleton-shimmer" />
+                          <div className="h-3 w-8 rounded skeleton-shimmer" />
+                          <div className="h-6 w-16 rounded-md skeleton-shimmer" />
+                        </div>
+                        <div className="h-3.5 w-48 rounded skeleton-shimmer" />
+                      </div>
+                    </div>
+
+                    {/* Fare & CTA Button Skeleton */}
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex-shrink-0">
+                      <div className="space-y-1 text-left sm:text-right">
+                        <div className="h-6 w-24 rounded-md skeleton-shimmer" />
+                        <div className="h-3 w-16 rounded skeleton-shimmer" />
+                      </div>
+                      <div className="h-10 w-28 sm:w-32 rounded-xl skeleton-shimmer" />
+                    </div>
+                  </div>
+
+                  {/* Amenities Row Skeleton */}
+                  <div className="flex items-center justify-between pt-0.5">
+                    <div className="flex items-center gap-2">
+                      <div className="h-5 w-20 rounded-full skeleton-shimmer" />
+                      <div className="h-5 w-16 rounded-full skeleton-shimmer" />
+                      <div className="h-5 w-24 rounded-full skeleton-shimmer hidden sm:block" />
+                    </div>
+                    <div className="h-3.5 w-24 rounded skeleton-shimmer" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredTrips.length === 0 ? (
             <div className="craft-card p-12 text-center text-slate-600">

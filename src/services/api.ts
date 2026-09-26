@@ -42,15 +42,39 @@ export class ApiService {
 
   // --- Public APIs ---
   static async getCompanyInfo() {
-    const res = await fetch(`${API_BASE}/company`);
-    if (!res.ok) throw new Error('Failed to load company info');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/company`);
+      if (!res.ok) throw new Error('Failed to load company info');
+      const data = await res.json();
+      localStorage.setItem('transcar_offline_company_info', JSON.stringify(data));
+      return data;
+    } catch (err) {
+      const cached = localStorage.getItem('transcar_offline_company_info');
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (_) {}
+      }
+      throw err;
+    }
   }
 
   static async getRoutes(): Promise<Route[]> {
-    const res = await fetch(`${API_BASE}/routes`);
-    if (!res.ok) throw new Error('Failed to load routes');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/routes`);
+      if (!res.ok) throw new Error('Failed to load routes');
+      const data = await res.json();
+      localStorage.setItem('transcar_offline_routes', JSON.stringify(data));
+      return data;
+    } catch (err) {
+      const cached = localStorage.getItem('transcar_offline_routes');
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (_) {}
+      }
+      throw err;
+    }
   }
 
   static async searchTrips(params: { origin?: string; destination?: string; date?: string; demo?: boolean }): Promise<Trip[]> {
@@ -60,15 +84,63 @@ export class ApiService {
     if (params.date) query.set('date', params.date);
     if (params.demo) query.set('demo', 'true');
 
-    const res = await fetch(`${API_BASE}/trips?${query.toString()}`);
-    if (!res.ok) throw new Error('Failed to search trips');
-    return res.json();
+    try {
+      const res = await fetch(`${API_BASE}/trips?${query.toString()}`);
+      if (!res.ok) throw new Error('Failed to search trips');
+      const data = await res.json();
+      localStorage.setItem('transcar_offline_last_search_trips', JSON.stringify(data));
+      return data;
+    } catch (err) {
+      const cached = localStorage.getItem('transcar_offline_last_search_trips');
+      if (cached) {
+        try {
+          return JSON.parse(cached);
+        } catch (_) {}
+      }
+      throw err;
+    }
   }
 
   static async getTripDetails(tripId: string): Promise<Trip & { seats: any[] }> {
     const res = await fetch(`${API_BASE}/trips/${tripId}`);
     if (!res.ok) throw new Error('Failed to get trip details');
     return res.json();
+  }
+
+  static cacheBookingLocally(booking: Booking) {
+    if (!booking || !booking.bookingReference) return;
+    try {
+      // Set as latest
+      localStorage.setItem('transcar_offline_last_booking', JSON.stringify(booking));
+
+      // Append to saved tickets list (max 10 recent)
+      const existingJson = localStorage.getItem('transcar_offline_cached_tickets');
+      let list: Booking[] = existingJson ? JSON.parse(existingJson) : [];
+      list = list.filter((b) => b.bookingReference !== booking.bookingReference);
+      list.unshift(booking);
+      if (list.length > 10) list = list.slice(0, 10);
+      localStorage.setItem('transcar_offline_cached_tickets', JSON.stringify(list));
+    } catch (e) {
+      console.warn('Could not cache booking locally:', e);
+    }
+  }
+
+  static getOfflineLastTicket(): Booking | null {
+    try {
+      const saved = localStorage.getItem('transcar_offline_last_booking');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  static getOfflineSavedTickets(): Booking[] {
+    try {
+      const saved = localStorage.getItem('transcar_offline_cached_tickets');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   }
 
   static async createBooking(payload: {
@@ -89,6 +161,9 @@ export class ApiService {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to create booking');
+    if (data.booking) {
+      ApiService.cacheBookingLocally(data.booking);
+    }
     return data;
   }
 
@@ -126,14 +201,33 @@ export class ApiService {
   }
 
   static async retrieveTicket(bookingReference: string, phone: string): Promise<Booking> {
-    const res = await fetch(`${API_BASE}/tickets/retrieve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bookingReference, phone }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Booking retrieval failed');
-    return data;
+    const cleanRef = bookingReference.trim().toUpperCase();
+    const cleanPhone = phone.trim();
+
+    try {
+      const res = await fetch(`${API_BASE}/tickets/retrieve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingReference: cleanRef, phone: cleanPhone }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Booking retrieval failed');
+      ApiService.cacheBookingLocally(data);
+      return data;
+    } catch (err: any) {
+      // Offline fallback
+      const savedTickets = ApiService.getOfflineSavedTickets();
+      const matched = savedTickets.find((b) => {
+        const refMatch = b.bookingReference.toUpperCase() === cleanRef;
+        const phoneMatch = !cleanPhone || (b.contactPhone && b.contactPhone.replace(/\D/g, '').includes(cleanPhone.replace(/\D/g, '')));
+        return refMatch && phoneMatch;
+      });
+
+      if (matched) {
+        return matched;
+      }
+      throw err;
+    }
   }
 
   static async getTicketBoardingStatus(bookingReference: string) {

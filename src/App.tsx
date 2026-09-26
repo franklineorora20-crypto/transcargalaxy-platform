@@ -1,5 +1,6 @@
 import React from 'react';
 import { Header, Footer } from './components/layout/Header';
+import { OfflineBanner } from './components/common/OfflineBanner';
 import { HomePage } from './components/public/HomePage';
 import { TripSearchPage } from './components/public/TripSearchPage';
 import { BookingFlow } from './components/public/BookingFlow';
@@ -92,7 +93,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100 font-sans text-slate-900 selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-screen min-h-[100dvh] flex flex-col bg-slate-100 font-sans text-slate-900 selection:bg-amber-500 selection:text-slate-950 overflow-x-clip relative gpu-accelerated [backface-visibility:hidden] [transform:translateZ(0)]">
       {/* Global Header */}
       <Header
         currentView={currentView}
@@ -193,6 +194,9 @@ export default function App() {
 
       {/* Global Footer */}
       <Footer onNavigate={(view) => setCurrentView(view)} />
+
+      {/* Offline Status Notification Banner */}
+      <OfflineBanner />
 
       {/* WhatsApp Floating Widget */}
       <a

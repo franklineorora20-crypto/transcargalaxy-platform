@@ -168,25 +168,26 @@ export const HomePage: React.FC<HomePageProps> = ({
   return (
     <div className="space-y-16 pb-20">
       {/* Hero Section with Emil Kowalski Layered Atmosphere */}
-      <section className="relative text-white pt-16 pb-20 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 overflow-hidden">
+      <section className="relative text-white pt-16 pb-20 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 overflow-hidden isolate gpu-accelerated [backface-visibility:hidden] [transform:translateZ(0)]">
         {/* Background Image with Cinematic Vignette */}
-        <div className="pointer-events-none absolute inset-0 z-0">
+        <div className="pointer-events-none absolute inset-0 z-0 gpu-accelerated [backface-visibility:hidden]">
           <img 
             src="/images/transcar_user_uploaded_hero.jpg" 
             alt="TransCar Fleet" 
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).src = '/images/transcar_homepage_hero.jpg';
             }}
-            className="w-full h-full object-cover opacity-55 scale-105 transition-transform duration-1000"
+            className="w-full h-full object-cover opacity-55 sm:scale-105 transition-transform duration-1000 will-change-transform [backface-visibility:hidden]"
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/90 via-slate-950/75 to-slate-950"></div>
-          {/* Subtle Emil Kowalski radial glow */}
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-amber-500/10 blur-[120px] pointer-events-none"></div>
+          {/* Subtle Emil Kowalski radial glow - desktop full blur, mobile safe lightweight blur */}
+          <div className="hidden sm:block absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-amber-500/10 blur-[120px] pointer-events-none"></div>
+          <div className="sm:hidden absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-32 bg-amber-500/10 blur-2xl pointer-events-none"></div>
         </div>
 
-        <div className="max-w-4xl mx-auto text-center space-y-4 relative z-10">
+        <div className="max-w-4xl mx-auto text-center space-y-4 relative z-10 gpu-accelerated [backface-visibility:hidden]">
           {/* Status Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs text-slate-200 craft-shadow-sm">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/80 sm:bg-white/10 sm:backdrop-blur-md border border-white/15 text-xs text-slate-200 craft-shadow-sm">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span className="font-medium">Nairobi • Rongai • Kisii Express Corridor</span>
           </div>
@@ -201,7 +202,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         {/* Clean Tactile Quick-Search Card */}
-        <div className="max-w-5xl mx-auto mt-6 sm:mt-10 craft-card p-4 sm:p-7 shadow-2xl relative z-10 bg-white/95 backdrop-blur-xl border border-slate-200/90">
+        <div className="max-w-5xl mx-auto mt-6 sm:mt-10 craft-card p-4 sm:p-7 shadow-2xl relative z-10 bg-white sm:bg-white/95 sm:backdrop-blur-xl border border-slate-200/90">
           <form onSubmit={handleSearchSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
             {/* Origin */}
             <div>
@@ -357,66 +358,98 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
-          {routes.slice(0, 3).map((route) => (
-            <div
-              key={route.id}
-              className="craft-card-interactive p-6 flex flex-col justify-between"
-            >
-              <div className="space-y-3.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-mono font-bold text-slate-900 bg-amber-400 px-2.5 py-0.5 rounded-md border border-amber-500/30">
-                    {route.code}
-                  </span>
-                  <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    Scheduled
-                  </span>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-bold text-slate-950 tracking-tight">
-                    {route.origin} → {route.destination}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Departs 1:00 AM Daily • ~{route.estimatedDurationHours} hrs duration</span>
-                  </p>
-                </div>
-
-                <div className="text-xs text-slate-500 pt-1 space-y-1">
-                  <p className="flex items-center gap-1 text-[11px]">
-                    <Shield className="w-3 h-3 text-slate-400" />
-                    Toyota HiAce 11, 14 & 16-seater classes
-                  </p>
-                  <p className="text-[11px]">
-                    Direct Hotline: <a href="tel:+254724626199" className="font-semibold text-slate-800 hover:text-amber-600">+254 724 626199</a>
-                  </p>
-                </div>
-              </div>
-
-              <div className="pt-4 mt-5 border-t border-slate-100 flex flex-col gap-3">
-                <div className="flex items-baseline justify-between">
-                  <div>
-                    <span className="text-2xl font-extrabold text-slate-950 tabular-nums">
-                      KES {route.baseFareKsh.toLocaleString()}
-                    </span>
-                    <span className="text-xs text-slate-400 ml-1">/ passenger</span>
+          {routes.length === 0 ? (
+            [1, 2, 3].map((i) => (
+              <div
+                key={`route-skeleton-${i}`}
+                className="craft-card p-6 flex flex-col justify-between min-h-[290px]"
+                aria-label="Loading route"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="h-5 w-16 rounded-md skeleton-shimmer" />
+                    <div className="h-5 w-24 rounded-full skeleton-shimmer" />
                   </div>
-                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                    Seats Available
-                  </span>
+                  <div className="space-y-2">
+                    <div className="h-6 w-4/5 rounded-md skeleton-shimmer" />
+                    <div className="h-4 w-3/5 rounded skeleton-shimmer" />
+                  </div>
+                  <div className="space-y-1.5 pt-1">
+                    <div className="h-3.5 w-48 rounded skeleton-shimmer" />
+                    <div className="h-3.5 w-36 rounded skeleton-shimmer" />
+                  </div>
+                </div>
+                <div className="pt-4 mt-5 border-t border-slate-100 flex flex-col gap-3">
+                  <div className="flex items-baseline justify-between">
+                    <div className="h-7 w-28 rounded-md skeleton-shimmer" />
+                    <div className="h-4 w-20 rounded skeleton-shimmer" />
+                  </div>
+                  <div className="h-10 w-full rounded-xl skeleton-shimmer" />
+                </div>
+              </div>
+            ))
+          ) : (
+            routes.slice(0, 3).map((route) => (
+              <div
+                key={route.id}
+                className="craft-card-interactive p-6 flex flex-col justify-between"
+              >
+                <div className="space-y-3.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-mono font-bold text-slate-900 bg-amber-400 px-2.5 py-0.5 rounded-md border border-amber-500/30">
+                      {route.code}
+                    </span>
+                    <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      Scheduled
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-950 tracking-tight">
+                      {route.origin} → {route.destination}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Departs 1:00 AM Daily • ~{route.estimatedDurationHours} hrs duration</span>
+                    </p>
+                  </div>
+
+                  <div className="text-xs text-slate-500 pt-1 space-y-1">
+                    <p className="flex items-center gap-1 text-[11px]">
+                      <Shield className="w-3 h-3 text-slate-400" />
+                      Toyota HiAce 11, 14 & 16-seater classes
+                    </p>
+                    <p className="text-[11px]">
+                      Direct Hotline: <a href="tel:+254724626199" className="font-semibold text-slate-800 hover:text-amber-600">+254 724 626199</a>
+                    </p>
+                  </div>
                 </div>
 
-                <button
-                  onClick={() => onSelectRoute(route)}
-                  className="craft-btn-amber w-full py-2.5 text-xs font-bold flex items-center justify-center gap-1.5"
-                >
-                  <span>Select Seats & Book</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                <div className="pt-4 mt-5 border-t border-slate-100 flex flex-col gap-3">
+                  <div className="flex items-baseline justify-between">
+                    <div>
+                      <span className="text-2xl font-extrabold text-slate-950 tabular-nums">
+                        KES {route.baseFareKsh.toLocaleString()}
+                      </span>
+                      <span className="text-xs text-slate-400 ml-1">/ passenger</span>
+                    </div>
+                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                      Seats Available
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => onSelectRoute(route)}
+                    className="craft-btn-amber w-full py-2.5 text-xs font-bold flex items-center justify-center gap-1.5"
+                  >
+                    <span>Select Seats & Book</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
 

@@ -20,6 +20,7 @@ import {
   Heart,
 } from 'lucide-react';
 import { BrandName } from '../common/BrandName';
+import { PWAInstallButton } from '../common/PWAInstallButton';
 import { ApiService } from '../../services/api';
 
 interface HeaderProps {
@@ -49,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-50 glass-surface border-b border-slate-200/80 transition-colors">
+    <header className="sticky top-0 z-50 glass-surface border-b border-slate-200/80 transition-colors gpu-accelerated [backface-visibility:hidden] [transform:translateZ(0)]">
       {/* Precision Top Telemetry Bar */}
       <div className="bg-slate-950 text-slate-300 text-[10px] sm:text-xs border-b border-slate-800/80">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-1.5 flex flex-wrap items-center justify-between gap-2">
@@ -216,6 +217,8 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Quick Action CTA Button */}
             <div className="flex items-center gap-2">
+              <PWAInstallButton />
+
               <button
                 onClick={() => handleNav('search')}
                 className="craft-btn-amber text-xs px-3.5 py-2 hidden sm:inline-flex"

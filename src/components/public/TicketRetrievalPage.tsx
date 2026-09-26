@@ -138,6 +138,35 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
           </div>
         </form>
 
+        {/* Offline Cached Tickets Quick Selection */}
+        {ApiService.getOfflineSavedTickets().length > 0 && (
+          <div className="pt-4 border-t border-neutral-200 space-y-2">
+            <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+              Saved Offline Boarding Passes
+            </span>
+            <div className="space-y-1.5">
+              {ApiService.getOfflineSavedTickets().slice(0, 3).map((saved) => (
+                <button
+                  key={saved.id || saved.bookingReference}
+                  type="button"
+                  onClick={() => setRetrievedBooking(saved)}
+                  className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center justify-between transition-colors text-xs"
+                >
+                  <div className="min-w-0">
+                    <span className="font-mono font-bold text-slate-950 block">{saved.bookingReference}</span>
+                    <span className="text-[11px] text-slate-500 truncate block">
+                      {saved.routeOrigin || 'Rongai'} → {saved.routeDestination || 'Kisii'}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md flex-shrink-0">
+                    Open Ticket
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Demo Help */}
         <div className="pt-4 border-t-2 border-neutral-200 text-xs bg-black text-neutral-300 p-4 rounded-2xl border border-neutral-800 space-y-1.5">
           <p className="font-black text-white flex items-center gap-1.5">

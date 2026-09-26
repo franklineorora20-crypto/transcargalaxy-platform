@@ -19,7 +19,6 @@
     text-rendering: optimizeLegibility;
     font-feature-settings: 'cv02' 1, 'cv03' 1, 'cv04' 1, 'cv11' 1, 'ss01' 1, 'ss02' 1;
     scroll-behavior: smooth;
-    overflow-x: hidden;
     width: 100%;
     -webkit-text-size-adjust: 100%;
   }
@@ -30,15 +29,15 @@
     line-height: 1.5;
     color: #0f172a;
     background-color: #f8fafc;
-    overflow-x: hidden;
     width: 100%;
     min-height: 100vh;
-    min-height: -webkit-fill-available;
+    min-height: 100dvh;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
-    -webkit-overflow-scrolling: touch;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
   /* Emil Kowalski Typography Hierarchy & Tight Optical Kerning */
@@ -87,6 +86,22 @@
 /* ==========================================================================
    Emil Kowalski Signature Design Tokens & Micro-Interactions
    ========================================================================== */
+
+/* GPU Hardware Acceleration & Raster Stability */
+.gpu-layer {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
+.gpu-accelerated {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
 
 /* Layered subtle shadows & crisp border rings */
 .craft-shadow-sm {
@@ -147,6 +162,21 @@
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Mobile GPU Safety Fallback: Disable expensive backdrop-filter on mobile to eliminate tile tearing */
+@media (max-width: 768px) {
+  .glass-surface {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.96);
+  }
+
+  .glass-surface-dark {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(15, 23, 42, 0.96);
+  }
 }
 
 /* Emil Kowalski Tactile Button System with Inner Highlight and Spring Physics */
@@ -270,6 +300,36 @@
   75%, 100% {
     transform: scale(2.2);
     opacity: 0;
+  }
+}
+
+/* Shimmer Skeleton Loader */
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: #f1f5f9;
+}
+
+.skeleton-shimmer::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 1.6s infinite;
+  content: '';
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
   }
 }
 
