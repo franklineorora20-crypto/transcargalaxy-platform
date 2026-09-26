@@ -3,6 +3,37 @@ import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
+import rateLimit from 'express-rate-limit';
+import * as Sentry from '@sentry/node';
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'production',
+  });
+}
+
+// Fallback production M-Pesa Callback URL if not explicitly provided
+if (!process.env.MPESA_CALLBACK_URL || process.env.MPESA_CALLBACK_URL.includes('your-domain')) {
+  process.env.MPESA_CALLBACK_URL = 'https://transcargalaxy-platform.vercel.app/api/mpesa/callback';
+}
+
+// Rate limiters for critical booking and M-Pesa payment APIs
+const limiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, jaribu tena baada ya dakika 5' },
+});
+
+const stkLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many M-Pesa requests, jaribu tena baada ya dakika 10' },
+});
 
 import {
   supabaseAdmin,
@@ -710,20 +741,15 @@ ${xmlUrls}
   res.status(200).send(xml.trim());
 });
 
-app.get('/robots.txt', (req, res) => {
-  const host = req.get('host') || 'localhost:3000';
-  const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
-  const baseUrl = `${protocol}://${host}`;
-
+app.get('/robots.txt', (_req, res) => {
   const robots = `User-agent: *
 Allow: /
-Allow: /booking/
-Allow: /booking/*
-Allow: /routes
-Allow: /retrieve-ticket
-Allow: /sitemap.xml
+Disallow: /manager-portal/
+Disallow: /driver-portal/
+Disallow: /api/
+Disallow: /admin/
 
-Sitemap: ${baseUrl}/sitemap.xml
+Sitemap: https://transcargalaxy-platform.vercel.app/sitemap.xml
 `;
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.status(200).send(robots);
@@ -1079,10 +1105,47 @@ app.post(
 
 
 // =============================================================
+// SEAT INVENTORY AUTO-RELEASE LOCK (10 MINS TIMEOUT)
+// =============================================================
+
+const SEAT_LOCK_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+
+function cleanupExpiredUnpaidBookings() {
+  const now = Date.now();
+  let releasedCount = 0;
+  for (const booking of bookings) {
+    if (booking.bookingStatus === 'PENDING_PAYMENT' || booking.paymentStatus === 'PENDING') {
+      const bookingTime = new Date(booking.createdAt).getTime();
+      if (now - bookingTime > SEAT_LOCK_TIMEOUT_MS) {
+        booking.bookingStatus = 'CANCELLED';
+        booking.paymentStatus = 'FAILED';
+        // Auto-release seats back to trip
+        const trip = trips.find((t) => t.id === booking.tripId);
+        if (trip) {
+          const bookedSeats = booking.passengers.map((p) => String(p.seatNumber).trim().toUpperCase());
+          trip.bookedSeatNumbers = trip.bookedSeatNumbers.filter(
+            (seat) => !bookedSeats.includes(String(seat).trim().toUpperCase())
+          );
+          trip.availableSeats = Math.max(0, trip.totalSeats - trip.bookedSeatNumbers.length);
+          releasedCount++;
+        }
+      }
+    }
+  }
+  if (releasedCount > 0) {
+    console.log(`[SeatLock] Auto-released ${releasedCount} unpaid seat reservation(s) after 10 min timeout.`);
+  }
+}
+
+// Periodically run seat release check every 30 seconds
+setInterval(cleanupExpiredUnpaidBookings, 30 * 1000);
+
+// =============================================================
 // PUBLIC BOOKING
 // =============================================================
 
-app.post('/api/bookings', (req, res) => {
+app.post('/api/bookings', limiter, (req, res) => {
+  cleanupExpiredUnpaidBookings();
   const {
     tripId,
     passengers,
@@ -1331,142 +1394,142 @@ app.post('/api/bookings', (req, res) => {
 // M-PESA STK PUSH
 // =============================================================
 
-app.post(
-  '/api/payments/mpesa-stk',
-  async (req, res) => {
-    const {
+const handleStkPush = async (req: Request, res: Response) => {
+  const {
+    bookingReference,
+    phone,
+    amount,
+  } = req.body;
+
+  if (!bookingReference || !phone) {
+    return res.status(400).json({
+      error:
+        'Booking reference and phone number required.',
+    });
+  }
+
+  const booking = bookings.find(
+    (b) =>
+      b.bookingReference ===
       bookingReference,
-      phone,
-      amount,
-    } = req.body;
+  );
 
-    if (!bookingReference || !phone) {
-      return res.status(400).json({
-        error:
-          'Booking reference and phone number required.',
-      });
-    }
+  if (!booking) {
+    return res.status(404).json({
+      error: 'Booking not found.',
+    });
+  }
 
-    const booking = bookings.find(
-      (b) =>
-        b.bookingReference ===
-        bookingReference,
-    );
+  if (!darajaConfigured()) {
+    return res.status(202).json({
+      status: 'PENDING',
+      pending: true,
+      customerMessage:
+        'M-Pesa verification pending - admin must confirm. Daraja credentials are not configured.',
+    });
+  }
 
-    if (!booking) {
-      return res.status(404).json({
-        error: 'Booking not found.',
-      });
-    }
+  try {
+    const timestamp =
+      darajaTimestamp();
 
-    if (!darajaConfigured()) {
-      return res.status(202).json({
-        status: 'PENDING',
-        pending: true,
-        customerMessage:
-          'M-Pesa verification pending - admin must confirm. Daraja credentials are not configured.',
-      });
-    }
+    const password =
+      Buffer.from(
+        `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`,
+      ).toString('base64');
 
-    try {
-      const timestamp =
-        darajaTimestamp();
+    const token =
+      await getDarajaAccessToken();
 
-      const password =
-        Buffer.from(
-          `${process.env.MPESA_SHORTCODE}${process.env.MPESA_PASSKEY}${timestamp}`,
-        ).toString('base64');
-
-      const token =
-        await getDarajaAccessToken();
-
-      const response = await fetch(
-        `${mpesaBaseUrl()}/mpesa/stkpush/v1/processrequest`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type':
-              'application/json',
-          },
-          body: JSON.stringify({
-            BusinessShortCode:
-              Number(
-                process.env.MPESA_SHORTCODE,
-              ),
-            Password: password,
-            Timestamp: timestamp,
-            TransactionType:
-              'CustomerPayBillOnline',
-            Amount: Math.round(
-              Number(
-                amount ||
-                  booking.totalFareKsh,
-              ),
-            ),
-            PartyA: phone,
-            PartyB: Number(
+    const response = await fetch(
+      `${mpesaBaseUrl()}/mpesa/stkpush/v1/processrequest`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type':
+            'application/json',
+        },
+        body: JSON.stringify({
+          BusinessShortCode:
+            Number(
               process.env.MPESA_SHORTCODE,
             ),
-            PhoneNumber: phone,
-            CallBackURL:
-              process.env
-                .MPESA_CALLBACK_URL,
-            AccountReference:
-              booking.bookingReference,
-            TransactionDesc:
-              `Transcar Rongai booking ${booking.bookingReference}`,
-          }),
-        },
-      );
-
-      const data =
-        (await response.json()) as {
-          CheckoutRequestID?: string;
-          ResponseDescription?: string;
-          errorMessage?: string;
-        };
-
-      if (
-        !response.ok ||
-        !data.CheckoutRequestID
-      ) {
-        return res.status(502).json({
-          error:
-            data.errorMessage ||
-            data.ResponseDescription ||
-            'Daraja STK push failed.',
-        });
-      }
-
-      pendingMpesaRequests.set(
-        data.CheckoutRequestID,
-        {
-          bookingReference,
-          amount: Number(
-            amount ||
-              booking.totalFareKsh,
+          Password: password,
+          Timestamp: timestamp,
+          TransactionType:
+            'CustomerPayBillOnline',
+          Amount: Math.round(
+            Number(
+              amount ||
+                booking.totalFareKsh,
+            ),
           ),
-          phone,
-        },
-      );
+          PartyA: phone,
+          PartyB: Number(
+            process.env.MPESA_SHORTCODE,
+          ),
+          PhoneNumber: phone,
+          CallBackURL:
+            process.env
+              .MPESA_CALLBACK_URL,
+          AccountReference:
+            booking.bookingReference,
+          TransactionDesc:
+            `Transcar Rongai booking ${booking.bookingReference}`,
+        }),
+      },
+    );
 
-      return res.json({
-        status: 'REQUEST_ACCEPTED',
-        checkoutRequestId:
-          data.CheckoutRequestID,
-        customerMessage:
-          `M-Pesa STK prompt sent to ${phone}. Enter your PIN to complete payment.`,
-      });
-    } catch (error: any) {
+    const data =
+      (await response.json()) as {
+        CheckoutRequestID?: string;
+        ResponseDescription?: string;
+        errorMessage?: string;
+      };
+
+    if (
+      !response.ok ||
+      !data.CheckoutRequestID
+    ) {
       return res.status(502).json({
         error:
-          error.message ||
-          'M-Pesa initiation failed.',
+          data.errorMessage ||
+          data.ResponseDescription ||
+          'Daraja STK push failed.',
       });
     }
-  },
-);
+
+    pendingMpesaRequests.set(
+      data.CheckoutRequestID,
+      {
+        bookingReference,
+        amount: Number(
+          amount ||
+            booking.totalFareKsh,
+        ),
+        phone,
+      },
+    );
+
+    return res.json({
+      status: 'REQUEST_ACCEPTED',
+      checkoutRequestId:
+        data.CheckoutRequestID,
+      customerMessage:
+        `M-Pesa STK prompt sent to ${phone}. Enter your PIN to complete payment.`,
+    });
+  } catch (error: any) {
+    return res.status(502).json({
+      error:
+        error.message ||
+        'M-Pesa initiation failed.',
+    });
+  }
+};
+
+app.post('/api/payments/mpesa-stk', stkLimiter, handleStkPush);
+app.post('/api/mpesa/stkpush', stkLimiter, handleStkPush);
 
 
 // =============================================================
@@ -1475,6 +1538,7 @@ app.post(
 
 app.post(
   '/api/mpesa/callback',
+  limiter,
   (req, res) => {
     const rawBody = Buffer.isBuffer(
       (req as any).rawBody,

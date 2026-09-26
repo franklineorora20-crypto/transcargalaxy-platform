@@ -55,7 +55,7 @@ const FLEET_SHOWCASE_DATA: FleetVehicleShowcase[] = [
     edition: 'Standard 11-Seater Class',
     category: '11-Seater HiAce Van',
     seats: 11,
-    image: '/images/transcar_highway_kde4160.jpg',
+    image: '/images/transcar_highway_kde4160.webp',
     description:
       'Spacious 11-seater Toyota HiAce with generous legroom, individual high-back seating, air conditioning, and dedicated luggage space.',
     corridor: 'Rongai • Kiserian • Kisii Express Corridor',
@@ -70,7 +70,7 @@ const FLEET_SHOWCASE_DATA: FleetVehicleShowcase[] = [
     edition: 'Express 11-Seater Class',
     category: '11-Seater HiAce Van',
     seats: 11,
-    image: '/images/transcar_kde4160_real.jpg',
+    image: '/images/transcar_highway_kde4160.webp',
     description:
       'Reliable 11-passenger Toyota HiAce shuttle for fast direct connections with reclining seats and full safety telemetry.',
     corridor: 'Kisii • Narok • Rongai Direct',
@@ -85,7 +85,7 @@ const FLEET_SHOWCASE_DATA: FleetVehicleShowcase[] = [
     edition: 'Intercity 14-Seater Class',
     category: '14-Seater HiAce Van',
     seats: 14,
-    image: '/images/transcar_stalker_kdv149e.jpg',
+    image: '/images/transcar_stalker_kdv149e.webp',
     description:
       'High-capacity 14-seater Toyota HiAce van featuring custom aerodynamic livery, dual front headlights, and full-cabin USB charging.',
     corridor: 'Rongai • Suswa • Kisii Express Corridor',
@@ -100,7 +100,7 @@ const FLEET_SHOWCASE_DATA: FleetVehicleShowcase[] = [
     edition: 'Corridor 14-Seater Class',
     category: '14-Seater HiAce Van',
     seats: 14,
-    image: '/images/transcar_kde832y_day.jpg',
+    image: '/images/transcar_kde832y_day.webp',
     description:
       'Standard 14-seater Toyota HiAce daytime intercity shuttle servicing the Rongai, Kiserian, Matasia, Ngong, Suswa, and Kisii corridor.',
     corridor: 'Rongai • Kiserian • Matasia • Ngong • Suswa • Kisii',
@@ -115,7 +115,7 @@ const FLEET_SHOWCASE_DATA: FleetVehicleShowcase[] = [
     edition: 'Overnight 14-Seater Class',
     category: '14-Seater HiAce Van',
     seats: 14,
-    image: '/images/transcar_night_travel.jpg',
+    image: '/images/transcar_night_travel.webp',
     description:
       'Night-equipped 14-seater Toyota HiAce shuttle with calibrated reflective chevrons and scheduled overnight departures.',
     corridor: 'Rongai • Narok • Bomet • Kisii',
@@ -130,7 +130,7 @@ const FLEET_SHOWCASE_DATA: FleetVehicleShowcase[] = [
     edition: 'Long-Wheelbase 16-Seater Class',
     category: '16-Seater HiAce Van',
     seats: 16,
-    image: '/images/executive_shuttle_van.jpg',
+    image: '/images/transcar_highway_rear.webp',
     description:
       'Long-wheelbase 16-seater Toyota HiAce van configured with maximum passenger seating and rear luggage compartment.',
     corridor: 'Rongai • Kilgoris • Rongo • Kehancha',
@@ -172,10 +172,10 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* Background Image with Cinematic Vignette */}
         <div className="pointer-events-none absolute inset-0 z-0 gpu-accelerated [backface-visibility:hidden]">
           <img 
-            src="/images/transcar_user_uploaded_hero.jpg" 
+            src="/images/transcar_user_uploaded_hero.webp" 
             alt="TransCar Fleet" 
             onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = '/images/transcar_homepage_hero.jpg';
+              (e.currentTarget as HTMLImageElement).src = '/images/transcar_user_uploaded_hero.jpg';
             }}
             className="w-full h-full object-cover opacity-55 sm:scale-105 transition-transform duration-1000 will-change-transform [backface-visibility:hidden]"
           />
@@ -481,9 +481,10 @@ export const HomePage: React.FC<HomePageProps> = ({
                   <img
                     src={veh.image}
                     alt={veh.title}
+                    loading="lazy"
                     referrerPolicy="no-referrer"
                     onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/images/transcar_white_highway.jpg';
+                      (e.currentTarget as HTMLImageElement).src = '/images/transcar_white_highway.webp';
                     }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />

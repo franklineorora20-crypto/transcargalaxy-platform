@@ -5,8 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     <meta name="theme-color" content="#020617" />
     <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TransCar" />
+    <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BusTrip",
+      "provider": {
+        "@type": "Organization",
+        "name": "TransCar Rongai Express",
+        "url": "https://transcargalaxy-platform.vercel.app",
+        "telephone": "+254722998877"
+      },
+      "departureBusStop": {
+        "@type": "BusStation",
+        "name": "Maasai Mall, Ongata Rongai, Nairobi"
+      },
+      "arrivalBusStop": {
+        "@type": "BusStation",
+        "name": "Kisii Town Central Bus Terminal, Kisii"
+      },
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "KES",
+        "availability": "https://schema.org/InStock",
+        "validFrom": "2026-01-01"
+      }
+    }
+    </script>
     <title>TransCar rongai: Commuter & Long-Distance Express Bus Network</title>
     <meta name="description" content="Official booking platform for TransCar Rongai commuter shuttles and Kenya intercity express coaches. Instant M-Pesa automated ticketing, real-time GPS fleet tracking, and passenger seat reservation." />
     <meta property="og:title" content="TransCar rongai: Commuter & Long-Distance Express Bus Network" />

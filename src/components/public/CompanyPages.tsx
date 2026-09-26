@@ -95,8 +95,9 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({ page, routes, onBook
               <div className="bg-white rounded-2xl overflow-hidden border-2 border-neutral-200 shadow-sm hover:border-amber-400 transition-all group">
                 <div className="aspect-[4/3] w-full overflow-hidden bg-black relative">
                   <img
-                    src="/images/transcar_highway_kde4160.jpg"
+                    src="/images/transcar_highway_kde4160.webp"
                     alt="TransCar Express Shuttle KDE 416Q"
+                    loading="lazy"
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -116,8 +117,9 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({ page, routes, onBook
               <div className="bg-white rounded-2xl overflow-hidden border-2 border-neutral-200 shadow-sm hover:border-amber-400 transition-all group">
                 <div className="aspect-[4/3] w-full overflow-hidden bg-black relative">
                   <img
-                    src="/images/transcar_stalker_kdv149e.jpg"
+                    src="/images/transcar_stalker_kdv149e.webp"
                     alt="TransCar Stalker Cruiser KDV 149E"
+                    loading="lazy"
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -137,8 +139,9 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({ page, routes, onBook
               <div className="bg-white rounded-2xl overflow-hidden border-2 border-neutral-200 shadow-sm hover:border-amber-400 transition-all group">
                 <div className="aspect-[4/3] w-full overflow-hidden bg-black relative">
                   <img
-                    src="/images/executive_shuttle_van.jpg"
+                    src="/images/transcar_highway_rear.webp"
                     alt="TransCar Maxi Shuttle KDC 789C"
+                    loading="lazy"
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -301,8 +304,9 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({ page, routes, onBook
               <div className="rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-900 group">
                 <div className="aspect-[16/9] w-full overflow-hidden">
                   <img
-                    src="/images/transcar_highway_kde4160.jpg"
+                    src="/images/transcar_highway_kde4160.webp"
                     alt="TransCar Exact Original Van"
+                    loading="lazy"
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -321,8 +325,9 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({ page, routes, onBook
               <div className="rounded-2xl overflow-hidden border border-neutral-800 bg-neutral-900 group">
                 <div className="aspect-[16/9] w-full overflow-hidden">
                   <img
-                    src="/images/transcar_white_highway.jpg"
+                    src="/images/transcar_white_highway.webp"
                     alt="TransCar Highway Cruiser"
+                    loading="lazy"
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />

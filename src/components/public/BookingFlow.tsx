@@ -26,6 +26,32 @@ import { DigitalTicket } from './DigitalTicket';
 import { ApiService } from '../../services/api';
 import { validatePassengerDetailsOrThrow } from '../../utils/validation';
 
+const errorMap: Record<string, { en: string; sw: string }> = {
+  timeout: { en: 'Payment timed out. Please try again.', sw: 'Malipo yamechelewa, tafadhali jaribu tena.' },
+  stk_failed: { en: 'M-Pesa prompt cancelled or failed.', sw: 'Umekataa au umeshindwa kukamilisha malipo ya M-Pesa.' },
+  no_seats: { en: 'Selected seats were just reserved by another passenger. Bus full.', sw: 'Viti vimejaa, tafadhali chagua viti vingine.' },
+  invalid_code: { en: 'Invalid M-Pesa confirmation code. Must be 8-12 alphanumeric characters.', sw: 'Msimbo wa M-Pesa sio sahihi. Lazima uwe tarakimu 8-12.' },
+  generic: { en: 'Could not secure seat reservation.', sw: 'Hitilafu imetokea wakati wa kuhifadhi siti.' },
+};
+
+const getLocalizedError = (msg: string): string => {
+  if (!msg) return `${errorMap.generic.en} (${errorMap.generic.sw})`;
+  const lower = msg.toLowerCase();
+  if (lower.includes('timeout') || lower.includes('timed out') || lower.includes('pending')) {
+    return `${errorMap.timeout.en} • ${errorMap.timeout.sw}`;
+  }
+  if (lower.includes('cancel') || lower.includes('prompt') || lower.includes('reject')) {
+    return `${errorMap.stk_failed.en} • ${errorMap.stk_failed.sw}`;
+  }
+  if (lower.includes('reserved by another') || lower.includes('full') || lower.includes('conflict')) {
+    return `${errorMap.no_seats.en} • ${errorMap.no_seats.sw}`;
+  }
+  if (lower.includes('alphanumeric') || lower.includes('confirmation code')) {
+    return `${errorMap.invalid_code.en} • ${errorMap.invalid_code.sw}`;
+  }
+  return msg;
+};
+
 interface BookingFlowProps {
   initialTrip?: Trip | null;
   onDone?: () => void;
@@ -60,6 +86,43 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
       else if (cap === 16) setActiveChassisCapacity(16);
       else if (selectedTrip.vehicle?.registrationNumber?.replace(/\s/g, '').toUpperCase() === 'KDE416Q') setActiveChassisCapacity(11);
       else setActiveChassisCapacity(14);
+
+      // Inject / update dynamic JSON-LD structured data for this corridor
+      try {
+        let scriptTag = document.getElementById('dynamic-bus-schema') as HTMLScriptElement | null;
+        if (!scriptTag) {
+          scriptTag = document.createElement('script');
+          scriptTag.id = 'dynamic-bus-schema';
+          scriptTag.type = 'application/ld+json';
+          document.head.appendChild(scriptTag);
+        }
+        scriptTag.text = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BusTrip',
+          'provider': {
+            '@type': 'Organization',
+            'name': 'TransCar Rongai Express',
+            'url': 'https://transcargalaxy-platform.vercel.app',
+          },
+          'departureBusStop': {
+            '@type': 'BusStation',
+            'name': `${selectedTrip.route?.origin || 'Maasai Mall, Rongai'} Terminal`,
+          },
+          'arrivalBusStop': {
+            '@type': 'BusStation',
+            'name': `${selectedTrip.route?.destination || 'Kisii'} Terminal`,
+          },
+          'departureTime': selectedTrip.departureTime,
+          'offers': {
+            '@type': 'Offer',
+            'price': selectedTrip.fareKsh,
+            'priceCurrency': 'KES',
+            'availability': selectedTrip.availableSeats > 0 ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+          },
+        });
+      } catch (e) {
+        // Safe fallback
+      }
     }
   }, [selectedTrip?.id, selectedTrip?.vehicle?.seatingCapacity, selectedTrip?.totalSeats, selectedTrip?.vehicle?.registrationNumber]);
 
@@ -274,10 +337,10 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
       setActiveBooking(booking);
       setStep(3);
     } catch (err: any) {
-      setPaymentError(err.message || 'Could not secure seat reservation.');
+      setPaymentError(getLocalizedError(err.message || 'Could not secure seat reservation.'));
       // If conflicting seats, alert and return to step 1
       if (err.message && err.message.includes('reserved by another passenger')) {
-        setRealtimeNotification(err.message);
+        setRealtimeNotification(getLocalizedError(err.message));
         if (selectedTrip) syncTripAvailability(selectedTrip.id, true);
         setStep(1);
       }
@@ -290,17 +353,17 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
   const handleVerifyMpesaCode = async () => {
     const code = mpesaCodeInput.trim().toUpperCase();
     if (!code) {
-      setPaymentError('Please enter your 10-character M-Pesa confirmation code (e.g. QGH8491KLR).');
+      setPaymentError(getLocalizedError('Please enter your 10-character M-Pesa confirmation code'));
       return;
     }
 
     if (!/^[A-Z0-9]{8,12}$/.test(code)) {
-      setPaymentError('M-Pesa confirmation code must be 8-12 alphanumeric characters (e.g. QGH8491KLR).');
+      setPaymentError(getLocalizedError('M-Pesa confirmation code must be 8-12 alphanumeric characters (e.g. QGH8491KLR).'));
       return;
     }
 
     if (!activeBooking) {
-      setPaymentError('Booking reservation not found. Please try again.');
+      setPaymentError(getLocalizedError('Booking reservation not found. Please try again.'));
       return;
     }
 
@@ -318,10 +381,10 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
         setConfirmedBooking(res.booking);
         setStep(4);
       } else {
-        setPaymentError(res.message || 'Payment verification could not be completed.');
+        setPaymentError(getLocalizedError(res.message || 'Payment verification could not be completed.'));
       }
     } catch (err: any) {
-      setPaymentError(err.message || 'Failed to verify M-Pesa code.');
+      setPaymentError(getLocalizedError(err.message || 'Failed to verify M-Pesa code.'));
     } finally {
       setIsProcessingPayment(false);
     }
@@ -544,6 +607,9 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                 <span className="text-base font-black text-black bg-amber-400 px-2 py-0.5 rounded">
                   KES {calculateTotalFare().toLocaleString()}
                 </span>
+                <p className="text-[11px] text-neutral-500 font-medium mt-1">
+                  All fares inclusive of 16% Statutory VAT as per Kenya Tax Laws
+                </p>
               </div>
             </div>
 
@@ -786,6 +852,9 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                 <span className="text-xl font-black font-mono text-black bg-amber-400 px-3 py-0.5 rounded-lg border border-black">
                   KES {calculateTotalFare().toLocaleString()}
                 </span>
+                <p className="text-[11px] text-neutral-500 font-medium mt-1">
+                  All fares inclusive of 16% Statutory VAT as per Kenya Tax Laws
+                </p>
               </div>
             </div>
 

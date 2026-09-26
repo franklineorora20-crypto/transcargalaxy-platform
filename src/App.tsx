@@ -1,16 +1,19 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Header, Footer } from './components/layout/Header';
 import { OfflineBanner } from './components/common/OfflineBanner';
 import { HomePage } from './components/public/HomePage';
 import { TripSearchPage } from './components/public/TripSearchPage';
 import { BookingFlow } from './components/public/BookingFlow';
-import { TripTrackingPage } from './components/public/TripTrackingPage';
-import { TicketRetrievalPage } from './components/public/TicketRetrievalPage';
-import { CompanyPages } from './components/public/CompanyPages';
-import { DriverLogin } from './components/driver/DriverLogin';
-import { DriverPortal } from './components/driver/DriverPortal';
-import { ManagerLogin } from './components/manager/ManagerLogin';
-import { ManagerPortal } from './components/manager/ManagerPortal';
+
+// Code-split heavy administration, driver, tracking, and auxiliary pages
+const TripTrackingPage = lazy(() => import('./components/public/TripTrackingPage').then(m => ({ default: m.TripTrackingPage })));
+const TicketRetrievalPage = lazy(() => import('./components/public/TicketRetrievalPage').then(m => ({ default: m.TicketRetrievalPage })));
+const CompanyPages = lazy(() => import('./components/public/CompanyPages').then(m => ({ default: m.CompanyPages })));
+const DriverLogin = lazy(() => import('./components/driver/DriverLogin').then(m => ({ default: m.DriverLogin })));
+const DriverPortal = lazy(() => import('./components/driver/DriverPortal').then(m => ({ default: m.DriverPortal })));
+const ManagerLogin = lazy(() => import('./components/manager/ManagerLogin').then(m => ({ default: m.ManagerLogin })));
+const ManagerPortal = lazy(() => import('./components/manager/ManagerPortal').then(m => ({ default: m.ManagerPortal })));
+
 import { Route, Trip } from './types';
 import { ApiService } from './services/api';
 
@@ -161,90 +164,97 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-grow">
-        {currentView === 'home' && (
-          <HomePage
-            routes={routes}
-            onStartSearch={handleStartSearch}
-            onTrackBus={() => setCurrentView('tracking')}
-            onRetrieveTicket={() => setCurrentView('retrieve-ticket')}
-            onSelectRoute={handleBookFromRoute}
-          />
-        )}
+        <Suspense fallback={
+          <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 text-slate-800">
+            <div className="w-8 h-8 border-4 border-amber-400 border-t-slate-900 rounded-full animate-spin"></div>
+            <span className="text-xs font-black uppercase tracking-widest text-slate-700">Loading TransCar...</span>
+          </div>
+        }>
+          {currentView === 'home' && (
+            <HomePage
+              routes={routes}
+              onStartSearch={handleStartSearch}
+              onTrackBus={() => setCurrentView('tracking')}
+              onRetrieveTicket={() => setCurrentView('retrieve-ticket')}
+              onSelectRoute={handleBookFromRoute}
+            />
+          )}
 
-        {currentView === 'search' && (
-          <TripSearchPage
-            defaultOrigin={searchOrigin}
-            defaultDestination={searchDestination}
-            defaultDate={searchDate}
-            defaultPassengers={searchPassengers}
-            onSelectTrip={handleSelectTripForBooking}
-          />
-        )}
+          {currentView === 'search' && (
+            <TripSearchPage
+              defaultOrigin={searchOrigin}
+              defaultDestination={searchDestination}
+              defaultDate={searchDate}
+              defaultPassengers={searchPassengers}
+              onSelectTrip={handleSelectTripForBooking}
+            />
+          )}
 
-        {currentView === 'booking' && (
-          <BookingFlow
-            initialTrip={selectedTripForBooking}
-            onDone={() => setCurrentView('home')}
-            onTrackBus={handleTrackBusFromRef}
-            onOpenDriverPortal={() => {
-              if (!driverData) {
-                setDriverData({ name: 'Frankline Orora', licenseNumber: 'DL-8492019' });
-                setUserRole('DRIVER');
-              }
-              setCurrentView('driver-portal');
-            }}
-          />
-        )}
+          {currentView === 'booking' && (
+            <BookingFlow
+              initialTrip={selectedTripForBooking}
+              onDone={() => setCurrentView('home')}
+              onTrackBus={handleTrackBusFromRef}
+              onOpenDriverPortal={() => {
+                if (!driverData) {
+                  setDriverData({ name: 'Frankline Orora', licenseNumber: 'DL-8492019' });
+                  setUserRole('DRIVER');
+                }
+                setCurrentView('driver-portal');
+              }}
+            />
+          )}
 
-        {currentView === 'tracking' && (
-          <TripTrackingPage
-            initialCode={trackingCode}
-            onBookNow={() => setCurrentView('search')}
-          />
-        )}
+          {currentView === 'tracking' && (
+            <TripTrackingPage
+              initialCode={trackingCode}
+              onBookNow={() => setCurrentView('search')}
+            />
+          )}
 
-        {currentView === 'retrieve-ticket' && (
-          <TicketRetrievalPage
-            onBackToHome={() => setCurrentView('home')}
-            onTrackBus={handleTrackBusFromRef}
-          />
-        )}
+          {currentView === 'retrieve-ticket' && (
+            <TicketRetrievalPage
+              onBackToHome={() => setCurrentView('home')}
+              onTrackBus={handleTrackBusFromRef}
+            />
+          )}
 
-        {(currentView === 'about' ||
-          currentView === 'services' ||
-          currentView === 'routes' ||
-          currentView === 'safety' ||
-          currentView === 'policies' ||
-          currentView === 'terms' ||
-          currentView === 'privacy') && (
-          <CompanyPages
-            page={currentView as any}
-            routes={routes}
-            onBookRoute={handleBookFromRoute}
-          />
-        )}
+          {(currentView === 'about' ||
+            currentView === 'services' ||
+            currentView === 'routes' ||
+            currentView === 'safety' ||
+            currentView === 'policies' ||
+            currentView === 'terms' ||
+            currentView === 'privacy') && (
+            <CompanyPages
+              page={currentView as any}
+              routes={routes}
+              onBookRoute={handleBookFromRoute}
+            />
+          )}
 
-        {currentView === 'driver-login' && (
-          <DriverLogin
-            onLoginSuccess={handleDriverLoginSuccess}
-            onCancel={() => setCurrentView('home')}
-          />
-        )}
+          {currentView === 'driver-login' && (
+            <DriverLogin
+              onLoginSuccess={handleDriverLoginSuccess}
+              onCancel={() => setCurrentView('home')}
+            />
+          )}
 
-        {currentView === 'driver-portal' && (
-          <DriverPortal driverData={driverData} onLogout={handleLogout} />
-        )}
+          {currentView === 'driver-portal' && (
+            <DriverPortal driverData={driverData} onLogout={handleLogout} />
+          )}
 
-        {currentView === 'manager-login' && (
-          <ManagerLogin
-            onLoginSuccess={handleManagerLoginSuccess}
-            onCancel={() => setCurrentView('home')}
-          />
-        )}
+          {currentView === 'manager-login' && (
+            <ManagerLogin
+              onLoginSuccess={handleManagerLoginSuccess}
+              onCancel={() => setCurrentView('home')}
+            />
+          )}
 
-        {currentView === 'manager-portal' && (
-          <ManagerPortal managerData={managerData} onLogout={handleLogout} />
-        )}
+          {currentView === 'manager-portal' && (
+            <ManagerPortal managerData={managerData} onLogout={handleLogout} />
+          )}
+        </Suspense>
       </main>
 
       {/* Global Footer */}

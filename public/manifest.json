@@ -1,0 +1,50 @@
+{
+  "id": "/",
+  "name": "TransCar Rongai Express",
+  "short_name": "TransCar",
+  "description": "Official shuttle booking, offline boarding passes, and real-time fleet operations platform for TransCar Rongai.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#020617",
+  "background_color": "#f8fafc",
+  "categories": ["travel", "transportation", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "64x64 192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book Shuttle",
+      "short_name": "Book",
+      "description": "Search and book TransCar express seats",
+      "url": "/booking",
+      "icons": [{ "src": "/favicon.svg", "sizes": "64x64" }]
+    },
+    {
+      "name": "My Tickets",
+      "short_name": "Tickets",
+      "description": "View and download offline boarding passes",
+      "url": "/retrieve-ticket",
+      "icons": [{ "src": "/favicon.svg", "sizes": "64x64" }]
+    },
+    {
+      "name": "Live Tracking",
+      "short_name": "Track",
+      "description": "Track active shuttle GPS position",
+      "url": "/tracking",
+      "icons": [{ "src": "/favicon.svg", "sizes": "64x64" }]
+    }
+  ]
+}

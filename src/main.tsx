@@ -1,7 +1,15 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import * as Sentry from '@sentry/react';
 import App from './App.tsx';
 import './index.css';
+
+if (typeof window !== 'undefined' && (import.meta as any).env?.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: (import.meta as any).env.VITE_SENTRY_DSN,
+    environment: (import.meta as any).env.MODE || 'production',
+  });
+}
 
 // Safely register Service Worker for offline asset and data caching
 if (

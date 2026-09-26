@@ -306,6 +306,10 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             </div>
 
+            <div className="pt-1 pb-1">
+              <PWAInstallButton />
+            </div>
+
             <div className="space-y-1 pt-2 border-t border-slate-100">
               <button
                 onClick={() => handleNav('home')}
