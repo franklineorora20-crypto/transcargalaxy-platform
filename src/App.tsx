@@ -35,7 +35,62 @@ export default function App() {
 
   React.useEffect(() => {
     ApiService.getRoutes()
-      .then((data) => setRoutes(data))
+      .then((data) => {
+        setRoutes(data);
+
+        // Check if there is a deep link in window.location.pathname
+        const path = window.location.pathname.toLowerCase();
+
+        if (path.startsWith('/booking/') && path.length > 9) {
+          const slug = path.replace('/booking/', '').replace(/\/$/, '');
+          const slugMap: Record<string, { origin: string; destination: string }> = {
+            'massai-mall-kisii': { origin: 'Rongai', destination: 'Kisii' },
+            'ongata-rongai-kisii': { origin: 'Rongai', destination: 'Kisii' },
+            'kisii-massai-mall': { origin: 'Kisii', destination: 'Rongai' },
+            'kisii-ongata-rongai': { origin: 'Kisii', destination: 'Rongai' },
+            'ngong-kisii': { origin: 'Ngong', destination: 'Kisii' },
+            'kisii-ngong': { origin: 'Kisii', destination: 'Ngong' },
+            'kiserian-kisii': { origin: 'Kiserian', destination: 'Kisii' },
+            'kisii-kiserian': { origin: 'Kisii', destination: 'Kiserian' },
+            'massai-mall-oyugis': { origin: 'Rongai', destination: 'Oyugis' },
+            'ongata-rongai-oyugis': { origin: 'Rongai', destination: 'Oyugis' },
+            'oyugis-massai-mall': { origin: 'Oyugis', destination: 'Rongai' },
+            'massai-mall-kendu-bay': { origin: 'Rongai', destination: 'Kendu Bay' },
+            'ongata-rongai-kendu-bay': { origin: 'Rongai', destination: 'Kendu Bay' },
+            'kendu-bay-massai-mall': { origin: 'Kendu Bay', destination: 'Rongai' },
+            'massai-mall-migori': { origin: 'Rongai', destination: 'Mogongo' },
+            'migori-massai-mall': { origin: 'Mogongo', destination: 'Rongai' },
+            'massai-mall-rongo': { origin: 'Rongai', destination: 'Rongo' },
+            'rongo-massai-mall': { origin: 'Rongo', destination: 'Rongai' },
+            'massai-mall-kehancha': { origin: 'Rongai', destination: 'Kehancha' },
+            'kehancha-massai-mall': { origin: 'Kehancha', destination: 'Rongai' },
+            'massai-mall-bongo': { origin: 'Rongai', destination: 'Bongo' },
+            'bongo-massai-mall': { origin: 'Bongo', destination: 'Rongai' },
+          };
+
+          const matched = slugMap[slug];
+          if (matched) {
+            setSearchOrigin(matched.origin);
+            setSearchDestination(matched.destination);
+            setCurrentView('search');
+            document.title = `Book Shuttle: ${matched.origin} to ${matched.destination} | TransCar Rongai Express`;
+          } else {
+            setCurrentView('search');
+          }
+        } else if (path === '/booking' || path === '/book') {
+          setCurrentView('search');
+        } else if (path === '/retrieve-ticket' || path === '/tickets') {
+          setCurrentView('retrieve-ticket');
+        } else if (path === '/tracking' || path === '/track') {
+          setCurrentView('tracking');
+        } else if (path === '/routes') {
+          setCurrentView('routes');
+        } else if (path === '/fleet' || path === '/services') {
+          setCurrentView('services');
+        } else if (path === '/safety') {
+          setCurrentView('safety');
+        }
+      })
       .catch((err) => console.error('Error loading initial routes:', err));
 
     // If driver token is already stored in local state

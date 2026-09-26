@@ -4,22 +4,21 @@ import App from './App.tsx';
 import './index.css';
 
 // Safely register Service Worker for offline asset and data caching
-if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-  import('virtual:pwa-register')
-    .then(({ registerSW }) => {
-      registerSW({
-        immediate: true,
-        onNeedRefresh() {
-          console.log('New app version available.');
-        },
-        onOfflineReady() {
-          console.log('App ready to work offline.');
-        },
+if (
+  typeof window !== 'undefined' &&
+  'serviceWorker' in navigator &&
+  window.location.protocol.startsWith('http')
+) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js', { scope: '/' })
+      .then((reg) => {
+        console.log('TransCar offline service worker active:', reg.scope);
+      })
+      .catch((err) => {
+        console.info('Service worker registration in current mode:', err?.message || err);
       });
-    })
-    .catch((err) => {
-      console.warn('Service worker registration skipped:', err);
-    });
+  });
 }
 
 createRoot(document.getElementById('root')!).render(

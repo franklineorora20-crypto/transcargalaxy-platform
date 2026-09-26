@@ -615,6 +615,120 @@ const requireDriverOrManager = requireRole(
 // PUBLIC API ROUTES
 // =============================================================
 
+// =============================================================
+// SITEMAP & SEARCH ENGINE CRAWLER ENDPOINTS
+// =============================================================
+
+app.get('/sitemap.xml', (req, res) => {
+  const host = req.get('host') || 'localhost:3000';
+  const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+  const baseUrl = `${protocol}://${host}`;
+
+  const primaryCorridors = [
+    { slug: 'massai-mall-kisii', priority: '1.0', changefreq: 'hourly', origin: 'Maasai Mall / Ongata Rongai', destination: 'Kisii' },
+    { slug: 'ongata-rongai-kisii', priority: '0.95', changefreq: 'daily', origin: 'Ongata Rongai', destination: 'Kisii' },
+    { slug: 'kisii-massai-mall', priority: '0.95', changefreq: 'daily', origin: 'Kisii', destination: 'Maasai Mall / Rongai' },
+    { slug: 'kisii-ongata-rongai', priority: '0.90', changefreq: 'daily', origin: 'Kisii', destination: 'Ongata Rongai' },
+    { slug: 'ngong-kisii', priority: '0.90', changefreq: 'daily', origin: 'Ngong', destination: 'Kisii' },
+    { slug: 'kisii-ngong', priority: '0.85', changefreq: 'daily', origin: 'Kisii', destination: 'Ngong' },
+    { slug: 'kiserian-kisii', priority: '0.90', changefreq: 'daily', origin: 'Kiserian', destination: 'Kisii' },
+    { slug: 'kisii-kiserian', priority: '0.85', changefreq: 'daily', origin: 'Kisii', destination: 'Kiserian' },
+    { slug: 'massai-mall-oyugis', priority: '0.85', changefreq: 'daily', origin: 'Rongai', destination: 'Oyugis' },
+    { slug: 'oyugis-massai-mall', priority: '0.80', changefreq: 'daily', origin: 'Oyugis', destination: 'Rongai' },
+    { slug: 'massai-mall-kendu-bay', priority: '0.85', changefreq: 'daily', origin: 'Rongai', destination: 'Kendu Bay' },
+    { slug: 'kendu-bay-massai-mall', priority: '0.80', changefreq: 'daily', origin: 'Kendu Bay', destination: 'Rongai' },
+    { slug: 'massai-mall-migori', priority: '0.85', changefreq: 'daily', origin: 'Rongai', destination: 'Mogongo/Migori' },
+    { slug: 'migori-massai-mall', priority: '0.80', changefreq: 'daily', origin: 'Migori', destination: 'Rongai' },
+    { slug: 'massai-mall-rongo', priority: '0.80', changefreq: 'daily', origin: 'Rongai', destination: 'Rongo' },
+    { slug: 'rongo-massai-mall', priority: '0.80', changefreq: 'daily', origin: 'Rongo', destination: 'Rongai' },
+    { slug: 'massai-mall-kehancha', priority: '0.80', changefreq: 'daily', origin: 'Rongai', destination: 'Kehancha' },
+    { slug: 'kehancha-massai-mall', priority: '0.80', changefreq: 'daily', origin: 'Kehancha', destination: 'Rongai' },
+    { slug: 'massai-mall-bongo', priority: '0.80', changefreq: 'daily', origin: 'Rongai', destination: 'Bongo' },
+    { slug: 'bongo-massai-mall', priority: '0.80', changefreq: 'daily', origin: 'Bongo', destination: 'Rongai' }
+  ];
+
+  const now = new Date().toISOString().split('T')[0];
+
+  const xmlUrls = [
+    `  <url>
+    <loc>${baseUrl}/</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>1.0</priority>
+  </url>`,
+    `  <url>
+    <loc>${baseUrl}/booking</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>always</changefreq>
+    <priority>0.95</priority>
+  </url>`,
+    `  <url>
+    <loc>${baseUrl}/retrieve-ticket</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>`,
+    `  <url>
+    <loc>${baseUrl}/routes</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>`,
+    `  <url>
+    <loc>${baseUrl}/fleet</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>`,
+    `  <url>
+    <loc>${baseUrl}/safety</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.70</priority>
+  </url>`,
+    ...primaryCorridors.map(
+      (c) => `  <url>
+    <loc>${baseUrl}/booking/${c.slug}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>${c.changefreq}</changefreq>
+    <priority>${c.priority}</priority>
+  </url>`
+    ),
+  ].join('\n');
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+${xmlUrls}
+</urlset>`;
+
+  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+  res.status(200).send(xml.trim());
+});
+
+app.get('/robots.txt', (req, res) => {
+  const host = req.get('host') || 'localhost:3000';
+  const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+  const baseUrl = `${protocol}://${host}`;
+
+  const robots = `User-agent: *
+Allow: /
+Allow: /booking/
+Allow: /booking/*
+Allow: /routes
+Allow: /retrieve-ticket
+Allow: /sitemap.xml
+
+Sitemap: ${baseUrl}/sitemap.xml
+`;
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.status(200).send(robots);
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({
     status: 'ok',
@@ -695,6 +809,76 @@ app.get('/api/company', (_req, res) => {
 
 app.get('/api/routes', (_req, res) => {
   res.json(routes.filter((r) => r.isActive));
+});
+
+app.get('/api/routes/by-slug/:slug', (req, res) => {
+  const slug = req.params.slug.toLowerCase().trim();
+
+  // Map slugs to route keywords
+  const slugMap: Record<string, { origin: string; destination: string; title: string }> = {
+    'massai-mall-kisii': { origin: 'Rongai', destination: 'Kisii', title: 'Maasai Mall / Ongata Rongai to Kisii Express' },
+    'ongata-rongai-kisii': { origin: 'Rongai', destination: 'Kisii', title: 'Ongata Rongai to Kisii Express' },
+    'kisii-massai-mall': { origin: 'Kisii', destination: 'Rongai', title: 'Kisii to Maasai Mall / Rongai Express' },
+    'kisii-ongata-rongai': { origin: 'Kisii', destination: 'Rongai', title: 'Kisii to Ongata Rongai Express' },
+    'ngong-kisii': { origin: 'Ngong', destination: 'Kisii', title: 'Ngong to Kisii Express' },
+    'kisii-ngong': { origin: 'Kisii', destination: 'Ngong', title: 'Kisii to Ngong Express' },
+    'kiserian-kisii': { origin: 'Kiserian', destination: 'Kisii', title: 'Kiserian to Kisii Express' },
+    'kisii-kiserian': { origin: 'Kisii', destination: 'Kiserian', title: 'Kisii to Kiserian Express' },
+    'massai-mall-oyugis': { origin: 'Rongai', destination: 'Oyugis', title: 'Rongai to Oyugis Express' },
+    'ongata-rongai-oyugis': { origin: 'Rongai', destination: 'Oyugis', title: 'Ongata Rongai to Oyugis Express' },
+    'oyugis-massai-mall': { origin: 'Oyugis', destination: 'Rongai', title: 'Oyugis to Rongai Express' },
+    'massai-mall-kendu-bay': { origin: 'Rongai', destination: 'Kendu Bay', title: 'Rongai to Kendu Bay Express' },
+    'ongata-rongai-kendu-bay': { origin: 'Rongai', destination: 'Kendu Bay', title: 'Ongata Rongai to Kendu Bay Express' },
+    'kendu-bay-massai-mall': { origin: 'Kendu Bay', destination: 'Rongai', title: 'Kendu Bay to Rongai Express' },
+    'massai-mall-migori': { origin: 'Rongai', destination: 'Mogongo', title: 'Rongai to Mogongo / Migori Express' },
+    'migori-massai-mall': { origin: 'Mogongo', destination: 'Rongai', title: 'Mogongo / Migori to Rongai Express' },
+    'massai-mall-rongo': { origin: 'Rongai', destination: 'Rongo', title: 'Rongai to Rongo Express' },
+    'rongo-massai-mall': { origin: 'Rongo', destination: 'Rongai', title: 'Rongo to Rongai Express' },
+    'massai-mall-kehancha': { origin: 'Rongai', destination: 'Kehancha', title: 'Rongai to Kehancha Express' },
+    'kehancha-massai-mall': { origin: 'Kehancha', destination: 'Rongai', title: 'Kehancha to Rongai Express' },
+    'massai-mall-bongo': { origin: 'Rongai', destination: 'Bongo', title: 'Rongai to Bongo Express' },
+    'bongo-massai-mall': { origin: 'Bongo', destination: 'Rongai', title: 'Bongo to Rongai Express' },
+  };
+
+  const match = slugMap[slug];
+  if (!match) {
+    // Try fuzzy match in routes
+    const fuzzy = routes.find((r) => {
+      const codeSlug = `${r.origin.toLowerCase()}-${r.destination.toLowerCase()}`.replace(/\s+/g, '-');
+      return slug.includes(codeSlug) || codeSlug.includes(slug);
+    });
+
+    if (fuzzy) {
+      return res.json({
+        found: true,
+        slug,
+        route: fuzzy,
+        origin: fuzzy.origin,
+        destination: fuzzy.destination,
+        title: `${fuzzy.origin} to ${fuzzy.destination} Express`,
+      });
+    }
+
+    return res.status(404).json({
+      error: `Corridor route '${slug}' not found`,
+      availableSlugs: Object.keys(slugMap),
+    });
+  }
+
+  const route = routes.find(
+    (r) =>
+      r.origin.toLowerCase().includes(match.origin.toLowerCase()) &&
+      r.destination.toLowerCase().includes(match.destination.toLowerCase())
+  ) || routes[0];
+
+  res.json({
+    found: true,
+    slug,
+    title: match.title,
+    origin: match.origin,
+    destination: match.destination,
+    route,
+  });
 });
 
 
