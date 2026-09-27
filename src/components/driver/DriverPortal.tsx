@@ -144,13 +144,12 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
   const waypoints = [
     'Rongai Main Terminal',
     'Maasai Mall Gate',
-    'Galleria Interchange',
-    'Bomas of Kenya',
-    'Nyayo National Stadium',
-    'Machakos Junction',
-    'Sultan Hamud Waypoint',
-    'Mtito Andei Rest Oasis',
-    'Nakuru Highway Hub',
+    'Kiserian Town Stage',
+    'Ngong Milele Mall',
+    'Suswa Escarpment Viewpoint',
+    'Narok Town Stage',
+    'Bomet Highway Hub',
+    'Sotik Junction',
     'Kericho Tea Highlands',
     'Kisii Express Terminal',
   ];
@@ -986,7 +985,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
                     required
                     value={currentStopName}
                     onChange={(e) => setCurrentStopName(e.target.value)}
-                    placeholder="e.g. Mtito Andei Rest Oasis"
+                    placeholder="e.g. Narok Town Stage"
                     className="w-full text-xs px-3 py-2 border-2 border-slate-200 rounded-xl font-bold focus:border-slate-950 focus:outline-none"
                   />
                   <div className="flex flex-wrap gap-1 pt-1">

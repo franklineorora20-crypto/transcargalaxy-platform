@@ -193,12 +193,6 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({ page, routes, onBook
               </div>
 
               <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-700 space-y-2">
-                <span className="font-black text-amber-400 text-sm block">Mombasa Coastal Station</span>
-                <p className="text-neutral-300">Mwembe Tayari Commercial Center, Jomo Kenyatta Ave</p>
-                <p className="text-neutral-400">Hours: 05:30 - 22:30 Daily • Tel: +254 700 800 902</p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-700 space-y-2">
                 <span className="font-black text-amber-400 text-sm block">Kisumu Western Hub</span>
                 <p className="text-neutral-300">Mega Plaza Junction, Oginga Odinga Road</p>
                 <p className="text-neutral-400">Hours: 06:00 - 21:00 Daily • Tel: +254 700 800 903</p>
@@ -231,8 +225,8 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({ page, routes, onBook
               </div>
               <h3 className="text-xl font-black text-black">Scheduled Intercity Passenger Travel</h3>
               <p className="text-xs text-neutral-600 leading-relaxed font-medium">
-                Daily scheduled express coaches connecting Nairobi with coastal and western destinations.
-                Features high-speed onboard Wi-Fi, air conditioning, 240V USB phone charging ports, and spacious 2+2 or 2+1 reclining leather seating.
+                Daily scheduled express shuttles connecting Ongata Rongai, Ngong, and Kiserian with Kisii, Oyugis, Kendu Bay, Rongo, and South Nyanza destinations.
+                Features high-speed onboard Wi-Fi, air conditioning, 240V USB phone charging ports, and spacious reclining seating.
               </p>
               <ul className="text-xs text-neutral-800 space-y-1.5 font-medium">
                 <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-amber-500" /> Morning & Night Express Departures</li>

@@ -799,11 +799,11 @@ app.get('/api/company', (_req, res) => {
         hours: '05:00 - 23:00',
       },
       {
-        city: 'Mombasa',
+        city: 'Kisii',
         address:
-          'Mwembe Tayari Commercial Center',
-        phone: '+254 700 800 902',
-        hours: '05:30 - 22:30',
+          'Kisii Town Central Bus Terminal',
+        phone: '+254 724 626 199',
+        hours: '05:00 - 22:00',
       },
       {
         city: 'Kisumu',

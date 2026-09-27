@@ -534,8 +534,8 @@ export const INITIAL_MAINTENANCE: MaintenanceRecord[] = [
 export const INITIAL_ANNOUNCEMENTS: Announcement[] = [
   {
     id: 'ann-1',
-    title: 'KeNHA Road Maintenance Advisory: Voi Corridor',
-    message: 'Road resurfacing ongoing between KM 310 and 325 on Mombasa Highway. Drivers are advised to maintain 50km/h in active construction zones.',
+    title: 'KeNHA Road Maintenance Advisory: Narok–Bomet Corridor',
+    message: 'Road resurfacing ongoing along the Narok–Bomet highway section. Drivers are advised to maintain 50km/h in active construction zones.',
     priority: 'URGENT',
     targetAudience: 'ALL_DRIVERS',
     createdAt: '2026-09-17T06:00:00.000Z',
@@ -571,7 +571,7 @@ export const INITIAL_AUDIT_LOGS: AuditLog[] = [
     recordType: 'TRIP',
     recordId: 'trip-102',
     timestamp: '2026-09-13T16:20:00.000Z',
-    details: 'Scheduled Night Express SL-NBO-MBS-1930 assigned to vehicle KDC 456B and driver Frankline Orora',
+    details: 'Scheduled Night Express TR-RNG-KSI-0100 assigned to vehicle KDE 416Q and driver Frankline Orora',
   },
   {
     id: 'aud-3',

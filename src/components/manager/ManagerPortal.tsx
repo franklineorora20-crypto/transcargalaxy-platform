@@ -1493,7 +1493,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
                     <tr key={t.id} className="hover:bg-slate-50">
                       <td className="py-3 px-2 font-mono font-bold text-amber-700">{t.tripCode}</td>
                       <td className="py-3 px-2 font-bold text-slate-900">
-                        {t.route?.origin || 'Nairobi'} → {t.route?.destination || 'Mombasa'}
+                        {t.route?.origin || 'Rongai'} → {t.route?.destination || 'Kisii'}
                       </td>
                       <td className="py-3 px-2 text-slate-600">
                         {new Date(t.departureTime).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
@@ -2255,7 +2255,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
                   <tr key={t.id} className="hover:bg-slate-50">
                     <td className="py-3 px-2 font-mono font-bold text-amber-700">{t.tripCode}</td>
                     <td className="py-3 px-2 font-bold text-slate-900">
-                      {t.route?.origin || 'Nairobi'} → {t.route?.destination || 'Mombasa'}
+                      {t.route?.origin || 'Rongai'} → {t.route?.destination || 'Kisii'}
                     </td>
                     <td className="py-3 px-2 text-slate-600">
                       {new Date(t.departureTime).toLocaleString()}
@@ -2720,7 +2720,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
                 <input
                   type="text"
                   required
-                  placeholder="e.g. 250L Diesel fuel voucher at Total Mtito Andei"
+                  placeholder="e.g. 120L Diesel fuel voucher at Rubis Rongai"
                   value={newExpense.description}
                   onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
                   className="w-full p-2 border border-slate-300 rounded-xl"

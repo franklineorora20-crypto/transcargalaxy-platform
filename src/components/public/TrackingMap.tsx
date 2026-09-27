@@ -38,7 +38,6 @@ const TOWN_COORDINATES: Record<string, [number, number]> = {
   'Kehancha': [-1.250, 34.63],
   'Bongo': [-1.150, 34.70],
   'Nairobi': [-1.2921, 36.8219],
-  'Mombasa': [-4.0435, 39.6682],
   'Eldoret': [0.5143, 35.2698],
   'Kisumu': [-0.0917, 34.7680],
   'Nakuru': [-0.3031, 36.0800],

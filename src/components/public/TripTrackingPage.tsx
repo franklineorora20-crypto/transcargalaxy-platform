@@ -109,18 +109,18 @@ export const TripTrackingPage: React.FC<TripTrackingPageProps> = ({
             }}
             className="underline hover:text-amber-400 font-mono text-neutral-300 cursor-pointer"
           >
-            TRP-48291 (In Transit to Mombasa)
+            TRP-48291 (In Transit to Kisii)
           </button>
           <span>•</span>
           <button
             type="button"
             onClick={() => {
-              setSearchCode('SL-NBO-KSM-0800');
-              fetchTracking('SL-NBO-KSM-0800');
+              setSearchCode('TR-RNG-KND-0100');
+              fetchTracking('TR-RNG-KND-0100');
             }}
             className="underline hover:text-amber-400 font-mono text-neutral-300 cursor-pointer"
           >
-            SL-NBO-KSM-0800 (In Transit to Kisumu)
+            TR-RNG-KND-0100 (In Transit to Kendu Bay)
           </button>
         </div>
       </div>
