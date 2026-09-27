@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import {
-  RefreshCw,
-} from 'lucide-react';
+import { RefreshCw, CheckCircle2, Lock } from 'lucide-react';
 import { Trip } from '../../types';
+
+export const CAR_SEAT_VIEW_SEATS: Record<11 | 14 | 16, string[]> = {
+  11: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C'],
+  14: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3C', '4A', '4B', '4C', '4D'],
+  16: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '5A', '5B', '5C', '5D'],
+};
+
+export function isValidSeatForCarView(seatNumber: string, carView: 11 | 14 | 16): boolean {
+  const normalized = String(seatNumber || '').trim().toUpperCase();
+  return CAR_SEAT_VIEW_SEATS[carView]?.includes(normalized) ?? false;
+}
 
 export interface SeatSelectorProps {
   trip: Trip;
   selectedSeats: string[];
   onSeatToggle: (seatNumber: string, isExecutive?: boolean) => void;
-  maxSeats: number;
+  maxSeats?: number;
   configCapacity?: 11 | 14 | 16;
   onConfigChange?: (capacity: 11 | 14 | 16) => void;
   isSyncing?: boolean;
@@ -20,12 +29,10 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
   trip,
   selectedSeats,
   onSeatToggle,
-  maxSeats,
   configCapacity,
   onConfigChange,
   isSyncing = false,
   onRefreshAvailability,
-  lastSyncedAt,
 }) => {
   const bookedSet = React.useMemo(() => new Set(trip.bookedSeatNumbers || []), [trip.bookedSeatNumbers]);
 
@@ -40,13 +47,14 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
   }, [configCapacity, trip.vehicle?.seatingCapacity, trip.totalSeats, trip.vehicle?.registrationNumber]);
 
   const [activeConfigTab, setActiveConfigTab] = useState<11 | 14 | 16>(detectedCapacity);
-  const [hoveredSeat, setHoveredSeat] = useState<string | null>(null);
+  const [, setHoveredSeat] = useState<string | null>(null);
 
   useEffect(() => {
     setActiveConfigTab(detectedCapacity);
   }, [detectedCapacity]);
 
   const handleTabChange = (cap: 11 | 14 | 16) => {
+    if (cap === activeConfigTab) return;
     setActiveConfigTab(cap);
     if (onConfigChange) {
       onConfigChange(cap);
@@ -57,40 +65,48 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
   const isSixteenSeater = activeConfigTab === 16;
   const isFourteenSeater = activeConfigTab === 14;
 
-  const totalSeatsInConfig = activeConfigTab;
-  const occupiedCount = bookedSet.size;
+  // Strictly scope valid, occupied, and selected seats to the chosen Car Seat View
+  const validSeatsInActiveView = React.useMemo(
+    () => CAR_SEAT_VIEW_SEATS[activeConfigTab],
+    [activeConfigTab]
+  );
+  const validSeatsSet = React.useMemo(
+    () => new Set(validSeatsInActiveView),
+    [validSeatsInActiveView]
+  );
+
+  const selectedSeatsInActiveView = React.useMemo(
+    () => selectedSeats.filter((s) => validSeatsSet.has(s)),
+    [selectedSeats, validSeatsSet]
+  );
+
+  const totalSeatsInConfig = validSeatsInActiveView.length;
+  const occupiedCount = React.useMemo(
+    () => validSeatsInActiveView.filter((s) => bookedSet.has(s)).length,
+    [validSeatsInActiveView, bookedSet]
+  );
   const availableCount = Math.max(0, totalSeatsInConfig - occupiedCount);
 
-  const getSeatDescription = (seatNum: string) => {
-    if (seatNum === 'P1') return 'Front Cabin Left Window Seat (Panoramic Front View)';
-    if (seatNum === 'P2') return 'Front Cabin Center Seat (Alongside Driver)';
-    if (seatNum === '1A') return 'Row 1 Window Seat (Adjacent to Sliding Door Entry)';
-    if (seatNum.endsWith('A')) return 'Left Window Seat';
-    if (seatNum.endsWith('C') || seatNum.endsWith('D')) return 'Right Window Seat';
-    if (seatNum.startsWith('4') || seatNum.startsWith('5') || (isElevenSeater && seatNum.startsWith('3'))) {
-      return 'Last Row Rear Bench Seat';
-    }
-    return 'Comfort Passenger Seat';
-  };
-
-  // Minimalist, Official Seat Button
+  // Minimalist, Official Seat Button — strictly allows selecting seats belonging to the chosen Car Seat View
   const renderSeat = (
     seatNum: string,
     isOccupied: boolean,
     isWindow = false
   ) => {
-    const isSelected = selectedSeats.includes(seatNum);
+    const isAllowedInCurrentView = validSeatsSet.has(seatNum);
+    const isSelected = isAllowedInCurrentView && selectedSeatsInActiveView.includes(seatNum);
+    const isDisabled = isOccupied || !isAllowedInCurrentView;
 
     return (
       <button
         key={seatNum}
         type="button"
         id={`seat-${seatNum}`}
-        disabled={isOccupied}
+        disabled={isDisabled}
         onMouseEnter={() => setHoveredSeat(seatNum)}
         onMouseLeave={() => setHoveredSeat((curr) => (curr === seatNum ? null : curr))}
         onClick={() => {
-          if (!isOccupied) {
+          if (!isDisabled && isAllowedInCurrentView) {
             onSeatToggle(seatNum, isElevenSeater);
           }
         }}
@@ -98,11 +114,11 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
           isOccupied
             ? `Seat ${seatNum} is occupied`
             : isSelected
-            ? `Seat ${seatNum} selected (click to deselect)`
-            : `Select Seat ${seatNum} • KES ${trip.fareKsh.toLocaleString()}`
+            ? `Seat ${seatNum} selected in ${activeConfigTab}-Seater View (click to deselect)`
+            : `Select Seat ${seatNum} (${activeConfigTab}-Seater View) • KES ${trip.fareKsh.toLocaleString()}`
         }
         className={`relative flex flex-col items-center justify-center w-11 h-12 sm:w-12 sm:h-13 rounded-xl font-mono text-xs font-bold transition-all ${
-          isOccupied
+          isDisabled
             ? 'bg-slate-900/70 border border-slate-800 text-slate-600 cursor-not-allowed select-none'
             : isSelected
             ? 'bg-amber-400 text-slate-950 border-2 border-amber-300 shadow-md font-black ring-2 ring-amber-400/30'
@@ -126,23 +142,29 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
             {activeConfigTab}S
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-mono font-bold text-xs bg-slate-100 text-slate-800 px-2 py-0.5 rounded border border-slate-200">
                 {trip.vehicle?.registrationNumber || 'KDA 123A'}
               </span>
               <span className="text-xs text-slate-500 font-medium">
-                {isSixteenSeater ? '16-Seater HiAce' : isElevenSeater ? '11-Seater VIP Shuttle' : '14-Seater Intercity Shuttle'}
+                {isSixteenSeater
+                  ? '16-Seater HiAce Car Seat View'
+                  : isElevenSeater
+                  ? '11-Seater VIP Shuttle Car Seat View'
+                  : '14-Seater Intercity Shuttle Car Seat View'}
               </span>
             </div>
             <h4 className="text-base font-bold text-slate-900 mt-0.5">
-              Select Passenger Seats
+              Select Seats Directly on Your Chosen Car Seat View
             </h4>
           </div>
         </div>
 
         <div className="flex items-center gap-3 text-xs sm:text-right">
           <div className="space-y-0.5">
-            <span className="text-[11px] text-slate-500 font-medium block">Availability</span>
+            <span className="text-[11px] text-slate-500 font-medium block">
+              {activeConfigTab}-Seater View Availability
+            </span>
             <span className="font-mono font-bold text-slate-900 text-sm">
               <strong className="text-emerald-600">{availableCount}</strong> of {totalSeatsInConfig} Available
             </span>
@@ -161,28 +183,55 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
         </div>
       </div>
 
-      {/* Fleet Capacity Selector Tabs */}
-      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-2.5 p-2 bg-slate-50 rounded-xl border border-slate-200 text-xs">
-        <span className="font-medium text-slate-600 px-2">Vehicle Configuration:</span>
-        <div className="grid grid-cols-3 gap-1.5 w-full xs:w-auto">
+      {/* Step 1: Choose Specific Car Seat View */}
+      <div className="p-3 sm:p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider block">
+              1. Choose Your Car Seat View
+            </span>
+            <span className="text-[11px] text-slate-600">
+              You can only select seats that belong to the specific car seat view you choose below.
+            </span>
+          </div>
+          {selectedSeatsInActiveView.length > 0 && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-amber-100 text-amber-950 border border-amber-300 px-2.5 py-1 rounded-lg">
+              <Lock className="w-3 h-3 text-amber-700" />
+              <span>Using {activeConfigTab}-Seater View ({selectedSeatsInActiveView.length} selected)</span>
+            </span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {[
-            { cap: 11 as const, label: '11-Seater' },
-            { cap: 14 as const, label: '14-Seater' },
-            { cap: 16 as const, label: '16-Seater' },
-          ].map((item) => (
-            <button
-              key={item.cap}
-              type="button"
-              onClick={() => handleTabChange(item.cap)}
-              className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-colors cursor-pointer ${
-                activeConfigTab === item.cap
-                  ? 'bg-slate-900 text-amber-400 shadow-sm'
-                  : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
+            { cap: 11 as const, label: '11-Seater Car View', sub: 'VIP Shuttle • 3 Rows + Front' },
+            { cap: 14 as const, label: '14-Seater Car View', sub: 'Standard Matatu • 4 Rows + Front' },
+            { cap: 16 as const, label: '16-Seater Car View', sub: 'Maxi HiAce • 5 Rows + Front' },
+          ].map((item) => {
+            const isActive = activeConfigTab === item.cap;
+            return (
+              <button
+                key={item.cap}
+                type="button"
+                id={`car-view-${item.cap}`}
+                aria-pressed={isActive}
+                onClick={() => handleTabChange(item.cap)}
+                className={`p-2.5 rounded-xl text-left transition-all cursor-pointer border flex items-center justify-between ${
+                  isActive
+                    ? 'bg-slate-900 text-amber-400 border-slate-900 shadow-md ring-2 ring-amber-400/40'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border-slate-200'
+                }`}
+              >
+                <div>
+                  <span className="font-extrabold text-xs block">{item.label}</span>
+                  <span className={`text-[10px] block mt-0.5 ${isActive ? 'text-slate-300' : 'text-slate-500'}`}>
+                    {item.sub}
+                  </span>
+                </div>
+                {isActive && <CheckCircle2 className="w-4 h-4 text-amber-400 flex-shrink-0" />}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -195,7 +244,7 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3.5 h-3.5 rounded bg-amber-400 border border-amber-300" />
-            <span className="text-slate-900 font-bold">Selected ({selectedSeats.length})</span>
+            <span className="text-slate-900 font-bold">Selected ({selectedSeatsInActiveView.length})</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3.5 h-3.5 rounded bg-slate-900/70 border border-slate-800" />
@@ -209,28 +258,36 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
       </div>
 
       {/* Subtle Selected Seat Summary */}
-      {selectedSeats.length > 0 && (
-        <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-800">Selected Seats:</span>
+      {selectedSeatsInActiveView.length > 0 && (
+        <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-bold text-slate-800">
+              Selected in {activeConfigTab}-Seater View:
+            </span>
             <span className="font-mono font-bold text-slate-950 bg-amber-200/80 px-2 py-0.5 rounded">
-              {selectedSeats.join(', ')}
+              {selectedSeatsInActiveView.join(', ')}
             </span>
           </div>
           <span className="font-mono font-bold text-slate-900 text-sm">
-            Total: KES {(selectedSeats.length * trip.fareKsh).toLocaleString()}
+            Total: KES {(selectedSeatsInActiveView.length * trip.fareKsh).toLocaleString()}
           </span>
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* COMPACT & SNUG VEHICLE CABIN (TIGHT CORRIDOR & PROPORTIONAL MATATU GEOMETRY) */}
+      {/* COMPACT & SNUG VEHICLE CABIN (SPECIFIC CHOSEN CAR SEAT VIEW)             */}
       {/* ========================================================================= */}
-      <div className="w-fit mx-auto bg-slate-950 text-white rounded-2xl border border-slate-800 p-4 sm:p-5 shadow-lg relative min-w-[270px] sm:min-w-[300px]">
+      <div
+        data-car-seat-view={activeConfigTab}
+        className="w-fit mx-auto bg-slate-950 text-white rounded-2xl border border-slate-800 p-4 sm:p-5 shadow-lg relative min-w-[270px] sm:min-w-[300px]"
+      >
         {/* Windscreen / Front Marker */}
         <div className="text-center mb-3.5 pb-2 border-b border-slate-800/80">
           <div className="w-24 h-1.5 bg-slate-700 rounded-full mx-auto mb-1.5" />
-          <span className="text-[10px] font-mono tracking-wider uppercase text-slate-400 font-semibold">
+          <span className="text-[10px] font-mono tracking-wider uppercase text-amber-400 font-bold block">
+            {activeConfigTab}-Seater Cabin View
+          </span>
+          <span className="text-[9px] font-mono tracking-wider uppercase text-slate-400 font-semibold">
             ▲ Front (Windscreen)
           </span>
         </div>
@@ -277,7 +334,7 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
         </div>
 
         {/* ------------------------------------------------------------- */}
-        {/* PASSENGER CABIN ROWS WITH SIGNIFICANTLY REDUCED AISLE (10-12px) */}
+        {/* PASSENGER CABIN ROWS FOR THE CHOSEN CAR SEAT VIEW             */}
         {/* ------------------------------------------------------------- */}
         <div className="space-y-2">
           {/* =========================================================== */}

@@ -23,10 +23,11 @@ import {
   Package,
 } from 'lucide-react';
 import { Route, Trip } from '../../types';
+import { DatePicker } from '../common/DatePicker';
 
 interface HomePageProps {
   routes: Route[];
-  onStartSearch: (origin?: string, destination?: string, date?: string, passengers?: number) => void;
+  onStartSearch: (origin?: string, destination?: string, date?: string, carSeatView?: 11 | 14 | 16 | null) => void;
   onTrackBus: () => void;
   onRetrieveTicket: () => void;
   onSelectRoute: (route: Route) => void;
@@ -150,7 +151,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [selectedOrigin, setSelectedOrigin] = React.useState('Rongai');
   const [selectedDestination, setSelectedDestination] = React.useState('Kisii');
   const [travelDate, setTravelDate] = React.useState(new Date().toISOString().split('T')[0]);
-  const [passengers, setPassengers] = React.useState('1');
+  const [carSeatView, setCarSeatView] = React.useState<string>('ALL');
   const [inspectedVehicle, setInspectedVehicle] = React.useState<FleetVehicleShowcase | null>(null);
 
   const uniqueOrigins = React.useMemo(() => Array.from(new Set(routes.map((r) => r.origin))), [routes]);
@@ -158,11 +159,13 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onStartSearch(selectedOrigin, selectedDestination, travelDate, Number(passengers));
+    const chosenView = carSeatView === '11' ? 11 : carSeatView === '14' ? 14 : carSeatView === '16' ? 16 : null;
+    onStartSearch(selectedOrigin, selectedDestination, travelDate, chosenView);
   };
 
   const handleBookVehicle = (veh: FleetVehicleShowcase) => {
-    onStartSearch(veh.searchOrigin, veh.searchDestination);
+    const chosenView: 11 | 14 | 16 = veh.seats === 11 ? 11 : veh.seats === 16 ? 16 : 14;
+    onStartSearch(veh.searchOrigin, veh.searchDestination, travelDate, chosenView);
   };
 
   return (
@@ -197,7 +200,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </h1>
 
           <p className="text-sm sm:text-base text-slate-300 max-w-xl mx-auto font-normal leading-relaxed">
-            Daily express shuttles with instant seat selection and M-Pesa booking.
+            Daily express shuttles with instant seat selection, M-Pesa, and Pay in Cash options.
           </p>
         </div>
 
@@ -253,35 +256,31 @@ export const HomePage: React.FC<HomePageProps> = ({
               <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 Travel Date
               </label>
-              <div className="relative">
-                <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                <input
-                  id="hero-date"
-                  type="date"
-                  value={travelDate}
-                  onChange={(e) => setTravelDate(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer min-h-[44px]"
-                />
-              </div>
+              <DatePicker
+                id="hero-date"
+                value={travelDate}
+                onChange={(date) => setTravelDate(date)}
+                variant="light"
+              />
             </div>
 
-            {/* Passengers */}
+            {/* Car Seat View */}
             <div>
               <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Passengers
+                Car Seat View
               </label>
               <div className="relative">
-                <Users className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                <Bus className="w-4 h-4 text-amber-500 absolute left-3.5 top-3.5" />
                 <select
-                  value={passengers}
-                  onChange={(e) => setPassengers(e.target.value)}
+                  id="hero-car-view"
+                  value={carSeatView}
+                  onChange={(e) => setCarSeatView(e.target.value)}
                   className="w-full pl-9 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer min-h-[44px]"
                 >
-                  {[1, 2, 3, 4, 5, 6].map((count) => (
-                    <option key={count} value={count}>
-                      {count} {count === 1 ? 'Passenger' : 'Passengers'}
-                    </option>
-                  ))}
+                  <option value="ALL">All Car Seat Views</option>
+                  <option value="11">11-Seater Car View (VIP)</option>
+                  <option value="14">14-Seater Car View (Standard)</option>
+                  <option value="16">16-Seater Car View (Maxi)</option>
                 </select>
               </div>
             </div>
@@ -304,7 +303,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-800 font-medium border border-emerald-200/60 text-[11px]">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                <span>Instant M-Pesa STK</span>
+                <span>M-Pesa & Cash Booking</span>
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-blue-800 font-medium border border-blue-200/60 text-[11px]">
                 <Clock className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />

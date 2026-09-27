@@ -153,7 +153,7 @@ export interface Booking {
   totalFareKsh: number;
   bookingStatus: BookingStatus;
   paymentStatus: PaymentStatus;
-  paymentMethod: 'MPESA';
+  paymentMethod: 'MPESA' | 'CASH';
   mpesaTransactionCode?: string;
   createdAt: string;
 }
@@ -162,7 +162,7 @@ export interface PaymentRecord {
   id: string;
   bookingReference: string;
   amountKsh: number;
-  paymentMethod: 'MPESA';
+  paymentMethod: 'MPESA' | 'CASH';
   status: PaymentStatus;
   transactionReference: string;
   phone: string;

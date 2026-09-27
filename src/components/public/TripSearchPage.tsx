@@ -16,13 +16,14 @@ import {
 } from 'lucide-react';
 import { Trip, Route } from '../../types';
 import { ApiService } from '../../services/api';
+import { DatePicker } from '../common/DatePicker';
 
 interface TripSearchPageProps {
-  onSelectTrip: (trip: Trip) => void;
+  onSelectTrip: (trip: Trip, chosenCarSeatView?: 11 | 14 | 16) => void;
   defaultOrigin?: string;
   defaultDestination?: string;
   defaultDate?: string;
-  defaultPassengers?: number;
+  defaultCarSeatView?: 11 | 14 | 16 | null;
 }
 
 export const TripSearchPage: React.FC<TripSearchPageProps> = ({
@@ -30,12 +31,11 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
   defaultOrigin = '',
   defaultDestination = '',
   defaultDate = '',
-  defaultPassengers = 1,
+  defaultCarSeatView = null,
 }) => {
   const [origin, setOrigin] = React.useState(defaultOrigin);
   const [destination, setDestination] = React.useState(defaultDestination);
   const [travelDate, setTravelDate] = React.useState(defaultDate || new Date().toISOString().split('T')[0]);
-  const [passengers, setPassengers] = React.useState(defaultPassengers);
 
   const [trips, setTrips] = React.useState<Trip[]>([]);
   const [routes, setRoutes] = React.useState<Route[]>([]);
@@ -45,7 +45,15 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
   // Filters
   const [showMobileFilters, setShowMobileFilters] = React.useState(false);
   const [timeFilter, setTimeFilter] = React.useState<'ALL' | 'MORNING' | 'AFTERNOON' | 'NIGHT'>('ALL');
-  const [serviceTypeFilter, setServiceTypeFilter] = React.useState<string>('ALL');
+  const [serviceTypeFilter, setServiceTypeFilter] = React.useState<string>(
+    defaultCarSeatView === 11
+      ? 'hiace-11'
+      : defaultCarSeatView === 14
+      ? 'hiace-14'
+      : defaultCarSeatView === 16
+      ? 'hiace-16'
+      : 'ALL'
+  );
   const [maxPrice, setMaxPrice] = React.useState<number>(3000);
   const [onlyAvailable, setOnlyAvailable] = React.useState(true);
 
@@ -173,35 +181,31 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
             <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
               Date
             </label>
-            <div className="relative">
-              <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-              <input
-                id="search-date"
-                type="date"
-                value={travelDate}
-                onChange={(e) => setTravelDate(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all cursor-pointer"
-              />
-            </div>
+            <DatePicker
+              id="search-date"
+              value={travelDate}
+              onChange={(date) => setTravelDate(date)}
+              variant="dark"
+            />
           </div>
 
-          {/* Passengers */}
+          {/* Car Seat View */}
           <div>
             <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-              Passengers
+              Car Seat View
             </label>
             <div className="relative">
-              <Users className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <Bus className="w-4 h-4 text-amber-400 absolute left-3.5 top-3" />
               <select
-                value={passengers}
-                onChange={(e) => setPassengers(Number(e.target.value))}
+                id="search-car-view"
+                value={serviceTypeFilter}
+                onChange={(e) => setServiceTypeFilter(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:ring-2 focus:ring-amber-400 focus:outline-none transition-all cursor-pointer"
               >
-                {[1, 2, 3, 4, 5, 6].map((num) => (
-                  <option key={num} value={num}>
-                    {num} {num === 1 ? 'Passenger' : 'Passengers'}
-                  </option>
-                ))}
+                <option value="ALL">All Car Seat Views</option>
+                <option value="hiace-11">11-Seater Car View (11 Seats)</option>
+                <option value="hiace-14">14-Seater Car View (14 Seats)</option>
+                <option value="hiace-16">16-Seater Car View (16 Seats)</option>
               </select>
             </div>
           </div>
@@ -449,7 +453,21 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
                           {trip.availableSeats}/{trip.totalSeats} seats open
                         </span>
                         <button
-                          onClick={() => onSelectTrip(trip)}
+                          onClick={() => {
+                            const chosenCap: 11 | 14 | 16 =
+                              serviceTypeFilter === 'hiace-11'
+                                ? 11
+                                : serviceTypeFilter === 'hiace-14'
+                                ? 14
+                                : serviceTypeFilter === 'hiace-16'
+                                ? 16
+                                : trip.vehicle.seatingCapacity === 11
+                                ? 11
+                                : trip.vehicle.seatingCapacity === 16
+                                ? 16
+                                : 14;
+                            onSelectTrip(trip, chosenCap);
+                          }}
                           disabled={trip.availableSeats === 0}
                           className="craft-btn-amber text-xs py-2 px-3.5 sm:px-4 w-full flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed min-h-[40px]"
                         >

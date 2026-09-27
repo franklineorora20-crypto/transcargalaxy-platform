@@ -366,12 +366,18 @@ function darajaTimestamp() {
 function markBookingPaid(
   booking: Booking,
   mpesaCode: string,
+  method?: 'MPESA' | 'CASH',
 ) {
   if (booking.paymentStatus === 'PAID') return;
 
   booking.paymentStatus = 'PAID';
   booking.bookingStatus = 'CONFIRMED';
+  if (method) {
+    booking.paymentMethod = method;
+  }
   booking.mpesaTransactionCode = mpesaCode;
+
+  const channelLabel = booking.paymentMethod === 'CASH' ? `Cash (${mpesaCode})` : `M-Pesa ${mpesaCode}`;
 
   revenues.unshift({
     id: `rev-${Date.now()}`,
@@ -382,7 +388,7 @@ function markBookingPaid(
     routeDestination: booking.routeDestination,
     vehicleRegistration: booking.busRegistration,
     tripCode: booking.tripCode,
-    description: `Ticket sale ref ${booking.bookingReference} (${booking.passengers.length} passenger(s)) via M-Pesa ${mpesaCode}`,
+    description: `Ticket sale ref ${booking.bookingReference} (${booking.passengers.length} passenger(s)) via ${channelLabel}`,
   });
 }
 
@@ -1155,6 +1161,7 @@ app.post('/api/bookings', limiter, (req, res) => {
     emergencyContactName,
     emergencyContactPhone,
     paymentMethod = 'MPESA',
+    carSeatView,
     frontendTotal,
   } = req.body;
 
@@ -1170,10 +1177,10 @@ app.post('/api/bookings', limiter, (req, res) => {
     });
   }
 
-  if (paymentMethod !== 'MPESA') {
+  if (paymentMethod !== 'MPESA' && paymentMethod !== 'CASH') {
     return res.status(400).json({
       error:
-        'Card not supported yet. M-Pesa is the only available payment method.',
+        'Invalid payment method. Please select M-Pesa or Cash.',
     });
   }
 
@@ -1194,6 +1201,22 @@ app.post('/api/bookings', limiter, (req, res) => {
         .trim()
         .toUpperCase(),
     );
+
+  const carSeatViewMap: Record<number, string[]> = {
+    11: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C'],
+    14: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3C', '4A', '4B', '4C', '4D'],
+    16: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '5A', '5B', '5C', '5D'],
+  };
+
+  if (carSeatView && carSeatViewMap[Number(carSeatView)]) {
+    const allowedInView = carSeatViewMap[Number(carSeatView)];
+    const invalidForView = requestedSeatNumbers.filter((s: string) => !allowedInView.includes(s));
+    if (invalidForView.length > 0) {
+      return res.status(400).json({
+        error: `Seat(s) ${invalidForView.join(', ')} do not belong to the chosen ${carSeatView}-Seater car seat view.`,
+      });
+    }
+  }
 
   const allowedSeatsPattern = /^(P[1-2]|F[1-2]|[1-6][A-D])$/;
   const invalidSeats =
@@ -1676,6 +1699,7 @@ app.post(
       bookingReference,
       checkoutRequestId,
       transactionCode,
+      paymentMethod,
     } = req.body;
 
     const booking = bookings.find(
@@ -1690,9 +1714,21 @@ app.post(
       });
     }
 
+    if (paymentMethod === 'CASH') {
+      const cleanCashRef = transactionCode
+        ? String(transactionCode).trim().toUpperCase()
+        : `CASH-${Math.floor(100000 + Math.random() * 900000)}`;
+      markBookingPaid(booking, cleanCashRef, 'CASH');
+      return res.json({
+        success: true,
+        message: 'Cash payment booking confirmed successfully.',
+        booking,
+      });
+    }
+
     if (transactionCode) {
       const code = String(transactionCode).trim().toUpperCase();
-      if (!/^[A-Z0-9]{8,12}$/.test(code)) {
+      if (!/^[A-Z0-9-]{6,16}$/.test(code)) {
         return res.status(400).json({
           error: 'Invalid M-Pesa transaction code format. Must be 8-12 alphanumeric characters (e.g. QGH8491KLR).',
         });
@@ -1708,7 +1744,7 @@ app.post(
         });
       }
 
-      markBookingPaid(booking, code);
+      markBookingPaid(booking, code, 'MPESA');
       return res.json({
         success: true,
         message: 'M-Pesa payment confirmed successfully.',

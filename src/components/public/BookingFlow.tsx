@@ -18,10 +18,12 @@ import {
   QrCode,
   Copy,
   Check,
+  Banknote,
+  MapPin,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Trip, Booking } from '../../types';
-import { SeatSelector } from './SeatSelector';
+import { SeatSelector, CAR_SEAT_VIEW_SEATS, isValidSeatForCarView } from './SeatSelector';
 import { DigitalTicket } from './DigitalTicket';
 import { ApiService } from '../../services/api';
 import { validatePassengerDetailsOrThrow } from '../../utils/validation';
@@ -55,6 +57,7 @@ const getLocalizedError = (msg: string): string => {
 
 interface BookingFlowProps {
   initialTrip?: Trip | null;
+  initialCarSeatView?: 11 | 14 | 16 | null;
   onDone?: () => void;
   onTrackBus?: (ref: string) => void;
   onOpenDriverPortal?: () => void;
@@ -62,6 +65,7 @@ interface BookingFlowProps {
 
 export const BookingFlow: React.FC<BookingFlowProps> = ({
   initialTrip,
+  initialCarSeatView = null,
   onDone,
   onTrackBus,
   onOpenDriverPortal,
@@ -74,8 +78,9 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
 
   // Seat selection & real-time configuration
   const [selectedSeats, setSelectedSeats] = React.useState<string[]>([]);
-  const [passengersCount, setPassengersCount] = React.useState<number>(1);
-  const [activeChassisCapacity, setActiveChassisCapacity] = React.useState<11 | 14 | 16>(14);
+  const [activeChassisCapacity, setActiveChassisCapacity] = React.useState<11 | 14 | 16>(
+    initialCarSeatView && [11, 14, 16].includes(initialCarSeatView) ? initialCarSeatView : 14
+  );
   const [isSyncingAvailability, setIsSyncingAvailability] = React.useState(false);
   const [lastSyncedAt, setLastSyncedAt] = React.useState<Date>(new Date());
   const [realtimeNotification, setRealtimeNotification] = React.useState<string | null>(null);
@@ -83,11 +88,15 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
   // Dynamic initialization of chassis capacity when selectedTrip changes
   React.useEffect(() => {
     if (selectedTrip) {
-      const cap = selectedTrip.vehicle?.seatingCapacity || selectedTrip.totalSeats;
-      if (cap === 11) setActiveChassisCapacity(11);
-      else if (cap === 16) setActiveChassisCapacity(16);
-      else if (selectedTrip.vehicle?.registrationNumber?.replace(/\s/g, '').toUpperCase() === 'KDE416Q') setActiveChassisCapacity(11);
-      else setActiveChassisCapacity(14);
+      if (initialCarSeatView && [11, 14, 16].includes(initialCarSeatView)) {
+        setActiveChassisCapacity(initialCarSeatView);
+      } else {
+        const cap = selectedTrip.vehicle?.seatingCapacity || selectedTrip.totalSeats;
+        if (cap === 11) setActiveChassisCapacity(11);
+        else if (cap === 16) setActiveChassisCapacity(16);
+        else if (selectedTrip.vehicle?.registrationNumber?.replace(/\s/g, '').toUpperCase() === 'KDE416Q') setActiveChassisCapacity(11);
+        else setActiveChassisCapacity(14);
+      }
 
       // Inject / update dynamic JSON-LD structured data for this corridor
       try {
@@ -193,7 +202,8 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
   const [emergencyContactPhone, setEmergencyContactPhone] = React.useState('');
 
   // Payment state
-  const paymentMethod = 'MPESA' as const;
+  const [paymentMethod, setPaymentMethod] = React.useState<'MPESA' | 'CASH'>('MPESA');
+  const [cashReceiptInput, setCashReceiptInput] = React.useState('');
   const [fareQuote, setFareQuote] = React.useState<{ fare: number; serviceFee: number; total: number } | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = React.useState(false);
   const [paymentStatusText, setPaymentStatusText] = React.useState('');
@@ -217,35 +227,64 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
     }
   }, [initialTrip]);
 
-  // Adjust passengers list when selected seats change
+  // Switch Car Seat View: strictly reset any seats selected from another view
+  const handleCarSeatViewChange = (newCap: 11 | 14 | 16) => {
+    if (newCap === activeChassisCapacity) return;
+    const hadSelectedSeats = selectedSeats.length > 0;
+    setActiveChassisCapacity(newCap);
+    setSelectedSeats([]);
+    setPassengersData([]);
+    if (hadSelectedSeats) {
+      setRealtimeNotification(
+        `Switched to ${newCap}-Seater Car Seat View. Previous seat selections were cleared so you only select seats from this view.`
+      );
+      setTimeout(() => setRealtimeNotification(null), 5000);
+    }
+  };
+
+  // Adjust passengers list when selected seats change — strictly validated against chosen Car Seat View
   const handleSeatToggle = (seatNumber: string) => {
-    // Safety check: Never allow selecting a seat that is already booked in trip
-    if (selectedTrip?.bookedSeatNumbers?.includes(seatNumber)) {
-      setRealtimeNotification(`Seat ${seatNumber} is already booked and unavailable.`);
+    const cleanSeat = String(seatNumber || '').trim().toUpperCase();
+
+    // Enforce that seat belongs to the specific Car Seat View the customer chose
+    if (!isValidSeatForCarView(cleanSeat, activeChassisCapacity)) {
+      setRealtimeNotification(
+        `Seat ${cleanSeat} is not available in the ${activeChassisCapacity}-Seater Car Seat View. Please select a seat from the active ${activeChassisCapacity}-Seater layout.`
+      );
       setTimeout(() => setRealtimeNotification(null), 5000);
       return;
     }
 
-    if (selectedSeats.includes(seatNumber)) {
-      const updated = selectedSeats.filter((s) => s !== seatNumber);
+    // Safety check: Never allow selecting a seat that is already booked in trip
+    if (selectedTrip?.bookedSeatNumbers?.includes(cleanSeat)) {
+      setRealtimeNotification(`Seat ${cleanSeat} is already booked and unavailable.`);
+      setTimeout(() => setRealtimeNotification(null), 5000);
+      return;
+    }
+
+    if (selectedSeats.includes(cleanSeat)) {
+      const updated = selectedSeats.filter((s) => s !== cleanSeat && isValidSeatForCarView(s, activeChassisCapacity));
       setSelectedSeats(updated);
-      setPassengersData((prev) => prev.filter((p) => p.seatNumber !== seatNumber));
+      setPassengersData((prev) =>
+        prev.filter((p) => p.seatNumber !== cleanSeat && isValidSeatForCarView(p.seatNumber, activeChassisCapacity))
+      );
     } else {
-      if (selectedSeats.length >= passengersCount) {
-        setPassengersCount(selectedSeats.length + 1);
-      }
-      const updated = [...selectedSeats, seatNumber];
+      const validExisting = selectedSeats.filter((s) => isValidSeatForCarView(s, activeChassisCapacity));
+      const updated = [...validExisting, cleanSeat];
       setSelectedSeats(updated);
 
       // Add a passenger entry for this seat
-      setPassengersData((prev) => [
-        ...prev,
-        {
-          fullName: prev.length === 0 ? contactName : '',
-          idNumber: '',
-          seatNumber,
-        },
-      ]);
+      setPassengersData((prev) => {
+        const filteredPrev = prev.filter((p) => isValidSeatForCarView(p.seatNumber, activeChassisCapacity));
+        return [
+          ...filteredPrev,
+          {
+            fullName: filteredPrev.length === 0 ? contactName : '',
+            idNumber: '',
+            seatNumber: cleanSeat,
+          },
+        ];
+      });
     }
   };
 
@@ -324,15 +363,19 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
     setPaymentStatusText('Securing your seat reservation...');
 
     try {
+      const validPassengers = passengersData.filter((p) =>
+        CAR_SEAT_VIEW_SEATS[activeChassisCapacity].includes(p.seatNumber)
+      );
       const { booking } = await ApiService.createBooking({
         tripId: selectedTrip.id,
-        passengers: passengersData,
+        passengers: validPassengers,
         contactName,
         contactPhone,
         contactEmail,
         emergencyContactName,
         emergencyContactPhone,
         paymentMethod,
+        carSeatView: activeChassisCapacity,
         frontendTotal: fareQuote?.total,
       });
 
@@ -340,7 +383,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
       setStep(3);
       toast.info(
         'Seat Reservation Held',
-        `Booking reference ${booking.bookingReference} reserved for 10 minutes. Complete M-Pesa payment to confirm.`
+        `Booking reference ${booking.bookingReference} reserved for 10 minutes. Choose M-Pesa or Pay in Cash to confirm.`
       );
     } catch (err: any) {
       const errMsg = getLocalizedError(err.message || 'Could not secure seat reservation.');
@@ -432,6 +475,49 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
     setMpesaCodeInput(finalCode);
     setPaymentError(null);
     toast.info('Demo M-Pesa Code Filled', `Sample transaction code ${finalCode} populated.`);
+  };
+
+  // Confirm booking via Cash Payment at Stage / Boarding
+  const handleConfirmCashPayment = async () => {
+    if (!activeBooking) {
+      const msg = getLocalizedError('Booking reservation not found. Please try again.');
+      setPaymentError(msg);
+      toast.error('Booking Not Found', msg);
+      return;
+    }
+
+    const receiptCode = cashReceiptInput.trim().toUpperCase() || `CASH-STAGE-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    setIsProcessingPayment(true);
+    setPaymentError(null);
+    setPaymentStatusText('Confirming Cash Payment reservation...');
+
+    try {
+      const res = await ApiService.verifyPayment({
+        bookingReference: activeBooking.bookingReference,
+        transactionCode: receiptCode,
+        paymentMethod: 'CASH',
+      });
+
+      if (res.success && res.booking) {
+        setConfirmedBooking(res.booking);
+        setStep(4);
+        toast.success(
+          'Booking Confirmed',
+          `Cash booking ${res.booking.bookingReference} (${res.booking.routeOrigin} → ${res.booking.routeDestination}) confirmed.`
+        );
+      } else {
+        const msg = getLocalizedError(res.message || 'Cash booking confirmation could not be completed.');
+        setPaymentError(msg);
+        toast.error('Confirmation Incomplete', msg);
+      }
+    } catch (err: any) {
+      const msg = getLocalizedError(err.message || 'Failed to confirm Cash booking.');
+      setPaymentError(msg);
+      toast.error('Confirmation Failed', msg);
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   if (confirmedBooking) {
@@ -593,19 +679,11 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                 <span className="hidden sm:inline">Sync Seats</span>
               </button>
 
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-bold text-amber-400">Passengers:</label>
-                <select
-                  value={passengersCount}
-                  onChange={(e) => setPassengersCount(Number(e.target.value))}
-                  className="bg-neutral-900 border border-neutral-700 text-white font-bold text-xs rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-amber-400 focus:outline-none"
-                >
-                  {[1, 2, 3, 4, 5, 6].map((n) => (
-                    <option key={n} value={n}>
-                      {n} {n === 1 ? 'Seat' : 'Seats'}
-                    </option>
-                  ))}
-                </select>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-neutral-900 border border-neutral-700 text-xs font-bold">
+                <span className="text-amber-400">{activeChassisCapacity}-Seater View:</span>
+                <span className="text-white font-mono">
+                  {selectedSeats.length} {selectedSeats.length === 1 ? 'Seat' : 'Seats'} Selected
+                </span>
               </div>
             </div>
           </div>
@@ -614,9 +692,8 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
             trip={selectedTrip}
             selectedSeats={selectedSeats}
             onSeatToggle={handleSeatToggle}
-            maxSeats={passengersCount}
             configCapacity={activeChassisCapacity}
-            onConfigChange={(newCap) => setActiveChassisCapacity(newCap)}
+            onConfigChange={handleCarSeatViewChange}
             isSyncing={isSyncingAvailability}
             onRefreshAvailability={() => syncTripAvailability(selectedTrip.id, true)}
             lastSyncedAt={lastSyncedAt}
@@ -860,7 +937,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
         </div>
       )}
 
-      {/* STEP 3: M-Pesa Payment via Confirmation Code */}
+      {/* STEP 3: Payment (M-Pesa or Pay in Cash) */}
       {step === 3 && selectedTrip && (
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-2xl border-2 border-neutral-200 shadow-sm space-y-5">
@@ -870,7 +947,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                   Booking Reference: {activeBooking?.bookingReference || 'TRP-PENDING'}
                 </span>
                 <h3 className="text-lg font-black text-black">
-                  Lipa na M-Pesa Payment
+                  {paymentMethod === 'MPESA' ? 'Lipa na M-Pesa Payment' : 'Pay in Cash at Stage / Boarding'}
                 </h3>
               </div>
               <div className="text-left sm:text-right">
@@ -881,6 +958,100 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                 <p className="text-[11px] text-neutral-500 font-medium mt-1">
                   All fares inclusive of 16% Statutory VAT as per Kenya Tax Laws
                 </p>
+              </div>
+            </div>
+
+            {/* Payment Method Selector Tabs (M-Pesa vs Pay in Cash) */}
+            <div>
+              <span className="text-[11px] font-black uppercase tracking-wider text-neutral-600 block mb-2">
+                Select Payment Method
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  id="pay-method-mpesa-btn"
+                  onClick={() => {
+                    setPaymentMethod('MPESA');
+                    setPaymentError(null);
+                  }}
+                  className={`p-3.5 rounded-xl border-2 text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
+                    paymentMethod === 'MPESA'
+                      ? 'bg-[#0A0A0A] text-white border-[#FFC300] shadow-md'
+                      : 'bg-neutral-50 text-neutral-800 border-neutral-200 hover:border-neutral-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center font-black flex-shrink-0 ${
+                        paymentMethod === 'MPESA'
+                          ? 'bg-[#FFC300] text-[#0A0A0A]'
+                          : 'bg-neutral-200 text-neutral-700'
+                      }`}
+                    >
+                      <Phone className="w-5 h-5 stroke-[2.5]" />
+                    </div>
+                    <div>
+                      <span className="text-xs sm:text-sm font-black block">Lipa na M-Pesa</span>
+                      <span
+                        className={`text-[11px] block ${
+                          paymentMethod === 'MPESA' ? 'text-neutral-300' : 'text-neutral-500'
+                        }`}
+                      >
+                        Paybill 400200 • Instant SMS Verification
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                      paymentMethod === 'MPESA' ? 'border-[#FFC300] bg-[#FFC300] text-[#0A0A0A]' : 'border-neutral-300'
+                    }`}
+                  >
+                    {paymentMethod === 'MPESA' && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  id="pay-method-cash-btn"
+                  onClick={() => {
+                    setPaymentMethod('CASH');
+                    setPaymentError(null);
+                  }}
+                  className={`p-3.5 rounded-xl border-2 text-left flex items-center justify-between gap-3 transition-all cursor-pointer ${
+                    paymentMethod === 'CASH'
+                      ? 'bg-[#0A0A0A] text-white border-[#FFC300] shadow-md'
+                      : 'bg-neutral-50 text-neutral-800 border-neutral-200 hover:border-neutral-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center font-black flex-shrink-0 ${
+                        paymentMethod === 'CASH'
+                          ? 'bg-[#FFC300] text-[#0A0A0A]'
+                          : 'bg-neutral-200 text-neutral-700'
+                      }`}
+                    >
+                      <Banknote className="w-5 h-5 stroke-[2.5]" />
+                    </div>
+                    <div>
+                      <span className="text-xs sm:text-sm font-black block">Pay in Cash</span>
+                      <span
+                        className={`text-[11px] block ${
+                          paymentMethod === 'CASH' ? 'text-neutral-300' : 'text-neutral-500'
+                        }`}
+                      >
+                        Pay KES at Stage Counter or Boarding
+                      </span>
+                    </div>
+                  </div>
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                      paymentMethod === 'CASH' ? 'border-[#FFC300] bg-[#FFC300] text-[#0A0A0A]' : 'border-neutral-300'
+                    }`}
+                  >
+                    {paymentMethod === 'CASH' && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
+                </button>
               </div>
             </div>
 
@@ -906,145 +1077,253 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
               </div>
             </div>
 
-            {/* Official M-Pesa Payment Instructions Card */}
-            <div className="p-5 bg-slate-950 text-white rounded-2xl border-2 border-slate-800 space-y-4 shadow-xl">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-xs font-black text-amber-400 uppercase tracking-wider font-mono">
-                    Safaricom Lipa Na M-Pesa Instructions
-                  </span>
-                </div>
-                <span className="text-[10px] font-mono text-slate-400">Official Merchant Paybill</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                {/* Paybill Number */}
-                <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">1. Business No (Paybill)</span>
-                    <span className="font-mono font-black text-amber-400 text-base">400200</span>
+            {paymentMethod === 'MPESA' ? (
+              <>
+                {/* Official M-Pesa Payment Instructions Card */}
+                <div className="p-5 bg-slate-950 text-white rounded-2xl border-2 border-slate-800 space-y-4 shadow-xl">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-xs font-black text-amber-400 uppercase tracking-wider font-mono">
+                        Safaricom Lipa Na M-Pesa Instructions
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-400">Official Merchant Paybill</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy('400200', 'paybill')}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-colors"
-                    title="Copy Paybill Number"
-                  >
-                    {copiedPaybill ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
 
-                {/* Account Number */}
-                <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block">2. Account No</span>
-                    <span className="font-mono font-black text-white text-base block">
-                      867845
-                    </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    {/* Paybill Number */}
+                    <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase block">1. Business No (Paybill)</span>
+                        <span className="font-mono font-black text-amber-400 text-base">400200</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy('400200', 'paybill')}
+                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-colors"
+                        title="Copy Paybill Number"
+                      >
+                        {copiedPaybill ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+
+                    {/* Account Number */}
+                    <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase block">2. Account No</span>
+                        <span className="font-mono font-black text-white text-base block">
+                          867845
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy('867845', 'account')}
+                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-colors"
+                        title="Copy Account Number"
+                      >
+                        {copiedAccount ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+
+                    {/* Exact Amount */}
+                    <div className="p-3 bg-slate-900 rounded-xl border border-slate-800">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase block">3. Amount</span>
+                      <span className="font-mono font-black text-amber-400 text-base">
+                        KES {calculateTotalFare().toLocaleString()}
+                      </span>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy('867845', 'account')}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition-colors"
-                    title="Copy Account Number"
-                  >
-                    {copiedAccount ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
+
+                  {/* Step by step guide */}
+                  <div className="pt-2 text-xs text-slate-300 space-y-1 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
+                    <p className="font-bold text-amber-300 text-[11px]">How to Complete Payment on your phone:</p>
+                    <ol className="list-decimal list-inside space-y-0.5 text-[11px] text-slate-300 font-medium">
+                      <li>Go to M-Pesa on your mobile phone → Select <strong>Lipa na M-Pesa</strong> → <strong>Paybill</strong>.</li>
+                      <li>Enter Business No: <strong className="text-white font-mono">400200</strong> & Account No: <strong className="text-white font-mono">867845</strong>.</li>
+                      <li>Enter Amount: <strong className="text-white font-mono">KES {calculateTotalFare().toLocaleString()}</strong> and enter your M-Pesa PIN.</li>
+                      <li>You will receive an SMS confirmation from <strong>MPESA</strong> with your 10-character Transaction Code (e.g. <span className="font-mono text-amber-400 font-bold">QGH8491KLR</span>).</li>
+                    </ol>
+                  </div>
                 </div>
 
-                {/* Exact Amount */}
-                <div className="p-3 bg-slate-900 rounded-xl border border-slate-800">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase block">3. Amount</span>
-                  <span className="font-mono font-black text-amber-400 text-base">
-                    KES {calculateTotalFare().toLocaleString()}
-                  </span>
-                </div>
-              </div>
+                {/* Enter M-Pesa Confirmation Code Form */}
+                <div className="p-5 bg-amber-50/70 rounded-2xl border-2 border-amber-300 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <label htmlFor="mpesa-code" className="block text-xs font-black text-slate-950 uppercase tracking-wider">
+                        Enter M-Pesa Transaction Code *
+                      </label>
+                      <p className="text-[11px] text-slate-600">
+                        Type the 10-character code from your Safaricom M-Pesa SMS to confirm your ticket immediately.
+                      </p>
+                    </div>
 
-              {/* Step by step guide */}
-              <div className="pt-2 text-xs text-slate-300 space-y-1 bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
-                <p className="font-bold text-amber-300 text-[11px]">How to Complete Payment on your phone:</p>
-                <ol className="list-decimal list-inside space-y-0.5 text-[11px] text-slate-300 font-medium">
-                  <li>Go to M-Pesa on your mobile phone → Select <strong>Lipa na M-Pesa</strong> → <strong>Paybill</strong>.</li>
-                  <li>Enter Business No: <strong className="text-white font-mono">400200</strong> & Account No: <strong className="text-white font-mono">867845</strong>.</li>
-                  <li>Enter Amount: <strong className="text-white font-mono">KES {calculateTotalFare().toLocaleString()}</strong> and enter your M-Pesa PIN.</li>
-                  <li>You will receive an SMS confirmation from <strong>MPESA</strong> with your 10-character Transaction Code (e.g. <span className="font-mono text-amber-400 font-bold">QGH8491KLR</span>).</li>
-                </ol>
-              </div>
-            </div>
+                    {/* Quick Fill Test Code Button */}
+                    <button
+                      type="button"
+                      onClick={handleUseSampleCode}
+                      className="text-xs font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-3 py-1.5 rounded-lg border border-amber-400/80 transition-colors cursor-pointer self-start sm:self-auto"
+                    >
+                      ⚡ Auto-Fill Demo Code
+                    </button>
+                  </div>
 
-            {/* Enter M-Pesa Confirmation Code Form */}
-            <div className="p-5 bg-amber-50/70 rounded-2xl border-2 border-amber-300 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <label htmlFor="mpesa-code" className="block text-xs font-black text-slate-950 uppercase tracking-wider">
-                    Enter M-Pesa Transaction Code *
-                  </label>
-                  <p className="text-[11px] text-slate-600">
-                    Type the 10-character code from your Safaricom M-Pesa SMS to confirm your ticket immediately.
-                  </p>
-                </div>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div className="relative flex-1">
+                      <input
+                        id="mpesa-code"
+                        type="text"
+                        required
+                        maxLength={12}
+                        placeholder="e.g. QGH8491KLR"
+                        value={mpesaCodeInput}
+                        onChange={(e) => {
+                          setMpesaCodeInput(e.target.value.toUpperCase());
+                          setPaymentError(null);
+                        }}
+                        className="w-full px-4 py-3 text-base sm:text-lg font-mono font-black tracking-widest text-slate-950 bg-white border-2 border-amber-400 rounded-xl focus:ring-3 focus:ring-amber-400/40 focus:outline-none placeholder:text-slate-400 uppercase shadow-inner"
+                      />
+                    </div>
 
-                {/* Quick Fill Test Code Button */}
-                <button
-                  type="button"
-                  onClick={handleUseSampleCode}
-                  className="text-xs font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-3 py-1.5 rounded-lg border border-amber-400/80 transition-colors cursor-pointer self-start sm:self-auto"
-                >
-                  ⚡ Auto-Fill Demo Code
-                </button>
-              </div>
+                    <button
+                      type="button"
+                      id="confirm-mpesa-code-btn"
+                      disabled={isProcessingPayment || !mpesaCodeInput.trim()}
+                      onClick={handleVerifyMpesaCode}
+                      className={`px-6 py-3 rounded-xl font-black text-sm shadow-md flex items-center justify-center gap-2 transition-all min-h-[48px] ${
+                        mpesaCodeInput.trim() && !isProcessingPayment
+                          ? 'bg-slate-950 hover:bg-slate-900 text-amber-400 border-2 border-slate-950 cursor-pointer hover:shadow-lg'
+                          : 'bg-neutral-300 text-neutral-500 cursor-not-allowed border-2 border-neutral-300'
+                      }`}
+                    >
+                      {isProcessingPayment ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                          <span>{paymentStatusText || 'Verifying Code...'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck className="w-5 h-5 text-amber-400" />
+                          <span>Verify Code & Confirm Booking</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
 
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <div className="relative flex-1">
-                  <input
-                    id="mpesa-code"
-                    type="text"
-                    required
-                    maxLength={12}
-                    placeholder="e.g. QGH8491KLR"
-                    value={mpesaCodeInput}
-                    onChange={(e) => {
-                      setMpesaCodeInput(e.target.value.toUpperCase());
-                      setPaymentError(null);
-                    }}
-                    className="w-full px-4 py-3 text-base sm:text-lg font-mono font-black tracking-widest text-slate-950 bg-white border-2 border-amber-400 rounded-xl focus:ring-3 focus:ring-amber-400/40 focus:outline-none placeholder:text-slate-400 uppercase shadow-inner"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  id="confirm-mpesa-code-btn"
-                  disabled={isProcessingPayment || !mpesaCodeInput.trim()}
-                  onClick={handleVerifyMpesaCode}
-                  className={`px-6 py-3 rounded-xl font-black text-sm shadow-md flex items-center justify-center gap-2 transition-all min-h-[48px] ${
-                    mpesaCodeInput.trim() && !isProcessingPayment
-                      ? 'bg-slate-950 hover:bg-slate-900 text-amber-400 border-2 border-slate-950 cursor-pointer hover:shadow-lg'
-                      : 'bg-neutral-300 text-neutral-500 cursor-not-allowed border-2 border-neutral-300'
-                  }`}
-                >
-                  {isProcessingPayment ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
-                      <span>{paymentStatusText || 'Verifying Code...'}</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShieldCheck className="w-5 h-5 text-amber-400" />
-                      <span>Verify Code & Confirm Booking</span>
-                    </>
+                  {paymentError && (
+                    <div className="p-3 bg-rose-900/90 border border-rose-600 text-rose-100 text-xs rounded-xl flex items-center gap-2 animate-in fade-in">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+                      <span>{paymentError}</span>
+                    </div>
                   )}
-                </button>
-              </div>
-
-              {paymentError && (
-                <div className="p-3 bg-rose-900/90 border border-rose-600 text-rose-100 text-xs rounded-xl flex items-center gap-2 animate-in fade-in">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
-                  <span>{paymentError}</span>
                 </div>
-              )}
-            </div>
+              </>
+            ) : (
+              <>
+                {/* Official Cash Payment Instructions Card */}
+                <div className="p-5 bg-[#0A0A0A] text-white rounded-2xl border-2 border-neutral-800 space-y-4 shadow-xl">
+                  <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+                    <div className="flex items-center gap-2">
+                      <Banknote className="w-4 h-4 text-[#FFC300]" />
+                      <span className="text-xs font-black text-[#FFC300] uppercase tracking-wider font-mono">
+                        Stage Counter & Boarding Cash Payment
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono text-neutral-400">Official Cash Desk</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div className="p-3 bg-neutral-900 rounded-xl border border-neutral-800">
+                      <span className="text-[10px] font-bold text-neutral-400 uppercase block">1. Booking Reference</span>
+                      <span className="font-mono font-black text-[#FFC300] text-base">
+                        {activeBooking?.bookingReference || 'TRP-CASH'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-neutral-900 rounded-xl border border-neutral-800">
+                      <span className="text-[10px] font-bold text-neutral-400 uppercase block">2. Departure Stage</span>
+                      <span className="font-black text-white text-sm flex items-center gap-1 mt-0.5">
+                        <MapPin className="w-3.5 h-3.5 text-[#FFC300] flex-shrink-0" />
+                        <span className="truncate">{selectedTrip.route.origin} Terminal</span>
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-neutral-900 rounded-xl border border-neutral-800">
+                      <span className="text-[10px] font-bold text-neutral-400 uppercase block">3. Cash Due</span>
+                      <span className="font-mono font-black text-[#FFC300] text-base">
+                        KES {calculateTotalFare().toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 text-xs text-neutral-300 space-y-1 bg-neutral-900/80 p-3 rounded-xl border border-neutral-800">
+                    <p className="font-bold text-[#FFC300] text-[11px]">How to Complete Cash Payment:</p>
+                    <ol className="list-decimal list-inside space-y-0.5 text-[11px] text-neutral-300 font-medium">
+                      <li>Confirm your cash reservation below to generate your official boarding pass.</li>
+                      <li>Report to the <strong>{selectedTrip.route.origin} Stage Booking Desk</strong> at least <strong>30 minutes</strong> before departure.</li>
+                      <li>Present your Booking Reference (<strong className="text-white font-mono">{activeBooking?.bookingReference}</strong>) and pay <strong className="text-white font-mono">KES {calculateTotalFare().toLocaleString()}</strong> in cash to the Station Agent or Captain.</li>
+                    </ol>
+                  </div>
+                </div>
+
+                {/* Confirm Cash Booking Box */}
+                <div className="p-5 bg-amber-50/70 rounded-2xl border-2 border-amber-300 space-y-4">
+                  <div>
+                    <label htmlFor="cash-receipt-input" className="block text-xs font-black text-slate-950 uppercase tracking-wider">
+                      Stage Cash Receipt Number (Optional)
+                    </label>
+                    <p className="text-[11px] text-slate-600">
+                      If you have already paid cash at the stage desk, enter your receipt number below—or leave blank to pay upon arrival at the stage.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div className="relative flex-1">
+                      <input
+                        id="cash-receipt-input"
+                        type="text"
+                        maxLength={16}
+                        placeholder="Optional: e.g. CASH-4821 (or leave blank to pay at stage)"
+                        value={cashReceiptInput}
+                        onChange={(e) => {
+                          setCashReceiptInput(e.target.value.toUpperCase());
+                          setPaymentError(null);
+                        }}
+                        className="w-full px-4 py-3 text-sm font-mono font-bold text-slate-950 bg-white border-2 border-amber-400 rounded-xl focus:ring-3 focus:ring-amber-400/40 focus:outline-none placeholder:text-slate-400 uppercase shadow-inner"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      id="confirm-cash-booking-btn"
+                      disabled={isProcessingPayment}
+                      onClick={handleConfirmCashPayment}
+                      className="px-6 py-3 rounded-xl font-black text-sm shadow-md flex items-center justify-center gap-2 transition-all min-h-[48px] bg-[#0A0A0A] hover:bg-neutral-900 text-[#FFC300] border-2 border-[#0A0A0A] cursor-pointer hover:shadow-lg"
+                    >
+                      {isProcessingPayment ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-[#FFC300]" />
+                          <span>{paymentStatusText || 'Confirming...'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Banknote className="w-5 h-5 text-[#FFC300]" />
+                          <span>Confirm Cash Booking & Get Ticket</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {paymentError && (
+                    <div className="p-3 bg-rose-900/90 border border-rose-600 text-rose-100 text-xs rounded-xl flex items-center gap-2 animate-in fade-in">
+                      <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+                      <span>{paymentError}</span>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Navigation Controls */}

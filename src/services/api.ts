@@ -151,7 +151,8 @@ export class ApiService {
     contactEmail: string;
     emergencyContactName?: string;
     emergencyContactPhone?: string;
-    paymentMethod?: 'MPESA';
+    paymentMethod?: 'MPESA' | 'CASH';
+    carSeatView?: 11 | 14 | 16;
     frontendTotal?: number;
   }): Promise<{ message: string; booking: Booking }> {
     const res = await fetch(`${API_BASE}/bookings`, {
@@ -189,7 +190,12 @@ export class ApiService {
     return data;
   }
 
-  static async verifyPayment(payload: { bookingReference: string; checkoutRequestId?: string; transactionCode?: string }) {
+  static async verifyPayment(payload: {
+    bookingReference: string;
+    checkoutRequestId?: string;
+    transactionCode?: string;
+    paymentMethod?: 'MPESA' | 'CASH';
+  }) {
     const res = await fetch(`${API_BASE}/payments/verify`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -197,6 +203,9 @@ export class ApiService {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Payment confirmation failed');
+    if (data.booking) {
+      ApiService.cacheBookingLocally(data.booking);
+    }
     return data;
   }
 

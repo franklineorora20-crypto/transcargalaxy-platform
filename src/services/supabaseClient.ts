@@ -130,7 +130,7 @@ export interface DbBooking {
   total_fare_ksh: number;
   booking_status: 'CONFIRMED' | 'CHECKED_IN' | 'CANCELLED' | 'REFUNDED' | 'PENDING_PAYMENT';
   payment_status: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED' | 'CANCELLED';
-  payment_method: 'MPESA';
+  payment_method: 'MPESA' | 'CASH';
   mpesa_transaction_code?: string;
   pickup_point?: string;
   dropoff_point?: string;

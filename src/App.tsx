@@ -35,7 +35,7 @@ export default function App() {
   const [searchOrigin, setSearchOrigin] = React.useState('');
   const [searchDestination, setSearchDestination] = React.useState('');
   const [searchDate, setSearchDate] = React.useState('');
-  const [searchPassengers, setSearchPassengers] = React.useState(1);
+  const [searchCarSeatView, setSearchCarSeatView] = React.useState<11 | 14 | 16 | null>(null);
 
   React.useEffect(() => {
     ApiService.getRoutes()
@@ -127,16 +127,27 @@ export default function App() {
     setCurrentView('manager-portal');
   };
 
-  const handleStartSearch = (origin?: string, destination?: string, date?: string, passengers?: number) => {
+  const handleStartSearch = (
+    origin?: string,
+    destination?: string,
+    date?: string,
+    carSeatView?: 11 | 14 | 16 | null
+  ) => {
     if (origin) setSearchOrigin(origin);
     if (destination) setSearchDestination(destination);
     if (date) setSearchDate(date);
-    if (passengers) setSearchPassengers(passengers);
+    setSearchCarSeatView(carSeatView ?? null);
     setCurrentView('search');
   };
 
-  const handleSelectTripForBooking = (trip: Trip) => {
+  const handleSelectTripForBooking = (trip: Trip, chosenCarSeatView?: 11 | 14 | 16) => {
     setSelectedTripForBooking(trip);
+    if (chosenCarSeatView) {
+      setSearchCarSeatView(chosenCarSeatView);
+    } else {
+      const cap = trip.vehicle?.seatingCapacity || trip.totalSeats;
+      setSearchCarSeatView(cap === 11 ? 11 : cap === 16 ? 16 : 14);
+    }
     setCurrentView('booking');
   };
 
@@ -187,7 +198,7 @@ export default function App() {
               defaultOrigin={searchOrigin}
               defaultDestination={searchDestination}
               defaultDate={searchDate}
-              defaultPassengers={searchPassengers}
+              defaultCarSeatView={searchCarSeatView}
               onSelectTrip={handleSelectTripForBooking}
             />
           )}
@@ -195,6 +206,7 @@ export default function App() {
           {currentView === 'booking' && (
             <BookingFlow
               initialTrip={selectedTripForBooking}
+              initialCarSeatView={searchCarSeatView}
               onDone={() => setCurrentView('home')}
               onTrackBus={handleTrackBusFromRef}
               onOpenDriverPortal={() => {

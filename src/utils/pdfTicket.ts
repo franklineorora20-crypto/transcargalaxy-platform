@@ -148,7 +148,7 @@ export async function generateTicketPdf(booking: Booking, existingQrDataUrl?: st
 
   doc.setFontSize(10.5);
   doc.setTextColor(16, 185, 129); // Emerald 600
-  doc.text(`PAID (M-PESA)`, margin + 110, y + 13);
+  doc.text(booking.paymentMethod === 'CASH' ? 'PAID (CASH)' : 'PAID (M-PESA)', margin + 110, y + 13);
 
   doc.setFontSize(12);
   doc.setTextColor(15, 23, 42);
@@ -394,16 +394,16 @@ export async function generateTicketPdf(booking: Booking, existingQrDataUrl?: st
   doc.setFontSize(7.5);
   doc.setTextColor(100, 116, 139);
   doc.text('PAYMENT CHANNEL', margin + 6, y + 5.5);
-  doc.text('M-PESA TRANSACTION CODE', margin + 65, y + 5.5);
+  doc.text(booking.paymentMethod === 'CASH' ? 'CASH RECEIPT / REF' : 'M-PESA TRANSACTION CODE', margin + 65, y + 5.5);
   doc.text('CONTACT PHONE', margin + 120, y + 5.5);
   doc.text('TOTAL FARE PAID', pageWidth - margin - 6, y + 5.5, { align: 'right' });
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(15, 23, 42);
-  doc.text('Lipa na M-Pesa', margin + 6, y + 12);
+  doc.text(booking.paymentMethod === 'CASH' ? 'Cash at Stage' : 'Lipa na M-Pesa', margin + 6, y + 12);
 
-  const txnCode = booking.mpesaTransactionCode || (booking as any).mpesaReceiptNumber || 'QGH8491KLR';
+  const txnCode = booking.mpesaTransactionCode || (booking as any).mpesaReceiptNumber || (booking.paymentMethod === 'CASH' ? 'CASH-STAGE' : 'QGH8491KLR');
   doc.setFont('courier', 'bold');
   doc.setFontSize(9.5);
   doc.setTextColor(217, 119, 6);
@@ -423,7 +423,13 @@ export async function generateTicketPdf(booking: Booking, existingQrDataUrl?: st
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(100, 116, 139);
-  doc.text('Paid to Paybill 400200 • Acc: 867845 • Passenger insurance & NTSA road levy included.', margin + 6, y + 18);
+  doc.text(
+    booking.paymentMethod === 'CASH'
+      ? 'Paid in Cash at Official TransCar Stage Counter • Passenger insurance & NTSA road levy included.'
+      : 'Paid to Paybill 400200 • Acc: 867845 • Passenger insurance & NTSA road levy included.',
+    margin + 6,
+    y + 18
+  );
 
   // =========================================================================
   // 7. OFFLINE TRAVEL INSTRUCTIONS & PASSENGER NOTICE

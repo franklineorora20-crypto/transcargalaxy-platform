@@ -306,17 +306,32 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
             {/* Verified Payment Summary */}
             <div className="pt-2.5 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs">
               <div className="text-slate-600 text-[11px] space-y-0.5">
-                <p>
-                  <strong>Paybill:</strong> 400200 • <strong>Acc:</strong> 867845
-                </p>
-                {booking.mpesaTransactionCode && (
-                  <p className="font-mono text-slate-500">
-                    M-Pesa Ref: <strong className="text-slate-900">{booking.mpesaTransactionCode}</strong>
-                  </p>
+                {booking.paymentMethod === 'CASH' ? (
+                  <>
+                    <p>
+                      <strong>Payment Channel:</strong> Cash at Stage / Counter
+                    </p>
+                    {booking.mpesaTransactionCode && (
+                      <p className="font-mono text-slate-500">
+                        Cash Ref: <strong className="text-slate-900">{booking.mpesaTransactionCode}</strong>
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      <strong>Paybill:</strong> 400200 • <strong>Acc:</strong> 867845
+                    </p>
+                    {booking.mpesaTransactionCode && (
+                      <p className="font-mono text-slate-500">
+                        M-Pesa Ref: <strong className="text-slate-900">{booking.mpesaTransactionCode}</strong>
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
               <div className="text-right">
-                <span className="text-slate-500 text-[11px]">Total Paid: </span>
+                <span className="text-slate-500 text-[11px]">Total {booking.paymentMethod === 'CASH' ? 'Fare' : 'Paid'}: </span>
                 <span className="text-sm sm:text-base font-black font-mono text-slate-950 bg-amber-300 px-2 py-0.5 rounded border border-amber-400">
                   KES {booking.totalFareKsh.toLocaleString()}
                 </span>

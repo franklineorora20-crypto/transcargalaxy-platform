@@ -1788,7 +1788,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
               <p className="text-2xl font-black text-slate-900 font-mono">
                 KES {summary?.totalRevenueKsh.toLocaleString()}
               </p>
-                      <p className="text-xs text-slate-500">Includes M-Pesa passenger receipts</p>
+              <p className="text-xs text-slate-500">Includes M-Pesa & Cash passenger receipts</p>
             </div>
 
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-2">
@@ -2296,7 +2296,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
               <h3 className="text-xl font-black text-slate-900">All Passenger Bookings</h3>
-              <p className="text-xs text-slate-500">Live reservations, M-Pesa transaction IDs, and refund management.</p>
+              <p className="text-xs text-slate-500">Live reservations, M-Pesa & Cash payment records, and refund management.</p>
             </div>
             <span className="text-xs font-bold text-slate-500">{bookings.length} Total Bookings</span>
           </div>
@@ -2338,7 +2338,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
                             : 'bg-rose-100 text-rose-800'
                         }`}
                       >
-                        {b.paymentStatus}
+                        {b.paymentStatus} ({b.paymentMethod || 'MPESA'})
                       </span>
                     </td>
                     <td className="py-3 px-2 text-right space-x-2">
@@ -3012,9 +3012,11 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
 
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                 <div>
-                  <span className="text-slate-400 block">M-Pesa Trans ID:</span>
+                  <span className="text-slate-400 block">
+                    {selectedBookingForDetails.paymentMethod === 'CASH' ? 'Cash Receipt Ref:' : 'M-Pesa Trans ID:'}
+                  </span>
                   <span className="font-mono font-bold text-slate-800">
-                    {selectedBookingForDetails.mpesaTransactionCode || 'N/A'}
+                    {selectedBookingForDetails.mpesaTransactionCode || 'N/A'} ({selectedBookingForDetails.paymentMethod || 'MPESA'})
                   </span>
                 </div>
                 <div className="text-right">
