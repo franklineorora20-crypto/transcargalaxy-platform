@@ -1,4 +1,4 @@
-const CACHE_NAME = 'transcar-v2';
+const CACHE_NAME = 'transcar-v3';
 const STATIC_ASSETS = [
   '/',
   '/retrieve-ticket',
@@ -7,7 +7,13 @@ const STATIC_ASSETS = [
   '/offline.html',
   '/index.html',
   '/manifest.json',
-  '/favicon.svg'
+  '/favicon.svg',
+  '/favicon.ico',
+  '/icons/favicon.ico',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/icon-512-3d.png',
+  '/icons/icon-maskable-512.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -56,13 +62,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Images: Cache First Strategy
+  // 2. Images & Icons: Cache First Strategy
   if (
     request.destination === 'image' ||
     url.pathname.startsWith('/images/') ||
+    url.pathname.startsWith('/icons/') ||
     url.pathname.endsWith('.webp') ||
     url.pathname.endsWith('.jpg') ||
     url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.ico') ||
     url.pathname.endsWith('.svg')
   ) {
     event.respondWith(
@@ -78,7 +86,7 @@ self.addEventListener('fetch', (event) => {
             }
             return networkResponse;
           })
-          .catch(() => caches.match('/favicon.svg'));
+          .catch(() => caches.match('/icons/icon-192.png'));
       })
     );
     return;
@@ -113,7 +121,7 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => {
           return caches.match(request).then((cached) => {
-            return cached || caches.match('/index.html').then((index) => index || caches.match('/offline.html'));
+            return cached || caches.match('/offline.html').then((offline) => offline || caches.match('/index.html'));
           });
         })
     );

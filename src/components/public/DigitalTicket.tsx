@@ -20,6 +20,7 @@ import {
 import { Booking } from '../../types';
 import { MobileBoardingPassModal } from './MobileBoardingPassModal';
 import { generateTicketPdf } from '../../utils/pdfTicket';
+import { useToast } from '../common/Toast';
 
 interface DigitalTicketProps {
   booking: Booking;
@@ -34,6 +35,7 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
   onDone,
   onOpenDriverPortal,
 }) => {
+  const toast = useToast();
   const [qrDataUrl, setQrDataUrl] = React.useState<string>('');
   const [copied, setCopied] = React.useState(false);
   const [showMobilePassModal, setShowMobilePassModal] = React.useState(false);
@@ -74,9 +76,10 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
     setIsDownloadingPdf(true);
     try {
       await generateTicketPdf(booking, qrDataUrl || undefined);
+      toast.success('Boarding Pass Downloaded', `Saved PDF ticket for ${booking.bookingReference}.`);
     } catch (err) {
       console.error('Error generating PDF ticket:', err);
-      alert('Unable to generate PDF. Please try again.');
+      toast.error('PDF Generation Error', 'Unable to generate PDF ticket. Please try again.');
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -86,6 +89,7 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
     navigator.clipboard.writeText(booking.bookingReference);
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);
+    toast.success('Copied to Clipboard', `Booking reference ${booking.bookingReference} copied.`);
   };
 
   const formattedDate = new Date(booking.departureTime).toLocaleDateString('en-KE', {

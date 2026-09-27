@@ -25,6 +25,7 @@ import { SeatSelector } from './SeatSelector';
 import { DigitalTicket } from './DigitalTicket';
 import { ApiService } from '../../services/api';
 import { validatePassengerDetailsOrThrow } from '../../utils/validation';
+import { useToast } from '../common/Toast';
 
 const errorMap: Record<string, { en: string; sw: string }> = {
   timeout: { en: 'Payment timed out. Please try again.', sw: 'Malipo yamechelewa, tafadhali jaribu tena.' },
@@ -65,6 +66,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
   onTrackBus,
   onOpenDriverPortal,
 }) => {
+  const toast = useToast();
   const [step, setStep] = React.useState<number>(initialTrip ? 1 : 0);
   const [selectedTrip, setSelectedTrip] = React.useState<Trip | null>(initialTrip || null);
   const [availableTrips, setAvailableTrips] = React.useState<Trip[]>([]);
@@ -336,8 +338,14 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
 
       setActiveBooking(booking);
       setStep(3);
+      toast.info(
+        'Seat Reservation Held',
+        `Booking reference ${booking.bookingReference} reserved for 10 minutes. Complete M-Pesa payment to confirm.`
+      );
     } catch (err: any) {
-      setPaymentError(getLocalizedError(err.message || 'Could not secure seat reservation.'));
+      const errMsg = getLocalizedError(err.message || 'Could not secure seat reservation.');
+      setPaymentError(errMsg);
+      toast.error('Reservation Failed', errMsg);
       // If conflicting seats, alert and return to step 1
       if (err.message && err.message.includes('reserved by another passenger')) {
         setRealtimeNotification(getLocalizedError(err.message));
@@ -353,17 +361,23 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
   const handleVerifyMpesaCode = async () => {
     const code = mpesaCodeInput.trim().toUpperCase();
     if (!code) {
-      setPaymentError(getLocalizedError('Please enter your 10-character M-Pesa confirmation code'));
+      const msg = getLocalizedError('Please enter your 10-character M-Pesa confirmation code');
+      setPaymentError(msg);
+      toast.warning('M-Pesa Code Required', msg);
       return;
     }
 
     if (!/^[A-Z0-9]{8,12}$/.test(code)) {
-      setPaymentError(getLocalizedError('M-Pesa confirmation code must be 8-12 alphanumeric characters (e.g. QGH8491KLR).'));
+      const msg = getLocalizedError('M-Pesa confirmation code must be 8-12 alphanumeric characters (e.g. QGH8491KLR).');
+      setPaymentError(msg);
+      toast.warning('Invalid M-Pesa Code', msg);
       return;
     }
 
     if (!activeBooking) {
-      setPaymentError(getLocalizedError('Booking reservation not found. Please try again.'));
+      const msg = getLocalizedError('Booking reservation not found. Please try again.');
+      setPaymentError(msg);
+      toast.error('Booking Not Found', msg);
       return;
     }
 
@@ -380,11 +394,19 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
       if (res.success && res.booking) {
         setConfirmedBooking(res.booking);
         setStep(4);
+        toast.success(
+          'Booking Confirmed',
+          `Boarding pass ${res.booking.bookingReference} (${res.booking.routeOrigin} → ${res.booking.routeDestination}) is verified and ready.`
+        );
       } else {
-        setPaymentError(getLocalizedError(res.message || 'Payment verification could not be completed.'));
+        const msg = getLocalizedError(res.message || 'Payment verification could not be completed.');
+        setPaymentError(msg);
+        toast.error('Verification Incomplete', msg);
       }
     } catch (err: any) {
-      setPaymentError(getLocalizedError(err.message || 'Failed to verify M-Pesa code.'));
+      const msg = getLocalizedError(err.message || 'Failed to verify M-Pesa code.');
+      setPaymentError(msg);
+      toast.error('Verification Failed', msg);
     } finally {
       setIsProcessingPayment(false);
     }
@@ -395,17 +417,21 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
     if (type === 'paybill') {
       setCopiedPaybill(true);
       setTimeout(() => setCopiedPaybill(false), 2000);
+      toast.success('Copied to Clipboard', `Paybill Business No. ${text} copied.`);
     } else {
       setCopiedAccount(true);
       setTimeout(() => setCopiedAccount(false), 2000);
+      toast.success('Copied to Clipboard', `Account No. ${text} copied.`);
     }
   };
 
   const handleUseSampleCode = () => {
     const letters = 'QWERTYUPADFGHJKZXCVBNM';
     const randomCode = 'QGH' + Math.floor(1000 + Math.random() * 9000) + letters[Math.floor(Math.random() * letters.length)] + letters[Math.floor(Math.random() * letters.length)] + letters[Math.floor(Math.random() * letters.length)];
-    setMpesaCodeInput(randomCode.toUpperCase());
+    const finalCode = randomCode.toUpperCase();
+    setMpesaCodeInput(finalCode);
     setPaymentError(null);
+    toast.info('Demo M-Pesa Code Filled', `Sample transaction code ${finalCode} populated.`);
   };
 
   if (confirmedBooking) {

@@ -1,8 +1,9 @@
 import React from 'react';
-import { Ticket, Phone, Search, ShieldCheck, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Ticket, Phone, Search, ShieldCheck, AlertCircle, ArrowLeft, Copy } from 'lucide-react';
 import { Booking } from '../../types';
 import { ApiService } from '../../services/api';
 import { DigitalTicket } from './DigitalTicket';
+import { useToast } from '../common/Toast';
 
 interface TicketRetrievalPageProps {
   onBackToHome: () => void;
@@ -13,6 +14,7 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
   onBackToHome,
   onTrackBus,
 }) => {
+  const toast = useToast();
   const [bookingReference, setBookingReference] = React.useState('');
   const [phone, setPhone] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -22,7 +24,9 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
   const handleRetrieve = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bookingReference.trim() || !phone.trim()) {
-      setError('Both Booking Reference and Phone Number are required.');
+      const msg = 'Both Booking Reference and Phone Number are required.';
+      setError(msg);
+      toast.warning('Missing Details', msg);
       return;
     }
 
@@ -32,11 +36,25 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
     try {
       const data = await ApiService.retrieveTicket(bookingReference, phone);
       setRetrievedBooking(data);
+      toast.success(
+        'Booking Confirmed',
+        `Boarding pass ${data.bookingReference} (${data.routeOrigin} → ${data.routeDestination}) retrieved.`
+      );
     } catch (err: any) {
-      setError(err.message || 'No booking matching this reference and phone number was found.');
+      const msg = err.message || 'No booking matching this reference and phone number was found.';
+      setError(msg);
+      toast.error('Ticket Not Found', msg);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFillSampleCredentials = (ref: string, samplePhone: string) => {
+    setBookingReference(ref);
+    setPhone(samplePhone);
+    setError(null);
+    navigator.clipboard?.writeText(ref).catch(() => {});
+    toast.info('Copied to Clipboard', `Filled demo ticket ${ref} (${samplePhone}).`);
   };
 
   if (retrievedBooking) {
@@ -149,8 +167,11 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
                 <button
                   key={saved.id || saved.bookingReference}
                   type="button"
-                  onClick={() => setRetrievedBooking(saved)}
-                  className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center justify-between transition-colors text-xs"
+                  onClick={() => {
+                    setRetrievedBooking(saved);
+                    toast.success('Offline Ticket Loaded', `Boarding pass ${saved.bookingReference} opened.`);
+                  }}
+                  className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center justify-between transition-colors text-xs cursor-pointer"
                 >
                   <div className="min-w-0">
                     <span className="font-mono font-bold text-slate-950 block">{saved.bookingReference}</span>
@@ -168,13 +189,27 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
         )}
 
         {/* Demo Help */}
-        <div className="pt-4 border-t-2 border-neutral-200 text-xs bg-black text-neutral-300 p-4 rounded-2xl border border-neutral-800 space-y-1.5">
+        <div className="pt-4 border-t-2 border-neutral-200 text-xs bg-[#0A0A0A] text-neutral-300 p-4 rounded-2xl border border-neutral-800 space-y-2">
           <p className="font-black text-white flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-amber-400" /> Demo Sample Verification Credentials:
+            <ShieldCheck className="w-4 h-4 text-[#FFC300]" /> Demo Sample Verification Credentials:
           </p>
-          <div className="font-mono text-[11px] space-y-1 text-neutral-300">
-            <p>Reference: <strong className="text-amber-400">TRP-48291</strong> • Phone: <strong className="text-white">0722998877</strong></p>
-            <p>Reference: <strong className="text-amber-400">TRP-91042</strong> • Phone: <strong className="text-white">0701234567</strong></p>
+          <div className="font-mono text-[11px] space-y-1.5 text-neutral-300">
+            <button
+              type="button"
+              onClick={() => handleFillSampleCredentials('TRP-48291', '0722998877')}
+              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-left transition-colors cursor-pointer"
+            >
+              <span>Reference: <strong className="text-[#FFC300]">TRP-48291</strong> • Phone: <strong className="text-white">0722998877</strong></span>
+              <Copy className="w-3.5 h-3.5 text-[#FFC300] flex-shrink-0" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleFillSampleCredentials('TRP-91042', '0701234567')}
+              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-left transition-colors cursor-pointer"
+            >
+              <span>Reference: <strong className="text-[#FFC300]">TRP-91042</strong> • Phone: <strong className="text-white">0701234567</strong></span>
+              <Copy className="w-3.5 h-3.5 text-[#FFC300] flex-shrink-0" />
+            </button>
           </div>
         </div>
       </div>

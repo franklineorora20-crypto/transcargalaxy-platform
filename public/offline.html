@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Offline | TransCar Rongai Express</title>
+  <meta name="theme-color" content="#FFC300">
+  <link rel="icon" href="/icons/icon-192.png">
+  <title>Offline | TransCar - Shuttle Tracker</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #020617;
-      color: #f8fafc;
+      background-color: #0A0A0A;
+      color: #FFFFFF;
       margin: 0;
       padding: 24px;
       display: flex;
@@ -20,20 +22,38 @@
       text-align: center;
     }
     .card {
-      background: #0f172a;
-      border: 2px solid #334155;
-      padding: 32px 24px;
+      background: #0A0A0A;
+      border: 2px solid #FFC300;
+      padding: 36px 24px;
       border-radius: 24px;
       max-width: 440px;
       width: 100%;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 20px 30px -5px rgba(0, 0, 0, 0.9);
+    }
+    .icon-wrapper {
+      width: 88px;
+      height: 88px;
+      margin: 0 auto 20px auto;
+      border-radius: 22%;
+      overflow: hidden;
+      border: 2px solid #FFC300;
+      background-color: #0A0A0A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
     .badge {
-      background: #f59e0b;
-      color: #020617;
+      background: #FFC300;
+      color: #0A0A0A;
       font-weight: 900;
-      padding: 4px 12px;
-      border-radius: 9999px;
+      padding: 5px 14px;
+      border-radius: 8px;
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 1px;
@@ -44,10 +64,11 @@
       font-size: 24px;
       font-weight: 900;
       margin: 0 0 12px 0;
-      color: #ffffff;
+      color: #FFFFFF;
     }
     p {
-      color: #94a3b8;
+      color: #FFFFFF;
+      opacity: 0.85;
       font-size: 14px;
       line-height: 1.6;
       margin: 0 0 24px 0;
@@ -55,36 +76,52 @@
     .btn {
       display: inline-block;
       width: 100%;
-      background: #fbbf24;
-      color: #020617;
-      font-weight: 800;
+      background: #FFC300;
+      color: #0A0A0A;
+      font-weight: 900;
       font-size: 14px;
       padding: 14px;
       border-radius: 14px;
       text-decoration: none;
       box-sizing: border-box;
-      transition: background 0.2s;
+      border: 2px solid #FFFFFF;
+      transition: transform 0.15s ease;
     }
-    .btn:hover {
-      background: #f59e0b;
+    .btn:active {
+      transform: scale(0.98);
     }
     .saved-tickets {
       margin-top: 20px;
-      border-top: 1px solid #1e293b;
+      border-top: 1px solid rgba(255, 195, 0, 0.3);
       padding-top: 16px;
       font-size: 12px;
-      color: #cbd5e1;
+      color: #FFFFFF;
     }
   </style>
 </head>
 <body>
   <div class="card">
-    <span class="badge">Offline Mode • TransCar Express</span>
+    <div class="icon-wrapper">
+      <img src="/icons/icon-192.png" alt="TransCar - Shuttle Tracker Icon" onerror="this.style.display='none'; document.getElementById('fallback-svg').style.display='block';" />
+      <svg id="fallback-svg" style="display:none; width:100%; height:100%;" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+        <rect width="512" height="512" rx="112.64" fill="#0A0A0A" />
+        <path d="M 74 188 L 94 140 C 103 120, 122 112, 148 112 L 276 112 C 279 112, 280 116, 277 118 C 242 132, 212 156, 195 188 L 74 188 Z" fill="#FFC300" />
+        <path d="M 316 112 L 426 112 C 433 112, 437 117, 434 124 L 416 164 C 408 180, 392 188, 370 188 L 292 188 C 272 188, 258 197, 250 215 L 228 267 C 202 282, 192 301, 200 324 C 208 345, 232 360, 248 377 C 264 394, 263 415, 247 436 L 215 472 L 172 472 C 167 472, 165 468, 168 463 L 209 412 C 220 398, 219 382, 202 372 L 168 355 C 141 342, 134 316, 146 286 L 190 182 C 214 132, 260 112, 316 112 Z" fill="#FFC300" />
+        <path d="M 215 472 C 231 451, 247 436, 256 418 C 269 392, 256 372, 231 353 C 205 333, 194 312, 202 290 C 210 268, 242 252, 312 234 L 343 244 C 286 266, 255 282, 251 298 C 247 314, 264 329, 291 347 C 322 367, 335 392, 322 424 C 314 443, 303 458, 295 472 L 215 472 Z" fill="#FFFFFF" />
+        <path d="M 258 462 L 274 438" stroke="#0A0A0A" stroke-width="8" stroke-linecap="square" fill="none" />
+        <path d="M 286 414 C 290 400, 289 390, 284 380" stroke="#0A0A0A" stroke-width="7.5" stroke-linecap="square" fill="none" />
+        <path d="M 268 358 L 243 340" stroke="#0A0A0A" stroke-width="7" stroke-linecap="square" fill="none" />
+        <path d="M 227 318 C 221 307, 221 297, 226 288" stroke="#0A0A0A" stroke-width="6.5" stroke-linecap="square" fill="none" />
+        <path d="M 244 272 L 266 261" stroke="#0A0A0A" stroke-width="6" stroke-linecap="square" fill="none" />
+        <path d="M 254 256 L 330 222 L 304 206 C 299 203, 301 198, 307 198 L 392 201 C 399 201, 402 206, 398 212 L 340 286 C 336 291, 331 289, 333 283 L 343 244 L 254 256 Z" fill="#FFC300" />
+      </svg>
+    </div>
+    <span class="badge">Offline Mode • TransCar</span>
     <h1>Mtandao Umezimika / Offline</h1>
     <p>Huna mtandao kwa sasa. Unaweza kufungua tiketi zako zilizohifadhiwa hata bila data ya simu.</p>
     <a href="/retrieve-ticket" class="btn">Fungua Tiketi Zilizohifadhiwa (Offline Passes)</a>
     <div class="saved-tickets">
-      <p style="margin-bottom:0; font-size:12px;">Saved boarding passes & QR codes remain fully verifiable by the driver without cellular connection.</p>
+      <p style="margin-bottom:0; font-size:12px;">Saved boarding passes &amp; QR codes remain verifiable by the driver without cellular connection.</p>
     </div>
   </div>
 </body>

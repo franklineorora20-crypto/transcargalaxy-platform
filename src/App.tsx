@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Header, Footer } from './components/layout/Header';
 import { OfflineBanner } from './components/common/OfflineBanner';
+import { ToastProvider } from './components/common/Toast';
 import { HomePage } from './components/public/HomePage';
 import { TripSearchPage } from './components/public/TripSearchPage';
 import { BookingFlow } from './components/public/BookingFlow';
@@ -151,7 +152,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] flex flex-col bg-slate-100 font-sans text-slate-900 selection:bg-amber-500 selection:text-slate-950 overflow-x-clip relative gpu-accelerated [backface-visibility:hidden] [transform:translateZ(0)]">
+    <ToastProvider>
+      <div className="min-h-screen min-h-[100dvh] flex flex-col bg-slate-100 font-sans text-slate-900 selection:bg-[#FFC300] selection:text-[#0A0A0A] overflow-x-clip relative gpu-accelerated [backface-visibility:hidden] [transform:translateZ(0)]">
       {/* Global Header */}
       <Header
         currentView={currentView}
@@ -281,7 +283,8 @@ export default function App() {
           Join WhatsApp Group
         </span>
       </a>
-    </div>
+      </div>
+    </ToastProvider>
   );
 }
 

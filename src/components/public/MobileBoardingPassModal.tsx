@@ -22,6 +22,7 @@ import { Booking } from '../../types';
 import { ApiService } from '../../services/api';
 import { playBoardingSound } from '../../utils/audio';
 import { generateTicketPdf } from '../../utils/pdfTicket';
+import { useToast } from '../common/Toast';
 
 interface MobileBoardingPassModalProps {
   booking: Booking;
@@ -36,6 +37,7 @@ export const MobileBoardingPassModal: React.FC<MobileBoardingPassModalProps> = (
   onClose,
   onOpenDriverPortal,
 }) => {
+  const toast = useToast();
   const [selectedPassengerIndex, setSelectedPassengerIndex] = React.useState<number>(0);
   const [qrDataUrl, setQrDataUrl] = React.useState<string>('');
   const [highBrightness, setHighBrightness] = React.useState<boolean>(true);
@@ -129,6 +131,7 @@ export const MobileBoardingPassModal: React.FC<MobileBoardingPassModalProps> = (
 
       playBoardingSound('success');
       setSimulatedScanMsg(res.message || 'Boarding Approved!');
+      toast.success('Booking Confirmed — Boarded', `Seat ${currentPassenger.seatNumber} (${currentPassenger.fullName}) verified.`);
 
       // Update local state immediately
       setLivePassengers((prev) =>
@@ -142,6 +145,7 @@ export const MobileBoardingPassModal: React.FC<MobileBoardingPassModalProps> = (
     } catch (err: any) {
       playBoardingSound('error');
       setSimulatedScanMsg(err.message || 'Validation failed.');
+      toast.error('Scan Validation Failed', err.message || 'Could not verify boarding pass.');
     } finally {
       setIsSimulatingScan(false);
     }
@@ -155,14 +159,17 @@ export const MobileBoardingPassModal: React.FC<MobileBoardingPassModalProps> = (
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    toast.success('QR Code Saved', `Saved QR pass for Seat ${currentPassenger.seatNumber}.`);
   };
 
   const handleDownloadPdf = async () => {
     setIsDownloadingPdf(true);
     try {
       await generateTicketPdf(booking, qrDataUrl || undefined);
+      toast.success('Boarding Pass Downloaded', `Saved PDF ticket for ${booking.bookingReference}.`);
     } catch (err) {
       console.error('Failed to generate PDF ticket:', err);
+      toast.error('PDF Generation Error', 'Could not generate PDF ticket.');
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -173,6 +180,7 @@ export const MobileBoardingPassModal: React.FC<MobileBoardingPassModalProps> = (
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);
+    toast.success('Copied to Clipboard', `Boarding pass details for ${booking.bookingReference} copied.`);
   };
 
   const isBoarded = currentPassenger.hasBoarded;

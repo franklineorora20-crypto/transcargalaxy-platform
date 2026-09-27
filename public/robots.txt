@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /manager-portal/
+Disallow: /driver-portal/
+Disallow: /api/
+Disallow: /admin/
+
+Sitemap: https://transcargalaxy-platform.vercel.app/sitemap.xml
