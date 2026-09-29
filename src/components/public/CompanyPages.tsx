@@ -535,7 +535,7 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({
                   <span className="font-black text-amber-400 text-sm block">Ongata Rongai Head Office & Stage</span>
                   <span className="text-[10px] bg-amber-400 text-black font-black px-1.5 py-0.5 rounded">HQ</span>
                 </div>
-                <p className="text-neutral-300">Magadi Road, Ongata Rongai Commercial Stage</p>
+                <p className="text-neutral-300">Next to Isalu Center, Magadi Road, Ongata Rongai</p>
                 <p className="text-amber-300 font-bold">Hours: 24/7 Operations • Hotline: +254 724 626199 / +254 717 747626</p>
               </div>
 

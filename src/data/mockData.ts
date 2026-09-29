@@ -300,7 +300,7 @@ export const INITIAL_TRIPS: Trip[] = [
     estimatedArrivalTime: `${TODAY_DATE}T15:30:00.000Z`,
     fareKsh: 1700,
     status: 'SCHEDULED',
-    currentStop: 'Rongai Stage',
+    currentStop: 'Rongai Stage (Next to Isalu Center)',
     delayMinutes: 0,
     totalSeats: 14,
     availableSeats: 6,

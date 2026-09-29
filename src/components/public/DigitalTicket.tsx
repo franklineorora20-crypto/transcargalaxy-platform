@@ -397,6 +397,11 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
                   <p className="text-xl sm:text-2xl font-black text-black mt-0.5">
                     {booking.routeOrigin} → {booking.routeDestination}
                   </p>
+                  {(booking.routeOrigin === 'Rongai' || booking.routeDestination === 'Rongai') && (
+                    <p className="text-[11px] font-bold text-neutral-600 mt-0.5">
+                      Rongai Terminal: Next to Isalu Center, Ongata Rongai
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -623,7 +628,7 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
                 <span>Cryptographically Secured Pass</span>
               </div>
               <p className="text-[11px] text-neutral-600 leading-relaxed font-medium">
-                • Report at the terminal 30 minutes before departure.
+                • Report at the terminal ({booking.routeOrigin === 'Rongai' ? 'Rongai — Next to Isalu Center' : `${booking.routeOrigin} Stage`}) 30 minutes before departure.
                 <br />• QR token:{' '}
                 <span className="font-mono text-[10px]">
                   {qrToken.slice(0, 18)}...

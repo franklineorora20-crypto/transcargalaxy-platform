@@ -103,13 +103,13 @@ export const TrackingMap: React.FC<TrackingMapProps> = ({ trackingData }) => {
 
         <Marker position={originCoord}>
           <Popup>
-            <strong>Origin:</strong> {trackingData.origin}
+            <strong>Origin:</strong> {trackingData.origin === 'Rongai' ? 'Rongai (Next to Isalu Center)' : trackingData.origin}
           </Popup>
         </Marker>
 
         <Marker position={destCoord}>
           <Popup>
-            <strong>Destination:</strong> {trackingData.destination}
+            <strong>Destination:</strong> {trackingData.destination === 'Rongai' ? 'Rongai (Next to Isalu Center)' : trackingData.destination}
           </Popup>
         </Marker>
 

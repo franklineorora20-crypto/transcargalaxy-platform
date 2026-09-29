@@ -40,6 +40,14 @@ const errorMap: Record<string, { en: string; sw: string }> = {
 const getLocalizedError = (msg: string): string => {
   if (!msg) return `${errorMap.generic.en} (${errorMap.generic.sw})`;
   const lower = msg.toLowerCase();
+  if (
+    lower.includes('unexpected token') ||
+    lower.includes('<!doctype') ||
+    lower.includes('not valid json') ||
+    lower.includes('syntaxerror')
+  ) {
+    return `${errorMap.generic.en} (${errorMap.generic.sw})`;
+  }
   if (lower.includes('timeout') || lower.includes('timed out') || lower.includes('pending')) {
     return `${errorMap.timeout.en} • ${errorMap.timeout.sw}`;
   }
@@ -128,7 +136,9 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
           },
           'departureBusStop': {
             '@type': 'BusStation',
-            'name': `${selectedTrip.route?.origin || 'Maasai Mall, Rongai'} Terminal`,
+            'name': selectedTrip.route?.origin === 'Rongai'
+              ? 'Rongai Terminal (Next to Isalu Center)'
+              : `${selectedTrip.route?.origin || 'Next to Isalu Center, Rongai'} Terminal`,
           },
           'arrivalBusStop': {
             '@type': 'BusStation',
@@ -1362,7 +1372,11 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                       <span className="text-[10px] font-bold text-neutral-400 uppercase block">2. Departure Stage</span>
                       <span className="font-black text-white text-sm flex items-center gap-1 mt-0.5">
                         <MapPin className="w-3.5 h-3.5 text-[#FFC300] flex-shrink-0" />
-                        <span className="truncate">{selectedTrip.route.origin} Terminal</span>
+                        <span className="truncate">
+                          {selectedTrip.route.origin === 'Rongai'
+                            ? 'Rongai (Next to Isalu Center)'
+                            : `${selectedTrip.route.origin} Terminal`}
+                        </span>
                       </span>
                     </div>
 
@@ -1378,7 +1392,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                     <p className="font-bold text-[#FFC300] text-[11px]">How to Complete Cash Payment:</p>
                     <ol className="list-decimal list-inside space-y-0.5 text-[11px] text-neutral-300 font-medium">
                       <li>Confirm your cash reservation below to generate your official boarding pass.</li>
-                      <li>Report to the <strong>{selectedTrip.route.origin} Stage Booking Desk</strong> at least <strong>30 minutes</strong> before departure.</li>
+                      <li>Report to the <strong>{selectedTrip.route.origin === 'Rongai' ? 'Rongai Stage (Next to Isalu Center)' : `${selectedTrip.route.origin} Stage Booking Desk`}</strong> at least <strong>30 minutes</strong> before departure.</li>
                       <li>Present your Booking Reference (<strong className="text-white font-mono">{activeBooking?.bookingReference}</strong>) and pay <strong className="text-white font-mono">KES {calculateTotalFare().toLocaleString()}</strong> in cash to the Station Agent or Captain.</li>
                     </ol>
                   </div>

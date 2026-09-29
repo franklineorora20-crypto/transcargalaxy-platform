@@ -127,7 +127,9 @@ export const TripDetailsDrawer: React.FC<TripDetailsDrawerProps> = ({
                 <span className="text-xl font-extrabold font-mono text-slate-950 tabular-nums">
                   {depTimeStr}
                 </span>
-                <span className="text-xs text-slate-600 block mt-0.5">{trip.route.origin} Stage</span>
+                <span className="text-xs text-slate-600 block mt-0.5">
+                  {trip.route.origin === 'Rongai' ? 'Rongai (Next to Isalu Center)' : `${trip.route.origin} Stage`}
+                </span>
               </div>
 
               <div className="flex flex-col items-center px-3">
@@ -145,7 +147,9 @@ export const TripDetailsDrawer: React.FC<TripDetailsDrawerProps> = ({
                 <span className="text-xl font-extrabold font-mono text-slate-950 tabular-nums">
                   {arrTimeStr}
                 </span>
-                <span className="text-xs text-slate-600 block mt-0.5">{trip.route.destination} Stage</span>
+                <span className="text-xs text-slate-600 block mt-0.5">
+                  {trip.route.destination === 'Rongai' ? 'Rongai (Next to Isalu Center)' : `${trip.route.destination} Stage`}
+                </span>
               </div>
             </div>
           </div>

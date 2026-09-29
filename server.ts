@@ -1037,7 +1037,7 @@ app.get('/api/company', (_req, res) => {
     slogan:
       'Premier Intercity & Rongai Regional Express Transportation',
     headquarters:
-      'TransCar Central Terminal, Rongai Commercial Hub / Haile Selassie Avenue, Nairobi, Kenya',
+      'Next to Isalu Center, Magadi Road, Ongata Rongai / Haile Selassie Avenue, Nairobi, Kenya',
     hotline: '+254 700 800 900',
     emergencyContact: '+254 711 999 000',
     email: 'support@transcarrongai.co.ke',
@@ -1048,7 +1048,7 @@ app.get('/api/company', (_req, res) => {
       {
         city: 'Ongata Rongai',
         address:
-          'Maasai Mall Terminal & Booking Office',
+          'Next to Isalu Center, Ongata Rongai Terminal & Booking Office',
         phone: '+254 700 800 900',
         hours: '05:00 - 23:30',
       },
@@ -1630,9 +1630,9 @@ app.post('/api/bookings', limiter, (req, res) => {
     busRegistration:
       trip.vehicle.registrationNumber,
     vehicleId: trip.vehicle.id,
-    contactName: contactName.trim(),
-    contactPhone: contactPhone.trim(),
-    contactEmail: contactEmail.trim(),
+    contactName: String(contactName || '').trim(),
+    contactPhone: String(contactPhone || '').trim(),
+    contactEmail: String(contactEmail || 'passenger@transcarrongai.co.ke').trim(),
     emergencyContactName:
       emergencyContactName?.trim(),
     emergencyContactPhone:
@@ -2314,7 +2314,9 @@ app.get(
           matchedTrip.status ===
           'IN_TRANSIT'
             ? 'Highway Corridor'
-            : 'Origin Terminal'
+            : matchedTrip.route.origin === 'Rongai'
+              ? 'Rongai Terminal (Next to Isalu Center)'
+              : 'Origin Terminal'
         ),
 
       nextStop:
@@ -6755,7 +6757,13 @@ app.post(
 // VITE MIDDLEWARE & SERVER STARTUP
 // =============================================================
 
-// Ensure all unhandled /api errors return valid JSON rather than HTML
+// Ensure all unmatched /api routes and unhandled /api errors return valid JSON rather than HTML
+app.all('/api/*', (req: Request, res: Response) => {
+  res.status(404).json({
+    error: `API endpoint not found: ${req.method} ${req.originalUrl}`,
+  });
+});
+
 app.use('/api', (err: any, _req: Request, res: Response, _next: NextFunction) => {
   console.error('[API Error]:', err);
   if (res.headersSent) return;
@@ -6763,6 +6771,17 @@ app.use('/api', (err: any, _req: Request, res: Response, _next: NextFunction) =>
   res.status(status).json({
     error: err?.message || 'An unexpected server error occurred. Please try again.',
   });
+});
+
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (req.path.startsWith('/api')) {
+    if (res.headersSent) return;
+    const status = typeof err?.status === 'number' ? err.status : 500;
+    return res.status(status).json({
+      error: err?.message || 'An unexpected server error occurred. Please try again.',
+    });
+  }
+  next(err);
 });
 
 async function startServer() {

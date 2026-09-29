@@ -89,7 +89,7 @@ export async function generateTicketPDF(booking: Booking, passengerIndex = 0) {
 
   doc.setTextColor(203, 213, 225);
   doc.setFontSize(8);
-  doc.text('P.O. Box 14200 - 20100, Rongai / Nakuru, Kenya | Tel: +254 722 981 364', 23, 44);
+  doc.text('Rongai Terminal: Next to Isalu Center, Ongata Rongai | Tel: +254 724 626199 / +254 717 747626', 23, 44);
 
   // Ticket Status Badge
   if (booking.paymentStatus === 'PAID') {

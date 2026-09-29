@@ -1,11 +1,6 @@
-const CACHE_NAME = 'transcar-v3';
+const CACHE_NAME = 'transcar-v8-network-first';
 const STATIC_ASSETS = [
-  '/',
-  '/retrieve-ticket',
-  '/my-tickets',
-  '/booking',
   '/offline.html',
-  '/index.html',
   '/manifest.json',
   '/favicon.svg',
   '/favicon.ico',
@@ -37,32 +32,29 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // 1. Ticket API & Retrieval Dynamic Caching (Network First -> Cache Fallback for offline QR)
-  if (url.pathname.startsWith('/api/tickets/') || url.pathname.includes('/retrieve-ticket')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(() => caches.match(request).then((res) => res || caches.match('/offline.html')))
-    );
+  // Never intercept API calls, non-GET requests, or Vite dev module paths.
+  // API offline resilience is handled directly in ApiService via localStorage.
+  if (
+    request.method !== 'GET' ||
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/src/') ||
+    url.pathname.startsWith('/node_modules/') ||
+    url.pathname.startsWith('/@') ||
+    url.pathname.endsWith('.ts') ||
+    url.pathname.endsWith('.tsx')
+  ) {
     return;
   }
 
-  // 2. Images & Icons: Cache First Strategy
+  // Images & Icons: Cache First Strategy
   if (
     request.destination === 'image' ||
     url.pathname.startsWith('/images/') ||
@@ -92,23 +84,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. General API Routes: Network First Strategy
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response && response.status === 200 && request.method === 'GET') {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(() => caches.match(request))
-    );
-    return;
-  }
-
-  // 4. HTML Navigation: Stale While Revalidate with Offline fallback
+  // HTML Navigation: Network First with Offline fallback
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -128,20 +104,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 5. Static CSS/JS Bundles: Stale While Revalidate
+  // Static production bundles: Network First with Cache Fallback (never serve stale JS)
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      const fetchPromise = fetch(request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const clone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return networkResponse;
-        })
-        .catch(() => cachedResponse);
-
-      return cachedResponse || fetchPromise;
-    })
+    fetch(request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return networkResponse;
+      })
+      .catch(() => caches.match(request))
   );
 });

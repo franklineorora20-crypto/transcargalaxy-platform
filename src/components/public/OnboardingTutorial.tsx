@@ -389,7 +389,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                     <div className="flex items-center justify-between text-xs font-mono text-slate-400 mb-6">
                       <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
                         <MapPin className="w-4 h-4" />
-                        <span>Rongai (Maasai Mall)</span>
+                        <span>Rongai (Next to Isalu Center)</span>
                       </div>
                       <span className="text-[10px] text-slate-500 hidden sm:inline">
                         Narok • Bomet Corridor
@@ -517,7 +517,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                       </span>
                       <div className="flex items-center gap-1.5 mt-1 font-bold text-xs sm:text-sm text-slate-900">
                         <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                        <span>Rongai (Maasai Mall)</span>
+                        <span>Rongai (Next to Isalu Center)</span>
                       </div>
                     </div>
 
@@ -624,7 +624,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
                             <span className="font-mono font-black text-sm text-amber-500">07:30 AM</span>
-                            <span className="text-xs font-bold">Rongai (Maasai Mall) → Kisii</span>
+                            <span className="text-xs font-bold">Rongai (Next to Isalu Center) → Kisii</span>
                           </div>
                           <p
                             className={`text-[11px] font-mono ${
@@ -665,7 +665,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-mono font-bold text-xs text-slate-900">09:00 AM</span>
-                            <span className="text-xs font-semibold">Rongai (Maasai Mall) → Kisii</span>
+                            <span className="text-xs font-semibold">Rongai (Next to Isalu Center) → Kisii</span>
                           </div>
                           <p className="text-[11px] font-mono text-slate-500">
                             Vehicle: KDE 416Q • 11-Seater VIP Shuttle • 8 Seats Open
@@ -1068,7 +1068,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                           Digital Boarding Pass
                         </span>
                         <h3 className="text-base font-extrabold text-white">
-                          Rongai (Maasai Mall) → Kisii Main Stage
+                          Rongai (Next to Isalu Center) → Kisii Main Stage
                         </h3>
                       </div>
                       <div className="px-3 py-1 rounded-lg bg-amber-400 text-slate-950 font-mono font-black text-xs">

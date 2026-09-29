@@ -11,22 +11,40 @@ if (typeof window !== 'undefined' && (import.meta as any).env?.VITE_SENTRY_DSN) 
   });
 }
 
-// Safely register Service Worker for offline asset and data caching
-if (
-  typeof window !== 'undefined' &&
-  'serviceWorker' in navigator &&
-  window.location.protocol.startsWith('http')
-) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/sw.js', { scope: '/' })
-      .then((reg) => {
-        console.log('TransCar offline service worker active:', reg.scope);
+// Evict stale Service Worker caches (e.g. transcar-v3) that may have cached HTML for API routes or stale JS bundles
+if (typeof window !== 'undefined') {
+  if ('caches' in window) {
+    caches
+      .keys()
+      .then((keys) => {
+        keys.forEach((key) => {
+          if (key !== 'transcar-v8-network-first') {
+            caches.delete(key).catch(() => {});
+          }
+        });
       })
-      .catch((err) => {
-        console.info('Service worker registration in current mode:', err?.message || err);
-      });
-  });
+      .catch(() => {});
+  }
+
+  if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((registrations) => {
+        registrations.forEach((reg) => {
+          reg.update().catch(() => {});
+        });
+      })
+      .catch(() => {});
+
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('/sw.js', { scope: '/', updateViaCache: 'none' })
+        .then((reg) => {
+          reg.update().catch(() => {});
+        })
+        .catch(() => {});
+    });
+  }
 }
 
 createRoot(document.getElementById('root')!).render(

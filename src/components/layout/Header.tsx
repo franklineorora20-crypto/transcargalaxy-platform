@@ -443,7 +443,7 @@ export const Footer: React.FC<{ onNavigate: (view: string) => void; onOpenTutori
               </p>
               <p className="flex items-start gap-2 text-slate-400 pt-1">
                 <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                <span>Maasai Mall Stage (Ongata Rongai), Nairobi Central & Kisii Main Stage. Daily operations.</span>
+                <span>Next to Isalu Center (Ongata Rongai), Nairobi Central & Kisii Main Stage. Daily operations.</span>
               </p>
             </div>
           </div>
