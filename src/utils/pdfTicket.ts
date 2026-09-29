@@ -243,7 +243,7 @@ export async function generateTicketPDF(booking: Booking, passengerIndex = 0) {
   doc.text(`Customer Phone: ${booking.contactPhone}`, 29, summaryY + 20);
   doc.text(`Payment Method: ${booking.paymentMethod} (${booking.paymentStatus})`, 29, summaryY + 26);
   doc.text(
-    `M-Pesa / Receipt Ref: ${booking.mpesaReceiptNumber || 'Verified Digital Booking'}`,
+    `M-Pesa / Receipt Ref: ${booking.mpesaTransactionCode || booking.mpesaReceiptNumber || 'Verified Digital Booking'}`,
     29,
     summaryY + 32
   );

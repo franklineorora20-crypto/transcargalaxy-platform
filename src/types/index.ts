@@ -186,20 +186,36 @@ export interface TicketRecord {
 
 export type VerificationOutcomeCode =
   | 'VALID'
+  | 'BOARDED'
   | 'BOARDED_CONFIRMED'
   | 'ALREADY_BOARDED'
   | 'WRONG_TRIP'
   | 'DATE_MISMATCH'
   | 'PAYMENT_PENDING'
   | 'INVALID_BOOKING_STATUS'
+  | 'CANCELLED'
+  | 'EXPIRED'
+  | 'REFUNDED'
+  | 'NOT_FOUND'
   | 'TICKET_NOT_FOUND';
 
 export interface TicketVerificationResult {
   valid: boolean;
   code: VerificationOutcomeCode;
-  status_label: string;
+  status_label?: string;
+  title?: string;
   message: string;
+  boarded?: boolean;
+  alreadyBoarded?: boolean;
   ticket?: TicketRecord;
+  expectedTrip?: {
+    tripId: string;
+    tripCode: string;
+    route: string;
+    departureTime: string;
+    travelDate: string;
+    vehicleRegistration: string;
+  };
   driver_trip?: {
     trip_id: string;
     trip_code: string;
@@ -231,9 +247,11 @@ export interface Booking {
   tickets?: TicketRecord[];
   totalFareKsh: number;
   bookingStatus: BookingStatus;
+  ticketStatus?: TicketStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: 'MPESA' | 'CASH';
   mpesaTransactionCode?: string;
+  mpesaReceiptNumber?: string;
   createdAt: string;
   verifiedAt?: string;
   verifiedBy?: string;

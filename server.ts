@@ -442,6 +442,22 @@ function generateSecureQrToken(ticketId: string): string {
   return `tcr_tok_${shortTag}_${entropy}`;
 }
 
+function generateTicketId(): string {
+  return generateUniqueTicketId();
+}
+
+function generateQrToken(ticketId?: string): string {
+  return generateSecureQrToken(ticketId || generateUniqueTicketId());
+}
+
+function formatTravelDateIso(isoString: string): string {
+  if (!isoString) return new Date().toISOString().slice(0, 10);
+  if (isoString.includes('T')) return isoString.split('T')[0];
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
+  return d.toISOString().slice(0, 10);
+}
+
 function formatDepartureClock(isoString: string): string {
   const d = new Date(isoString);
   if (isNaN(d.getTime())) return '05:00 AM';
@@ -455,11 +471,13 @@ function formatDepartureClock(isoString: string): string {
 function buildTicketRecord(
   booking: Booking,
   passenger: Passenger,
-  trip?: Trip,
+  tripOrTrips?: Trip | Trip[],
 ): TicketRecord {
+  const tripList = Array.isArray(tripOrTrips) ? tripOrTrips : trips;
+  const explicitTrip = !Array.isArray(tripOrTrips) ? tripOrTrips : undefined;
   const matchedTrip =
-    trip ||
-    trips.find(
+    explicitTrip ||
+    tripList.find(
       (t) => t.id === booking.tripId || t.tripCode === booking.tripCode,
     );
 
@@ -513,7 +531,7 @@ function buildTicketRecord(
   };
 }
 
-function ensureBookingTickets(booking: Booking): Booking {
+function ensureBookingTickets(booking: Booking, _trips?: Trip[]): Booking {
   const matchedTrip = trips.find(
     (t) => t.id === booking.tripId || t.tripCode === booking.tripCode,
   );
@@ -1594,11 +1612,14 @@ app.post('/api/bookings', limiter, (req, res) => {
       10000 + Math.random() * 90000,
     )}`;
 
+  const primaryTicketId = generateUniqueTicketId();
+  const primaryQrToken = generateSecureQrToken(primaryTicketId);
+
   const newBooking: Booking = {
     id: `bk-${Date.now()}`,
     bookingReference,
-    ticketId: generateTicketId(),
-    qrToken: generateQrToken(),
+    ticketId: primaryTicketId,
+    qrToken: primaryQrToken,
     tripId: trip.id,
     tripCode: trip.tripCode,
     routeOrigin: trip.route.origin,
@@ -6733,6 +6754,16 @@ app.post(
 // =============================================================
 // VITE MIDDLEWARE & SERVER STARTUP
 // =============================================================
+
+// Ensure all unhandled /api errors return valid JSON rather than HTML
+app.use('/api', (err: any, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('[API Error]:', err);
+  if (res.headersSent) return;
+  const status = typeof err?.status === 'number' ? err.status : 500;
+  res.status(status).json({
+    error: err?.message || 'An unexpected server error occurred. Please try again.',
+  });
+});
 
 async function startServer() {
   logSupabaseConfigurationWarning();

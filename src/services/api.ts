@@ -20,6 +20,19 @@ import {
 const API_BASE = '/api';
 
 export class ApiService {
+  private static async parseJson<T = any>(res: Response, fallbackError: string): Promise<T> {
+    const text = await res.text();
+    if (!text) {
+      if (!res.ok) throw new Error(fallbackError);
+      return {} as T;
+    }
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      throw new Error(res.ok ? fallbackError : `${fallbackError} (HTTP ${res.status})`);
+    }
+  }
+
   private static getHeaders(_role?: 'DRIVER' | 'MANAGER'): HeadersInit {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -105,8 +118,9 @@ export class ApiService {
 
   static async getTripDetails(tripId: string): Promise<Trip & { seats: any[] }> {
     const res = await fetch(`${API_BASE}/trips/${tripId}`);
-    if (!res.ok) throw new Error('Failed to get trip details');
-    return res.json();
+    const data = await this.parseJson<Trip & { seats: any[]; error?: string }>(res, 'Failed to get trip details');
+    if (!res.ok) throw new Error(data.error || 'Failed to get trip details');
+    return data;
   }
 
   static cacheBookingLocally(booking: Booking) {
@@ -162,7 +176,10 @@ export class ApiService {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
+    const data = await this.parseJson<{ message: string; booking: Booking; error?: string }>(
+      res,
+      'Failed to create booking',
+    );
     if (!res.ok) throw new Error(data.error || 'Failed to create booking');
     if (data.booking) {
       ApiService.cacheBookingLocally(data.booking);
@@ -176,7 +193,10 @@ export class ApiService {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
+    const data = await this.parseJson<{ fare: number; serviceFee: number; total: number; error?: string }>(
+      res,
+      'Failed to calculate fare',
+    );
     if (!res.ok) throw new Error(data.error || 'Failed to calculate fare');
     return data;
   }
@@ -187,7 +207,7 @@ export class ApiService {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
+    const data = await this.parseJson(res, 'M-Pesa initiation failed');
     if (!res.ok) throw new Error(data.error || 'M-Pesa initiation failed');
     return data;
   }
@@ -203,7 +223,7 @@ export class ApiService {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
+    const data = await this.parseJson(res, 'Payment confirmation failed');
     if (!res.ok) throw new Error(data.error || 'Payment confirmation failed');
     if (data.booking) {
       ApiService.cacheBookingLocally(data.booking);
@@ -221,7 +241,7 @@ export class ApiService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bookingReference: cleanRef, phone: cleanPhone }),
       });
-      const data = await res.json();
+      const data = await this.parseJson<Booking & { error?: string }>(res, 'Booking retrieval failed');
       if (!res.ok) throw new Error(data.error || 'Booking retrieval failed');
       ApiService.cacheBookingLocally(data);
       return data;
@@ -243,14 +263,18 @@ export class ApiService {
 
   static async getTicketBoardingStatus(bookingReference: string) {
     const res = await fetch(`${API_BASE}/tickets/status/${encodeURIComponent(bookingReference)}`);
-    const data = await res.json();
+    const data = await this.parseJson(res, 'Failed to fetch ticket status');
     if (!res.ok) throw new Error(data.error || 'Failed to fetch ticket status');
     return data;
   }
 
+  static async getTicketStatus(bookingReference: string) {
+    return this.getTicketBoardingStatus(bookingReference);
+  }
+
   static async trackBus(code: string): Promise<TrackingData> {
     const res = await fetch(`${API_BASE}/tracking/${encodeURIComponent(code)}`);
-    const data = await res.json();
+    const data = await this.parseJson<TrackingData & { error?: string }>(res, 'Bus tracking failed');
     if (!res.ok) throw new Error(data.error || 'Bus tracking failed');
     return data;
   }
@@ -262,7 +286,7 @@ export class ApiService {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json();
+    const data = await this.parseJson(res, 'Driver login failed');
     if (!res.ok) throw new Error(data.error || 'Driver login failed');
     localStorage.setItem('safariline_driver_token', data.token);
     localStorage.setItem('safariline_driver_id', data.user.id);
@@ -277,7 +301,7 @@ export class ApiService {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
+    const data = await this.parseJson(res, 'Driver account creation failed');
     if (!res.ok) throw new Error(data.error || 'Driver account creation failed');
     return data;
   }
@@ -287,7 +311,7 @@ export class ApiService {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json();
+    const data = await this.parseJson(res, 'Manager login failed');
     if (!res.ok) throw new Error(data.error || 'Manager login failed');
     localStorage.setItem('safariline_manager_token', data.token);
     localStorage.setItem('safariline_manager_name', data.user.name);
@@ -394,7 +418,7 @@ export class ApiService {
       method: 'GET',
       headers: this.getHeaders('DRIVER'),
     });
-    const data = await res.json();
+    const data = await this.parseJson(res, 'Failed to search tickets');
     if (!res.ok) {
       throw new Error(data.error || 'Failed to search tickets');
     }
@@ -413,7 +437,10 @@ export class ApiService {
       headers: this.getHeaders('DRIVER'),
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
+    const data = await this.parseJson<TicketVerificationResult & { error?: string }>(
+      res,
+      'Failed to verify ticket',
+    );
     if (!res.ok && !data.code) {
       throw new Error(data.error || 'Failed to verify ticket');
     }
@@ -432,7 +459,10 @@ export class ApiService {
       headers: this.getHeaders('DRIVER'),
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
+    const data = await this.parseJson<TicketVerificationResult & { boarded?: boolean; alreadyBoarded?: boolean; error?: string }>(
+      res,
+      'Failed to mark ticket as boarded',
+    );
     if (!res.ok && !data.code) {
       throw new Error(data.error || 'Failed to mark ticket as boarded');
     }
@@ -453,7 +483,7 @@ export class ApiService {
       headers: this.getHeaders('DRIVER'),
       body: JSON.stringify(payload),
     });
-    const data = await res.json();
+    const data = await this.parseJson(res, 'Failed to check in passenger');
     if (!res.ok) throw new Error(data.error || 'Failed to check in passenger');
     return data;
   }
