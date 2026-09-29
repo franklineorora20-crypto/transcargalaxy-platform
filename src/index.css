@@ -5,11 +5,49 @@
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     --font-display: 'Inter', 'Plus Jakarta Sans', -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    
-    /* Emil Kowalski Spring Physics & Precision Timing */
+
+    /* 4. Typography Scale Tokens */
+    --text-display: clamp(2.5rem, 4.5vw + 1rem, 4.25rem); /* ~56-68px desktop */
+    --text-h1: clamp(2.125rem, 3.2vw + 0.75rem, 3.125rem); /* ~40-50px */
+    --text-h2: clamp(1.625rem, 2.2vw + 0.5rem, 2.375rem); /* ~32-38px */
+    --text-h3: clamp(1.25rem, 1.5vw + 0.25rem, 1.625rem); /* ~22-26px */
+    --text-body: 1rem; /* 16px */
+    --text-meta: 0.8125rem; /* 13px */
+
+    /* 5. Predictable Spacing Scale (4, 8, 12, 16, 24, 32, 48, 64, 80, 96) */
+    --space-1: 0.25rem;  /* 4px */
+    --space-2: 0.5rem;   /* 8px */
+    --space-3: 0.75rem;  /* 12px */
+    --space-4: 1rem;     /* 16px */
+    --space-6: 1.5rem;   /* 24px */
+    --space-8: 2rem;     /* 32px */
+    --space-12: 3rem;    /* 48px */
+    --space-16: 4rem;    /* 64px */
+    --space-20: 5rem;    /* 80px */
+    --space-24: 6rem;    /* 96px */
+
+    /* 6. Surface, Border & Radius Tokens */
+    --surface-primary: #ffffff;
+    --surface-secondary: #f8fafc;
+    --surface-elevated: #0f172a;
+    --border-subtle: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --radius-sm: 0.5rem;   /* 8px */
+    --radius-md: 0.75rem;  /* 12px */
+    --radius-lg: 1rem;     /* 16px */
+    --radius-xl: 1.25rem;  /* 20px */
+
+    /* 8. Emil Kowalski Spring Physics & Precision Timing */
     --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
     --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* 49. Z-Index Scale */
+    --z-header: 40;
+    --z-sticky: 45;
+    --z-drawer: 60;
+    --z-modal: 70;
+    --z-toast: 80;
   }
 
   html {
@@ -26,9 +64,9 @@
   body {
     font-family: var(--font-sans);
     font-weight: 400;
-    line-height: 1.5;
+    line-height: 1.55;
     color: #0f172a;
-    background-color: #f8fafc;
+    background-color: var(--surface-secondary);
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
@@ -40,24 +78,24 @@
     backface-visibility: hidden;
   }
 
-  /* Emil Kowalski Typography Hierarchy & Tight Optical Kerning */
+  /* Typography Hierarchy & Optical Kerning */
   h1 {
     font-weight: 800;
-    letter-spacing: -0.035em;
+    letter-spacing: -0.032em;
     text-wrap: balance;
     line-height: 1.1;
   }
 
   h2 {
     font-weight: 700;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.026em;
     text-wrap: balance;
     line-height: 1.18;
   }
 
   h3 {
     font-weight: 700;
-    letter-spacing: -0.022em;
+    letter-spacing: -0.02em;
     text-wrap: balance;
     line-height: 1.25;
   }
@@ -70,7 +108,7 @@
   }
 
   p, span, label, input, select, textarea, button {
-    letter-spacing: -0.011em;
+    letter-spacing: -0.01em;
   }
 
   /* Monospace & Tabular figures for fares, ticket codes, dates, and seat labels */
@@ -84,10 +122,8 @@
 }
 
 /* ==========================================================================
-   Emil Kowalski Signature Design Tokens & Micro-Interactions
+   GPU Hardware Acceleration & Raster Stability
    ========================================================================== */
-
-/* GPU Hardware Acceleration & Raster Stability */
 .gpu-layer {
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
@@ -103,137 +139,154 @@
   transform: translateZ(0);
 }
 
-/* Layered subtle shadows & crisp border rings */
+/* ==========================================================================
+   6. Restrained Shadows & 1px Border Surface System
+   ========================================================================== */
 .craft-shadow-sm {
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
 }
 
 .craft-shadow-md {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 10px -2px rgba(15, 23, 42, 0.05), 0 1px 3px -1px rgba(15, 23, 42, 0.03);
 }
 
 .craft-shadow-lg {
-  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.07), 0 4px 8px -2px rgba(15, 23, 42, 0.03);
 }
 
 .craft-shadow-xl {
-  box-shadow: 0 20px 30px -6px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 20px 32px -8px rgba(15, 23, 42, 0.1), 0 8px 12px -4px rgba(15, 23, 42, 0.04);
 }
 
-/* Tactile Craft Card with 1px Highlight */
 .craft-card {
-  background: #ffffff;
-  border-radius: 1rem;
-  border: 1px solid rgba(226, 232, 240, 0.85);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--surface-primary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.03);
+  transition: border-color 0.18s var(--ease-spring), box-shadow 0.18s var(--ease-spring);
 }
 
 .craft-card-interactive {
-  background: #ffffff;
-  border-radius: 1rem;
-  border: 1px solid rgba(226, 232, 240, 0.85);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  background: var(--surface-primary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.03);
+  transition: transform 0.18s var(--ease-spring), box-shadow 0.18s var(--ease-spring), border-color 0.18s ease;
 }
 
 .craft-card-interactive:hover {
-  transform: translateY(-2px);
-  border-color: rgba(203, 213, 225, 0.9);
-  box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.07), 0 4px 8px -2px rgba(0, 0, 0, 0.03), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+  box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
 }
 
 .craft-card-interactive:active {
-  transform: translateY(0) scale(0.99);
+  transform: translateY(0) scale(0.995);
 }
 
-/* Glassmorphism Surface with Fine Inset Edge */
 .glass-surface {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04), inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
 }
 
 .glass-surface-dark {
-  background: rgba(15, 23, 42, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
 }
 
-/* Mobile GPU Safety Fallback: Disable expensive backdrop-filter on mobile to eliminate tile tearing */
 @media (max-width: 768px) {
   .glass-surface {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background: rgba(255, 255, 255, 0.96);
+    background: #ffffff;
   }
 
   .glass-surface-dark {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    background: rgba(15, 23, 42, 0.96);
+    background: #0f172a;
   }
 }
 
-/* Emil Kowalski Tactile Button System with Inner Highlight and Spring Physics */
-.craft-btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.875rem;
-  letter-spacing: -0.015em;
-  padding: 0.625rem 1.25rem;
-  border-radius: 0.75rem;
-  background: #0f172a;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.18);
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  cursor: pointer;
-}
-
-.craft-btn-primary:hover {
-  background: #1e293b;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px 0 rgba(15, 23, 42, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.25);
-}
-
-.craft-btn-primary:active {
-  transform: translateY(0.5px) scale(0.985);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
-}
-
+/* ==========================================================================
+   7. Unified Button System (Default, Hover, Focus, Pressed, Disabled)
+   ========================================================================== */
 .craft-btn-amber {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 0.875rem;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.012em;
   padding: 0.625rem 1.25rem;
-  border-radius: 0.75rem;
-  background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+  border-radius: var(--radius-md);
+  background: #f59e0b;
   color: #0f172a;
-  border: 1px solid rgba(245, 158, 11, 0.5);
-  box-shadow: 0 1px 2px 0 rgba(245, 158, 11, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid #d97706;
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.08), inset 0 1px 0 0 rgba(255, 255, 255, 0.35);
+  transition: transform 0.15s var(--ease-spring), background-color 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer;
 }
 
-.craft-btn-amber:hover {
-  background: linear-gradient(180deg, #fcd34d 0%, #fbbf24 100%);
+.craft-btn-amber:hover:not(:disabled) {
+  background: #fbbf24;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px 0 rgba(245, 158, 11, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 12px 0 rgba(245, 158, 11, 0.25), inset 0 1px 0 0 rgba(255, 255, 255, 0.45);
 }
 
-.craft-btn-amber:active {
-  transform: translateY(0.5px) scale(0.985);
-  box-shadow: 0 1px 2px 0 rgba(245, 158, 11, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+.craft-btn-amber:focus-visible {
+  outline: 2px solid #0f172a;
+  outline-offset: 2px;
+}
+
+.craft-btn-amber:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+
+.craft-btn-amber:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.craft-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  letter-spacing: -0.012em;
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-md);
+  background: #0f172a;
+  color: #ffffff;
+  border: 1px solid #0f172a;
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.15);
+  transition: transform 0.15s var(--ease-spring), background-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+.craft-btn-primary:hover:not(:disabled) {
+  background: #1e293b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px 0 rgba(15, 23, 42, 0.2);
+}
+
+.craft-btn-primary:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+.craft-btn-primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+
+.craft-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .craft-btn-secondary {
@@ -242,65 +295,134 @@
   justify-content: center;
   font-weight: 600;
   font-size: 0.875rem;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.012em;
   padding: 0.625rem 1.25rem;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-md);
   background: #ffffff;
-  color: #334155;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  color: #1e293b;
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.03);
+  transition: transform 0.15s var(--ease-spring), background-color 0.15s ease, border-color 0.15s ease;
   cursor: pointer;
 }
 
-.craft-btn-secondary:hover {
+.craft-btn-secondary:hover:not(:disabled) {
   background: #f8fafc;
   color: #0f172a;
-  border-color: #cbd5e1;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px 0 rgba(0, 0, 0, 0.05);
+  border-color: var(--border-strong);
 }
 
-.craft-btn-secondary:active {
-  transform: translateY(0.5px) scale(0.985);
+.craft-btn-secondary:focus-visible {
+  outline: 2px solid #f59e0b;
+  outline-offset: 2px;
+}
+
+.craft-btn-secondary:active:not(:disabled) {
+  transform: scale(0.985);
   background: #f1f5f9;
 }
 
-/* Micro-Pill Status Badges */
-.craft-badge-pulse {
-  position: relative;
+.craft-btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.craft-btn-tertiary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: #334155;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  cursor: pointer;
+}
+
+.craft-btn-tertiary:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.craft-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: var(--radius-md);
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s var(--ease-spring);
+  cursor: pointer;
+}
+
+.craft-btn-danger:hover:not(:disabled) {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.craft-btn-danger:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+/* ==========================================================================
+   45. Status System (Never rely on color alone — use border + label + icon)
+   ========================================================================== */
+.status-positive {
   display: inline-flex;
   align-items: center;
   gap: 0.375rem;
-  padding: 0.25rem 0.625rem;
+  padding: 0.1875rem 0.625rem;
+  border-radius: 0.5rem;
   font-size: 0.75rem;
   font-weight: 600;
-  border-radius: 9999px;
-  letter-spacing: -0.01em;
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
 }
 
-.craft-badge-pulse .dot {
-  width: 0.4375rem;
-  height: 0.4375rem;
-  border-radius: 9999px;
-  position: relative;
+.status-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.1875rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
 }
 
-.craft-badge-pulse .dot::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 9999px;
-  background: inherit;
-  opacity: 0.6;
-  animation: craft-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+.status-neutral {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.1875rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
 }
 
-@keyframes craft-ping {
-  75%, 100% {
-    transform: scale(2.2);
-    opacity: 0;
-  }
+.status-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.1875rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
 }
 
 /* Shimmer Skeleton Loader */

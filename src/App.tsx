@@ -5,6 +5,7 @@ import { ToastProvider } from './components/common/Toast';
 import { HomePage } from './components/public/HomePage';
 import { TripSearchPage } from './components/public/TripSearchPage';
 import { BookingFlow } from './components/public/BookingFlow';
+import { OnboardingTutorial, ONBOARDING_STORAGE_KEY } from './components/public/OnboardingTutorial';
 
 // Code-split heavy administration, driver, tracking, and auxiliary pages
 const TripTrackingPage = lazy(() => import('./components/public/TripTrackingPage').then(m => ({ default: m.TripTrackingPage })));
@@ -19,12 +20,57 @@ import { Route, Trip } from './types';
 import { ApiService } from './services/api';
 
 export default function App() {
-  const [currentView, setCurrentView] = React.useState<string>('home');
+  const [currentView, setCurrentViewState] = React.useState<string>('home');
   const [userRole, setUserRole] = React.useState<'CUSTOMER_PUBLIC' | 'DRIVER' | 'MANAGER'>(
     (ApiService.getUserRole() as any) || 'CUSTOMER_PUBLIC'
   );
   const [driverData, setDriverData] = React.useState<any>(null);
   const [managerData, setManagerData] = React.useState<any>(null);
+  const topSentinelRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollToPageTop = React.useCallback(() => {
+    const resetViewportToTop = () => {
+      const htmlEl = document.documentElement;
+      const bodyEl = document.body;
+      const scrollingEl = document.scrollingElement || htmlEl;
+
+      const prevHtmlScrollBehavior = htmlEl.style.scrollBehavior;
+      htmlEl.style.scrollBehavior = 'auto';
+
+      window.scrollTo(0, 0);
+      if (scrollingEl) {
+        scrollingEl.scrollTop = 0;
+        scrollingEl.scrollLeft = 0;
+      }
+      htmlEl.scrollTop = 0;
+      bodyEl.scrollTop = 0;
+
+      if (topSentinelRef.current) {
+        topSentinelRef.current.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'auto' });
+      }
+
+      htmlEl.style.scrollBehavior = prevHtmlScrollBehavior;
+    };
+
+    resetViewportToTop();
+    const rafId = window.requestAnimationFrame(() => {
+      resetViewportToTop();
+    });
+    return () => window.cancelAnimationFrame(rafId);
+  }, []);
+
+  const setCurrentView = React.useCallback(
+    (nextView: string) => {
+      setCurrentViewState(nextView);
+      scrollToPageTop();
+    },
+    [scrollToPageTop]
+  );
+
+  // Synchronously position viewport at the absolute top before browser paint on any view change
+  React.useLayoutEffect(() => {
+    return scrollToPageTop();
+  }, [currentView, scrollToPageTop]);
 
   // Global routes cache
   const [routes, setRoutes] = React.useState<Route[]>([]);
@@ -36,6 +82,17 @@ export default function App() {
   const [searchDestination, setSearchDestination] = React.useState('');
   const [searchDate, setSearchDate] = React.useState('');
   const [searchCarSeatView, setSearchCarSeatView] = React.useState<11 | 14 | 16 | null>(null);
+
+  // Interactive Onboarding Tutorial state (auto-shows on first visit for public users)
+  const [isTutorialOpen, setIsTutorialOpen] = React.useState<boolean>(() => {
+    try {
+      const hasSeen = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+      const role = ApiService.getUserRole();
+      return !hasSeen && (!role || role === 'CUSTOMER_PUBLIC');
+    } catch {
+      return false;
+    }
+  });
 
   React.useEffect(() => {
     ApiService.getRoutes()
@@ -89,7 +146,11 @@ export default function App() {
           setCurrentView('tracking');
         } else if (path === '/routes') {
           setCurrentView('routes');
-        } else if (path === '/fleet' || path === '/services') {
+        } else if (path === '/schedules') {
+          setCurrentView('schedules');
+        } else if (path === '/fleet') {
+          setCurrentView('fleet');
+        } else if (path === '/services') {
           setCurrentView('services');
         } else if (path === '/safety') {
           setCurrentView('safety');
@@ -133,9 +194,9 @@ export default function App() {
     date?: string,
     carSeatView?: 11 | 14 | 16 | null
   ) => {
-    if (origin) setSearchOrigin(origin);
-    if (destination) setSearchDestination(destination);
-    if (date) setSearchDate(date);
+    if (origin !== undefined) setSearchOrigin(origin);
+    if (destination !== undefined) setSearchDestination(destination);
+    if (date !== undefined) setSearchDate(date);
     setSearchCarSeatView(carSeatView ?? null);
     setCurrentView('search');
   };
@@ -164,7 +225,13 @@ export default function App() {
 
   return (
     <ToastProvider>
-      <div className="min-h-screen min-h-[100dvh] flex flex-col bg-slate-100 font-sans text-slate-900 selection:bg-[#FFC300] selection:text-[#0A0A0A] overflow-x-clip relative gpu-accelerated [backface-visibility:hidden] [transform:translateZ(0)]">
+      <div className="min-h-screen min-h-[100dvh] flex flex-col bg-slate-100 font-sans text-slate-900 selection:bg-[#FFC300] selection:text-[#0A0A0A] overflow-x-clip relative">
+      <div
+        ref={topSentinelRef}
+        id="app-top-sentinel"
+        className="h-0 w-full pointer-events-none"
+        aria-hidden="true"
+      />
       {/* Global Header */}
       <Header
         currentView={currentView}
@@ -173,27 +240,32 @@ export default function App() {
         onLogout={handleLogout}
         driverName={driverData?.name}
         managerName={managerData?.name}
+        onOpenTutorial={() => setIsTutorialOpen(true)}
       />
 
       {/* Main Content Area */}
-      <main className="flex-grow">
+      <main key={currentView} className="flex-grow animate-in fade-in duration-150">
         <Suspense fallback={
           <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 text-slate-800">
             <div className="w-8 h-8 border-4 border-amber-400 border-t-slate-900 rounded-full animate-spin"></div>
-            <span className="text-xs font-black uppercase tracking-widest text-slate-700">Loading TransCar...</span>
+            <span className="text-xs font-black uppercase tracking-widest text-slate-700">Loading TransCar rongai...</span>
           </div>
         }>
           {currentView === 'home' && (
             <HomePage
               routes={routes}
               onStartSearch={handleStartSearch}
+              onSelectTrip={handleSelectTripForBooking}
               onTrackBus={() => setCurrentView('tracking')}
               onRetrieveTicket={() => setCurrentView('retrieve-ticket')}
               onSelectRoute={handleBookFromRoute}
+              onOpenTutorial={() => setIsTutorialOpen(true)}
+              onOpenSchedules={() => setCurrentView('schedules')}
+              onOpenFleet={() => setCurrentView('fleet')}
             />
           )}
 
-          {currentView === 'search' && (
+          {(currentView === 'search' || currentView === 'schedules') && (
             <TripSearchPage
               defaultOrigin={searchOrigin}
               defaultDestination={searchDestination}
@@ -236,6 +308,7 @@ export default function App() {
           {(currentView === 'about' ||
             currentView === 'services' ||
             currentView === 'routes' ||
+            currentView === 'fleet' ||
             currentView === 'safety' ||
             currentView === 'policies' ||
             currentView === 'terms' ||
@@ -244,6 +317,7 @@ export default function App() {
               page={currentView as any}
               routes={routes}
               onBookRoute={handleBookFromRoute}
+              onSelectVehicleFilter={(cap) => handleStartSearch('', '', undefined, cap)}
             />
           )}
 
@@ -272,7 +346,20 @@ export default function App() {
       </main>
 
       {/* Global Footer */}
-      <Footer onNavigate={(view) => setCurrentView(view)} />
+      <Footer
+        onNavigate={(view) => setCurrentView(view)}
+        onOpenTutorial={() => setIsTutorialOpen(true)}
+      />
+
+      {/* First-Time User Interactive Onboarding Tutorial */}
+      <OnboardingTutorial
+        isOpen={isTutorialOpen}
+        onClose={() => setIsTutorialOpen(false)}
+        onStartBookingNow={() => {
+          setIsTutorialOpen(false);
+          setCurrentView('search');
+        }}
+      />
 
       {/* Offline Status Notification Banner */}
       <OfflineBanner />

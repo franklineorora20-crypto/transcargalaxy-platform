@@ -899,10 +899,61 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
         </div>
       )}
 
+      {/* 31. DRIVER PORTAL: TODAY'S TRIP MOBILE-FIRST SUMMARY */}
+      {activeTrip && (
+        <div className="craft-card p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-l-amber-400">
+          <div className="space-y-1">
+            <span className="text-[11px] font-extrabold uppercase tracking-widest text-amber-600 block">
+              TODAY&apos;S TRIP
+            </span>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-950 tracking-tight">
+              {activeTrip.route.origin} → {activeTrip.route.destination}
+            </h2>
+            <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm font-semibold text-slate-700 pt-0.5">
+              <span className="font-mono font-bold text-slate-950">
+                {new Date(activeTrip.departureTime).toLocaleTimeString('en-KE', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+              <span className="text-slate-300">•</span>
+              <span>{assignedVehicle?.seatingCapacity || activeTrip.totalSeats || 14}-Seater</span>
+              <span className="text-slate-300">•</span>
+              <span className="status-positive font-mono">
+                {manifestPassengers.length} / {assignedVehicle?.seatingCapacity || activeTrip.totalSeats || 14} passengers booked
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('driver-manifest-panel');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="craft-btn-secondary px-4 py-2.5 text-xs font-bold min-h-[44px]"
+            >
+              View Manifest
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.getElementById('driver-status-panel');
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+              className="craft-btn-amber px-4 py-2.5 text-xs font-bold min-h-[44px]"
+            >
+              Update Trip Status
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Grid: Trip Telematics & Passenger Manifest */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Trip Status Cockpit */}
-        <div className="lg:col-span-1 space-y-6">
+        <div id="driver-status-panel" className="lg:col-span-1 space-y-6">
           {/* Active Trip Telematics Card */}
           <div className="bg-white rounded-3xl border-2 border-slate-200 shadow-sm p-6 space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -1227,7 +1278,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
         </div>
 
         {/* Right Columns (Span 2): Fast QR Boarding Scanner & Passenger Manifest */}
-        <div className="lg:col-span-2 space-y-6">
+        <div id="driver-manifest-panel" className="lg:col-span-2 space-y-6">
           {/* Quick Boarding QR Scanner & Ticket Validator */}
           <div className="bg-slate-950 text-white rounded-3xl border-2 border-amber-400 p-6 sm:p-7 shadow-2xl space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">

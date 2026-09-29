@@ -11,6 +11,8 @@ interface DatePickerProps {
 }
 
 const DAYS_OF_WEEK = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+const SHORT_WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTH_NAMES = [
   'January',
   'February',
@@ -85,6 +87,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   }, [isOpen]);
 
   const todayIso = useMemo(() => toIsoDateString(new Date()), []);
+  const effectiveMinDate = minDate !== undefined ? minDate : todayIso;
   const tomorrowIso = useMemo(() => {
     const t = new Date();
     t.setDate(t.getDate() + 1);
@@ -99,16 +102,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   const formattedDisplay = useMemo(() => {
     if (!value) return 'Select travel date';
     const d = parseIsoDate(value);
-    const shortStr = d.toLocaleDateString('en-KE', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-    if (value === todayIso) return `Today, ${d.toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}`;
-    if (value === tomorrowIso) return `Tomorrow, ${d.toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}`;
-    return shortStr;
-  }, [value, todayIso, tomorrowIso]);
+    const weekday = SHORT_WEEKDAYS[d.getDay()];
+    const dayNum = d.getDate();
+    const monthShort = SHORT_MONTHS[d.getMonth()];
+    if (value === todayIso) return `Today • ${weekday}, ${dayNum} ${monthShort}`;
+    return `${weekday} • ${dayNum} ${monthShort}`;
+  }, [value, todayIso]);
 
   const calendarDays = useMemo(() => {
     const firstDayOfMonth = new Date(viewYear, viewMonth, 1).getDay();
@@ -130,7 +129,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         dateIso: iso,
         dayNumber: d.getDate(),
         isCurrentMonth: false,
-        isDisabled: Boolean(minDate && iso < minDate),
+        isDisabled: Boolean(effectiveMinDate && iso < effectiveMinDate),
       });
     }
 
@@ -142,7 +141,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         dateIso: iso,
         dayNumber: day,
         isCurrentMonth: true,
-        isDisabled: Boolean(minDate && iso < minDate),
+        isDisabled: Boolean(effectiveMinDate && iso < effectiveMinDate),
       });
     }
 
@@ -156,12 +155,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         dateIso: iso,
         dayNumber: day,
         isCurrentMonth: false,
-        isDisabled: Boolean(minDate && iso < minDate),
+        isDisabled: Boolean(effectiveMinDate && iso < effectiveMinDate),
       });
     }
 
     return cells;
-  }, [viewYear, viewMonth, minDate]);
+  }, [viewYear, viewMonth, effectiveMinDate]);
 
   const handlePrevMonth = () => {
     if (viewMonth === 0) {

@@ -76,6 +76,17 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
   const [availableTrips, setAvailableTrips] = React.useState<Trip[]>([]);
   const [loadingTrips, setLoadingTrips] = React.useState(!initialTrip);
 
+  // Scroll to top whenever booking step changes
+  React.useLayoutEffect(() => {
+    const htmlEl = document.documentElement;
+    const prevBehavior = htmlEl.style.scrollBehavior;
+    htmlEl.style.scrollBehavior = 'auto';
+    window.scrollTo(0, 0);
+    htmlEl.scrollTop = 0;
+    document.body.scrollTop = 0;
+    htmlEl.style.scrollBehavior = prevBehavior;
+  }, [step]);
+
   // Seat selection & real-time configuration
   const [selectedSeats, setSelectedSeats] = React.useState<string[]>([]);
   const [activeChassisCapacity, setActiveChassisCapacity] = React.useState<11 | 14 | 16>(
@@ -227,7 +238,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
     }
   }, [initialTrip]);
 
-  // Switch Car Seat View: strictly reset any seats selected from another view
+  // Switch Seat Configuration: strictly reset any seats selected from another configuration
   const handleCarSeatViewChange = (newCap: 11 | 14 | 16) => {
     if (newCap === activeChassisCapacity) return;
     const hadSelectedSeats = selectedSeats.length > 0;
@@ -236,20 +247,20 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
     setPassengersData([]);
     if (hadSelectedSeats) {
       setRealtimeNotification(
-        `Switched to ${newCap}-Seater Car Seat View. Previous seat selections were cleared so you only select seats from this view.`
+        `Switched to ${newCap}-Seater configuration. Previous seat selections were cleared so you only select seats from this layout.`
       );
       setTimeout(() => setRealtimeNotification(null), 5000);
     }
   };
 
-  // Adjust passengers list when selected seats change — strictly validated against chosen Car Seat View
+  // Adjust passengers list when selected seats change — strictly validated against chosen Seat Configuration
   const handleSeatToggle = (seatNumber: string) => {
     const cleanSeat = String(seatNumber || '').trim().toUpperCase();
 
-    // Enforce that seat belongs to the specific Car Seat View the customer chose
+    // Enforce that seat belongs to the specific Seat Configuration the customer chose
     if (!isValidSeatForCarView(cleanSeat, activeChassisCapacity)) {
       setRealtimeNotification(
-        `Seat ${cleanSeat} is not available in the ${activeChassisCapacity}-Seater Car Seat View. Please select a seat from the active ${activeChassisCapacity}-Seater layout.`
+        `Seat ${cleanSeat} is not available in the ${activeChassisCapacity}-Seater configuration. Please select a seat from the active ${activeChassisCapacity}-Seater layout.`
       );
       setTimeout(() => setRealtimeNotification(null), 5000);
       return;
@@ -337,8 +348,8 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
   };
 
   const validatePassengerDetails = () => {
-    if (!contactName.trim() || !contactPhone.trim() || !contactEmail.trim()) {
-      setPaymentError('Please provide the primary contact person details (Name, Phone number, and Email).');
+    if (!contactName.trim() || !contactPhone.trim()) {
+      setPaymentError('Please provide the primary passenger full name and M-Pesa phone number.');
       return false;
     }
     try {
@@ -371,7 +382,7 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
         passengers: validPassengers,
         contactName,
         contactPhone,
-        contactEmail,
+        contactEmail: contactEmail.trim() || 'passenger@transcarrongai.co.ke',
         emergencyContactName,
         emergencyContactPhone,
         paymentMethod,
@@ -531,35 +542,46 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
     );
   }
 
-  const accountRef = activeBooking?.bookingReference || (selectedTrip ? `TRANSCAR-${selectedTrip.tripCode.split('-')[1] || 'GALAXY'}` : 'TRANSCAR');
+  const accountRef = activeBooking?.bookingReference || (selectedTrip ? `TRANSCAR-${selectedTrip.tripCode.split('-')[1] || 'RONGAI'}` : 'TRANSCAR');
 
   return (
     <div className="max-w-4xl mx-auto my-3 sm:my-8 px-2.5 sm:px-4">
-      {/* Step Indicator */}
+      {/* 5-Step Passenger Booking Journey Indicator */}
       <div className="mb-4 sm:mb-8 bg-white p-3 sm:p-4 rounded-2xl border border-neutral-200 shadow-sm overflow-x-auto">
-        <div className="flex items-center justify-between min-w-[280px] sm:min-w-0 max-w-2xl mx-auto gap-2">
+        <div className="flex items-center justify-between min-w-[320px] sm:min-w-0 max-w-3xl mx-auto gap-1.5 sm:gap-2">
           {[
-            { num: 1, label: 'Trip' },
-            { num: 2, label: 'Seats' },
-            { num: 3, label: 'Details' },
-            { num: 4, label: 'Payment' },
-          ].map((s, idx) => (
-            <div key={s.num} className="flex items-center gap-1.5 sm:gap-2">
-              <div
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-black text-xs transition-colors flex-shrink-0 ${
-                  step === s.num
-                    ? 'bg-amber-400 text-black ring-2 sm:ring-4 ring-amber-400/30 border border-black'
-                    : step > s.num
-                    ? 'bg-black text-amber-400 border border-amber-400'
-                    : 'bg-neutral-100 text-neutral-400 border border-neutral-200'
-                }`}
-              >
-                {step > s.num ? <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" /> : s.num}
+            { stepVal: -1, num: 1, label: 'Find Trip' },
+            { stepVal: 0, num: 2, label: 'Select Trip' },
+            { stepVal: 1, num: 3, label: 'Choose Seat' },
+            { stepVal: 2, num: 4, label: 'Passenger Details' },
+            { stepVal: 3, num: 5, label: 'Payment' },
+          ].map((s, idx) => {
+            const isCurrent = step === s.stepVal;
+            const isCompleted = step > s.stepVal;
+            return (
+              <div key={s.num} className="flex items-center gap-1.5 sm:gap-2">
+                <div
+                  className={`w-6 h-6 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-black text-xs transition-colors flex-shrink-0 ${
+                    isCurrent
+                      ? 'bg-amber-400 text-black ring-2 sm:ring-4 ring-amber-400/30 border border-black'
+                      : isCompleted
+                      ? 'bg-black text-amber-400 border border-amber-400'
+                      : 'bg-neutral-100 text-neutral-400 border border-neutral-200'
+                  }`}
+                >
+                  {isCompleted ? <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[3]" /> : s.num}
+                </div>
+                <span
+                  className={`text-[10px] sm:text-xs font-bold whitespace-nowrap ${
+                    isCurrent ? 'text-black font-black' : 'text-neutral-700'
+                  }`}
+                >
+                  {s.label}
+                </span>
+                {idx < 4 && <div className="hidden md:block w-3 lg:w-6 h-px bg-neutral-200 flex-shrink-0" />}
               </div>
-              <span className="text-[11px] sm:text-xs font-bold text-neutral-700 whitespace-nowrap">{s.label}</span>
-              {idx < 3 && <div className="hidden sm:block w-4 sm:w-8 h-px bg-neutral-200 flex-shrink-0" />}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -699,28 +721,67 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
             lastSyncedAt={lastSyncedAt}
           />
 
-          <div className="p-4 sm:p-5 bg-white rounded-2xl border-2 border-neutral-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-xs font-bold text-neutral-600">Selected Seats: </span>
-              <span className="text-sm font-black text-black font-mono">
-                {selectedSeats.length > 0 ? selectedSeats.join(', ') : 'None selected yet'}
-              </span>
-              <div className="text-xs text-neutral-600 mt-1">
-                Subtotal:{' '}
-                <span className="text-base font-black text-black bg-amber-400 px-2 py-0.5 rounded">
-                  KES {calculateTotalFare().toLocaleString()}
+          {/* 24. LIVE SEAT SUMMARY CARD */}
+          <div className="craft-card p-5 sm:p-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 flex-1 text-xs">
+              <div>
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Selected Seat
                 </span>
-                <p className="text-[11px] text-neutral-500 font-medium mt-1">
-                  All fares inclusive of 16% Statutory VAT as per Kenya Tax Laws
-                </p>
+                <span className="text-sm font-extrabold font-mono text-slate-950 mt-0.5 block">
+                  {selectedSeats.length > 0 ? selectedSeats.join(', ') : 'None selected'}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Trip
+                </span>
+                <span className="text-sm font-extrabold text-slate-950 mt-0.5 block">
+                  {selectedTrip.route.origin} → {selectedTrip.route.destination}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Date
+                </span>
+                <span className="text-sm font-bold text-slate-900 mt-0.5 block">
+                  {new Date(selectedTrip.departureTime).toLocaleDateString('en-KE', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                  })}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Departure
+                </span>
+                <span className="text-sm font-extrabold font-mono text-slate-950 mt-0.5 block tabular-nums">
+                  {new Date(selectedTrip.departureTime).toLocaleTimeString('en-KE', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">
+                  Fare
+                </span>
+                <span className="text-base font-extrabold font-mono text-slate-950 mt-0.5 block tabular-nums">
+                  KSh {calculateTotalFare().toLocaleString()}
+                </span>
               </div>
             </div>
 
-            <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2.5 sm:gap-3">
+            <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2.5 sm:gap-3 shrink-0">
               {!initialTrip && (
                 <button
                   onClick={() => setStep(0)}
-                  className="px-4 py-2.5 border-2 border-neutral-300 rounded-xl text-xs font-bold text-black hover:bg-neutral-100 cursor-pointer min-h-[44px] flex items-center justify-center"
+                  className="craft-btn-secondary px-4 py-2.5 text-xs font-bold min-h-[44px]"
                 >
                   Change Trip
                 </button>
@@ -728,21 +789,17 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
               <button
                 disabled={selectedSeats.length === 0 || isSyncingAvailability}
                 onClick={handleProceedToPassengers}
-                className={`px-6 py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow-md transition-all min-h-[44px] ${
-                  selectedSeats.length > 0 && !isSyncingAvailability
-                    ? 'bg-amber-400 hover:bg-amber-300 text-black border border-black cursor-pointer'
-                    : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
-                }`}
+                className="craft-btn-amber px-6 py-2.5 text-xs font-bold flex items-center justify-center gap-2 min-h-[44px]"
               >
                 {isSyncingAvailability ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-neutral-600" />
-                    <span>Checking Seat Availability...</span>
+                    <Loader2 className="w-4 h-4 animate-spin text-slate-700" />
+                    <span>Checking Availability...</span>
                   </>
                 ) : (
                   <>
                     <span>Continue to Passenger Details</span>
-                    <ArrowRight className="w-4 h-4 stroke-[3]" />
+                    <ArrowRight className="w-4 h-4" />
                   </>
                 )}
               </button>
@@ -799,13 +856,12 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-black text-black mb-1">Email Address *</label>
+                <label className="block text-xs font-black text-black mb-1">Email Address (Optional)</label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-amber-500 absolute left-3 top-3" />
                   <input
                     type="email"
-                    required
-                    placeholder="franklineorora20@gmail.com"
+                    placeholder="Optional for email receipt"
                     value={contactEmail}
                     onChange={(e) => setContactEmail(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 text-sm border-2 border-neutral-300 rounded-xl font-medium focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none"
@@ -1055,25 +1111,62 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
               </div>
             </div>
 
-            {/* Trip Details Brief */}
-            <div className="p-4 bg-neutral-50 rounded-xl border border-neutral-200 flex flex-wrap items-center justify-between gap-4 text-xs">
-              <div>
-                <span className="font-bold text-neutral-500 block">Journey</span>
-                <span className="font-black text-slate-900 text-sm">
+            {/* 26. STRIPE-INSPIRED TRIP SUMMARY & 28. PAYMENT STATE BANNER */}
+            <div className="p-4 sm:p-5 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+              <div className="space-y-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                  Trip Summary
+                </span>
+                <p className="text-base font-extrabold text-slate-950">
                   {selectedTrip.route.origin} → {selectedTrip.route.destination}
-                </span>
+                </p>
+                <p className="text-xs font-medium text-slate-700 font-mono">
+                  {new Date(selectedTrip.departureTime).toLocaleDateString('en-KE', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                  })}{' '}
+                  •{' '}
+                  {new Date(selectedTrip.departureTime).toLocaleTimeString('en-KE', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <span className="status-neutral font-mono">
+                    Seat {selectedSeats.join(', ')}
+                  </span>
+                  <span className="status-neutral">
+                    {activeChassisCapacity}-Seater
+                  </span>
+                </div>
               </div>
-              <div>
-                <span className="font-bold text-neutral-500 block">Departure</span>
-                <span className="font-mono font-bold text-slate-900">
-                  {new Date(selectedTrip.departureTime).toLocaleDateString('en-KE', { weekday: 'short', month: 'short', day: 'numeric' })} at {new Date(selectedTrip.departureTime).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}
+
+              <div className="sm:text-right border-t sm:border-t-0 border-slate-200 pt-3 sm:pt-0">
+                <span className="text-[11px] font-semibold text-slate-500 block">Total</span>
+                <span className="text-xl font-extrabold font-mono text-slate-950 tabular-nums">
+                  KSh {calculateTotalFare().toLocaleString()}
                 </span>
-              </div>
-              <div>
-                <span className="font-bold text-neutral-500 block">Reserved Seats</span>
-                <span className="font-mono font-black text-amber-600 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
-                  {selectedSeats.join(', ')}
-                </span>
+
+                {/* 28. 4 Explicit Payment States */}
+                <div className="mt-2">
+                  {isProcessingPayment ? (
+                    <span className="status-warning">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Pending: Waiting for confirmation</span>
+                    </span>
+                  ) : paymentError ? (
+                    <span className="status-error">
+                      <span>×</span>
+                      <span>Payment not confirmed</span>
+                    </span>
+                  ) : (
+                    <span className="status-positive">
+                      <span>●</span>
+                      <span>Ready to pay</span>
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1212,9 +1305,33 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                   </div>
 
                   {paymentError && (
-                    <div className="p-3 bg-rose-900/90 border border-rose-600 text-rose-100 text-xs rounded-xl flex items-center gap-2 animate-in fade-in">
-                      <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
-                      <span>{paymentError}</span>
+                    <div className="p-4 bg-red-50 border border-red-200 text-red-900 text-xs rounded-xl space-y-2.5 animate-in fade-in">
+                      <div className="flex items-center gap-2 font-bold">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-600" />
+                        <span>{paymentError}</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={handleVerifyMpesaCode}
+                          className="craft-btn-secondary text-[11px] py-1.5 px-3 font-bold"
+                        >
+                          Retry M-Pesa
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setStep(2)}
+                          className="craft-btn-secondary text-[11px] py-1.5 px-3 font-bold"
+                        >
+                          Try another number
+                        </button>
+                        <a
+                          href="tel:+254724626199"
+                          className="craft-btn-tertiary text-[11px] py-1.5 px-2 font-semibold"
+                        >
+                          Contact support (+254 724 626199)
+                        </a>
+                      </div>
                     </div>
                   )}
                 </div>

@@ -14,18 +14,377 @@ import {
   HelpCircle,
   Sparkles,
   ArrowRight,
+  Eye,
+  X,
 } from 'lucide-react';
 import { Route } from '../../types';
+import { PsvCabinLayoutDiagram } from './HomePage';
+
+const FULL_FLEET_ROSTER = [
+  {
+    id: 'fleet-kde416q',
+    reg: 'KDE 416Q',
+    title: 'TransCar rongai VIP Shuttle',
+    edition: '11-Seater Executive Shuttle',
+    category: '11-Seater' as const,
+    cap: 11 as const,
+    status: 'Active on Route',
+    corridor: 'Rongai • Kiserian • Kisii Express Corridor',
+    image: '/images/transcar_highway_kde4160.webp',
+    frontSeats: '2 Front Seats (P1, P2) beside Driver (RHD)',
+    rearRows: '3 Rear Rows × 3 Seats (1A–1C, 2A–2C, 3A–3C)',
+    features: ['Extra Reclining Legroom', 'Dual USB-C Charging', 'Air Conditioning', '80 km/h Speed Governed'],
+  },
+  {
+    id: 'fleet-kdf520m',
+    reg: 'KDF 520M',
+    title: 'TransCar rongai Direct HiAce',
+    edition: '11-Seater Express Shuttle',
+    category: '11-Seater' as const,
+    cap: 11 as const,
+    status: 'Active on Route',
+    corridor: 'Kisii • Narok • Rongai Direct Corridor',
+    image: '/images/transcar_night_travel.webp',
+    frontSeats: '2 Front Seats (P1, P2) beside Driver (RHD)',
+    rearRows: '3 Rear Rows × 3 Seats (1A–1C, 2A–2C, 3A–3C)',
+    features: ['Reclining Comfort Seats', 'High-Speed Wi-Fi', 'Live GPS Tracking', '80 km/h Speed Governed'],
+  },
+  {
+    id: 'fleet-kdv149e',
+    reg: 'KDV 149E',
+    title: 'TransCar rongai Stalker Intercity',
+    edition: '14-Seater Standard Shuttle',
+    category: '14-Seater' as const,
+    cap: 14 as const,
+    status: 'Active on Route',
+    corridor: 'Rongai • Suswa • Narok • Kisii Corridor',
+    image: '/images/transcar_stalker_kdv149e.webp',
+    frontSeats: '2 Front Seats (P1, P2) beside Driver (RHD)',
+    rearRows: 'Rows 1–2 (3 seats), Row 3 (2 seats + aisle), Row 4 (4 seats)',
+    features: ['Individual Reading Lamps', 'High-Speed Onboard Wi-Fi', '25 KG Baggage Allowance', 'Live GPS Telematics'],
+  },
+  {
+    id: 'fleet-kde832y',
+    reg: 'KDE 832Y',
+    title: 'TransCar rongai Day Cruiser',
+    edition: '14-Seater Corridor Shuttle',
+    category: '14-Seater' as const,
+    cap: 14 as const,
+    status: 'Active on Route',
+    corridor: 'Rongai • Kiserian • Ngong • Suswa • Kisii',
+    image: '/images/transcar_kde832y_day.webp',
+    frontSeats: '2 Front Seats (P1, P2) beside Driver (RHD)',
+    rearRows: 'Rows 1–2 (3 seats), Row 3 (2 seats + aisle), Row 4 (4 seats)',
+    features: ['Certified PSV Captains', 'Overhead Luggage Bins', 'USB Phone Charging', 'Air Conditioning'],
+  },
+  {
+    id: 'fleet-kda123a',
+    reg: 'KDA 123A',
+    title: 'TransCar rongai Highway Express',
+    edition: '14-Seater Express Shuttle',
+    category: '14-Seater' as const,
+    cap: 14 as const,
+    status: 'Active on Route',
+    corridor: 'Rongai • Narok • Bomet • Oyugis • Kisii',
+    image: '/images/transcar_white_highway.webp',
+    frontSeats: '2 Front Seats (P1, P2) beside Driver (RHD)',
+    rearRows: 'Rows 1–2 (3 seats), Row 3 (2 seats + aisle), Row 4 (4 seats)',
+    features: ['Reflective Highway Safety', '25 KG Baggage Allowance', 'Live GPS Tracking', 'Air Conditioning'],
+  },
+  {
+    id: 'fleet-kdc789c',
+    reg: 'KDC 789C',
+    title: 'TransCar rongai Maxi Cruiser',
+    edition: '16-Seater Long-Wheelbase Shuttle',
+    category: '16-Seater' as const,
+    cap: 16 as const,
+    status: 'Active on Route',
+    corridor: 'Rongai • Kilgoris • Rongo • Kehancha',
+    image: '/images/transcar_highway_rear.webp',
+    frontSeats: '2 Front Seats (P1, P2) beside Driver (RHD)',
+    rearRows: 'Rows 1–3 (3 seats), Row 4 (1 window seat), Row 5 (4 rear seats)',
+    features: ['High-Roof Cabin Comfort', 'Dedicated Luggage Bay', 'Individual AC Louvers', 'NTSA Certified Safety'],
+  },
+];
 
 interface CompanyPagesProps {
-  page: 'about' | 'services' | 'routes' | 'safety' | 'policies' | 'terms' | 'privacy' | 'contact' | 'faqs';
+  page: 'about' | 'services' | 'routes' | 'fleet' | 'safety' | 'policies' | 'terms' | 'privacy' | 'contact' | 'faqs';
   routes: Route[];
   onBookRoute?: (route: Route) => void;
+  onSelectVehicleFilter?: (capacity: 11 | 14 | 16) => void;
 }
 
-export const CompanyPages: React.FC<CompanyPagesProps> = ({ page, routes, onBookRoute }) => {
+export const CompanyPages: React.FC<CompanyPagesProps> = ({
+  page,
+  routes,
+  onBookRoute,
+  onSelectVehicleFilter,
+}) => {
+  const [fleetFilter, setFleetFilter] = React.useState<'ALL' | '11-Seater' | '14-Seater' | '16-Seater'>('ALL');
+  const [selectedFleetVehicle, setSelectedFleetVehicle] = React.useState<(typeof FULL_FLEET_ROSTER)[number] | null>(null);
+
+  // Always scroll to the absolute top when CompanyPages mounts or switches page
+  React.useLayoutEffect(() => {
+    const htmlEl = document.documentElement;
+    const prevBehavior = htmlEl.style.scrollBehavior;
+    htmlEl.style.scrollBehavior = 'auto';
+    window.scrollTo(0, 0);
+    htmlEl.scrollTop = 0;
+    document.body.scrollTop = 0;
+    htmlEl.style.scrollBehavior = prevBehavior;
+  }, [page]);
+
+  const filteredFleet = React.useMemo(() => {
+    if (fleetFilter === 'ALL') return FULL_FLEET_ROSTER;
+    return FULL_FLEET_ROSTER.filter((v) => v.category === fleetFilter);
+  }, [fleetFilter]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+      {/* FLEET PAGE */}
+      {page === 'fleet' && (
+        <div className="space-y-12">
+          {/* Header & Category Filter */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-200 pb-6">
+            <div className="space-y-2 max-w-2xl">
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-600">
+                <Bus className="w-3.5 h-3.5" />
+                <span>TransCar rongai Official Vehicle Fleet</span>
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
+                Vehicle Fleet & Kenyan PSV Seat Configurations
+              </h1>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Browse our active fleet of 11-Seater, 14-Seater, and 16-Seater Toyota HiAce intercity shuttles. Every vehicle features Kenyan Right-Hand Drive seating with 2 front passenger seats (P1, P2) beside the driver and 80 km/h speed governors.
+              </p>
+            </div>
+
+            {/* Category Filter Tabs */}
+            <div className="flex flex-wrap items-center gap-1.5 bg-slate-200/70 p-1.5 rounded-xl border border-slate-200 self-start">
+              {(
+                [
+                  { id: 'ALL', label: `All Vehicles (${FULL_FLEET_ROSTER.length})` },
+                  { id: '11-Seater', label: '11-Seater (2)' },
+                  { id: '14-Seater', label: '14-Seater (3)' },
+                  { id: '16-Seater', label: '16-Seater (1)' },
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setFleetFilter(tab.id)}
+                  className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                    fleetFilter === tab.id
+                      ? 'bg-slate-950 text-amber-400 shadow-sm font-bold'
+                      : 'text-slate-700 hover:text-slate-950 hover:bg-white/60'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Complete 6-Vehicle Fleet Roster Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredFleet.map((veh) => (
+              <div
+                key={veh.id}
+                className="craft-card-interactive overflow-hidden flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="aspect-[16/10] w-full overflow-hidden bg-slate-950 relative">
+                    <img
+                      src={veh.image}
+                      alt={`${veh.reg} ${veh.title}`}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = '/images/transcar_white_highway.webp';
+                      }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+                    <span className="absolute top-3 left-3 text-xs font-extrabold uppercase tracking-wider bg-amber-400 text-slate-950 px-3 py-1 rounded-lg border border-slate-950 shadow">
+                      {veh.category}
+                    </span>
+                    <span className="absolute top-3 right-3 status-positive text-[11px] shadow-sm">
+                      <span>●</span>
+                      <span>{veh.status}</span>
+                    </span>
+                    <span className="absolute bottom-3 left-3 text-xs font-mono font-bold bg-slate-950/90 text-amber-400 px-2.5 py-1 rounded border border-amber-400/40">
+                      {veh.reg}
+                    </span>
+                  </div>
+
+                  <div className="p-5 sm:p-6 space-y-4">
+                    <div>
+                      <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider block">
+                        {veh.edition}
+                      </span>
+                      <h3 className="text-lg sm:text-xl font-extrabold text-slate-950 mt-0.5">
+                        {veh.title}
+                      </h3>
+                      <p className="text-xs text-slate-500 font-medium mt-1 flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <span>{veh.corridor}</span>
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+                      <div>
+                        <span className="font-bold text-slate-900 block">Front Cabin (RHD):</span>
+                        <span className="text-slate-600">{veh.frontSeats}</span>
+                      </div>
+                      <div>
+                        <span className="font-bold text-slate-900 block">Rear Cabin Layout:</span>
+                        <span className="text-slate-600">{veh.rearRows}</span>
+                      </div>
+                    </div>
+
+                    <ul className="grid grid-cols-2 gap-1.5 text-xs text-slate-700 font-medium">
+                      {veh.features.map((f) => (
+                        <li key={f} className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span className="truncate">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="p-5 sm:p-6 pt-0 grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFleetVehicle(veh)}
+                    className="craft-btn-secondary py-2.5 px-3 text-xs font-bold flex items-center justify-center gap-1.5"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Seat Map</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSelectVehicleFilter && onSelectVehicleFilter(veh.cap)}
+                    className="craft-btn-amber py-2.5 px-3 text-xs font-bold flex items-center justify-center gap-1.5"
+                  >
+                    <span>Find Trips</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Side-by-Side Kenyan PSV Cabin Diagrams Comparison */}
+          <div className="craft-card p-6 sm:p-8 space-y-6">
+            <div className="text-center max-w-2xl mx-auto space-y-1.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-600">
+                Right-Hand-Drive Cabin Diagrams
+              </span>
+              <h2 className="text-2xl font-extrabold text-slate-950 tracking-tight">
+                Compare 11-Seater, 14-Seater & 16-Seater Layouts
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-600">
+                All TransCar rongai vehicles position the driver on the front-right with 2 passenger seats (P1, P2) on the front-left.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+              {([11, 14, 16] as const).map((cap) => (
+                <div
+                  key={`diagram-${cap}`}
+                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col items-center space-y-4"
+                >
+                  <div className="text-center">
+                    <span className="status-neutral font-bold">{cap}-Seater PSV</span>
+                    <p className="text-xs text-slate-600 mt-1">
+                      {cap === 11
+                        ? '2 Front + 9 Rear (3×3 Rows)'
+                        : cap === 14
+                        ? '2 Front + 12 Rear (Aisle + 4-Seat Back)'
+                        : '2 Front + 14 Rear (Extended 5 Rows)'}
+                    </p>
+                  </div>
+                  <PsvCabinLayoutDiagram capacity={cap} />
+                  <button
+                    type="button"
+                    onClick={() => onSelectVehicleFilter && onSelectVehicleFilter(cap)}
+                    className="craft-btn-secondary w-full py-2.5 text-xs font-bold"
+                  >
+                    Search {cap}-Seater Departures
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Vehicle Seat Map Modal */}
+          {selectedFleetVehicle && (
+            <div
+              className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
+              onClick={() => setSelectedFleetVehicle(null)}
+            >
+              <div
+                className="bg-white rounded-2xl max-w-2xl w-full overflow-hidden border border-slate-200 shadow-2xl animate-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-5 bg-slate-950 text-white flex items-center justify-between border-b border-slate-800">
+                  <div>
+                    <span className="text-xs font-mono font-bold text-amber-400">
+                      {selectedFleetVehicle.reg} • {selectedFleetVehicle.category}
+                    </span>
+                    <h3 className="text-lg font-extrabold text-white">
+                      {selectedFleetVehicle.title}
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFleetVehicle(null)}
+                    className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                  <div className="space-y-4">
+                    <img
+                      src={selectedFleetVehicle.image}
+                      alt={selectedFleetVehicle.title}
+                      className="w-full h-44 object-cover rounded-xl border border-slate-200"
+                    />
+                    <div className="space-y-2 text-xs">
+                      <p className="font-bold text-slate-900">Corridor:</p>
+                      <p className="text-slate-600">{selectedFleetVehicle.corridor}</p>
+                      <p className="font-bold text-slate-900 pt-1">Seating Configuration:</p>
+                      <p className="text-slate-600">
+                        {selectedFleetVehicle.frontSeats} • {selectedFleetVehicle.rearRows}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const cap = selectedFleetVehicle.cap;
+                        setSelectedFleetVehicle(null);
+                        if (onSelectVehicleFilter) onSelectVehicleFilter(cap);
+                      }}
+                      className="craft-btn-amber w-full py-3 text-xs font-bold flex items-center justify-center gap-2"
+                    >
+                      <span>Find {selectedFleetVehicle.category} Trips</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  <div>
+                    <PsvCabinLayoutDiagram capacity={selectedFleetVehicle.cap} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 1. ABOUT US PAGE */}
       {page === 'about' && (
         <div className="space-y-10">
@@ -81,7 +440,7 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({ page, routes, onBook
           <div className="space-y-6">
             <div className="text-center max-w-2xl mx-auto space-y-2">
               <span className="text-xs font-black uppercase tracking-widest text-amber-500">
-                TransCar Galaxy Fleet
+                TransCar rongai Fleet
               </span>
               <h2 className="text-2xl sm:text-3xl font-black font-serif text-black">
                 Our Certified Executive Shuttles
@@ -386,7 +745,7 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({ page, routes, onBook
                         onClick={() => onBookRoute(route)}
                         className="px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-black font-black text-xs rounded-xl shadow transition-colors flex items-center gap-1.5 border border-black cursor-pointer"
                       >
-                        <span>Book Seats</span>
+                        <span>Find Trips</span>
                         <ArrowRight className="w-4 h-4 stroke-[3]" />
                       </button>
                     )}

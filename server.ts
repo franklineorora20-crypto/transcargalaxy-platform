@@ -220,7 +220,22 @@ async function loadRuntimeState() {
   }
 
   if (values.has('trips')) {
-    trips = values.get('trips') as Trip[];
+    const loadedTrips = values.get('trips') as Trip[];
+    const todayStr = new Date().toISOString().split('T')[0];
+    const hasTodayTrip = loadedTrips.some((t) => t.departureTime.startsWith(todayStr));
+    if (!hasTodayTrip && loadedTrips.length > 0) {
+      trips = loadedTrips.map((t) => {
+        const depTimePart = t.departureTime.includes('T') ? t.departureTime.split('T')[1] : '05:00:00.000Z';
+        const arrTimePart = t.estimatedArrivalTime.includes('T') ? t.estimatedArrivalTime.split('T')[1] : '11:30:00.000Z';
+        return {
+          ...t,
+          departureTime: `${todayStr}T${depTimePart}`,
+          estimatedArrivalTime: `${todayStr}T${arrTimePart}`,
+        };
+      });
+    } else {
+      trips = loadedTrips;
+    }
   }
 
   if (values.has('bookings')) {

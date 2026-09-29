@@ -96,6 +96,7 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
     const isAllowedInCurrentView = validSeatsSet.has(seatNum);
     const isSelected = isAllowedInCurrentView && selectedSeatsInActiveView.includes(seatNum);
     const isDisabled = isOccupied || !isAllowedInCurrentView;
+    const statusLabel = isOccupied ? 'occupied' : isSelected ? 'selected' : 'available';
 
     return (
       <button
@@ -103,6 +104,8 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
         type="button"
         id={`seat-${seatNum}`}
         disabled={isDisabled}
+        aria-label={`Seat ${seatNum} — ${statusLabel}`}
+        aria-pressed={isSelected}
         onMouseEnter={() => setHoveredSeat(seatNum)}
         onMouseLeave={() => setHoveredSeat((curr) => (curr === seatNum ? null : curr))}
         onClick={() => {
@@ -112,22 +115,22 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
         }}
         title={
           isOccupied
-            ? `Seat ${seatNum} is occupied`
+            ? `Seat ${seatNum} — occupied`
             : isSelected
-            ? `Seat ${seatNum} selected in ${activeConfigTab}-Seater View (click to deselect)`
-            : `Select Seat ${seatNum} (${activeConfigTab}-Seater View) • KES ${trip.fareKsh.toLocaleString()}`
+            ? `Seat ${seatNum} — selected (click to deselect)`
+            : `Seat ${seatNum} — available • KSh ${trip.fareKsh.toLocaleString()}`
         }
-        className={`relative flex flex-col items-center justify-center w-11 h-12 sm:w-12 sm:h-13 rounded-xl font-mono text-xs font-bold transition-all ${
+        className={`relative flex flex-col items-center justify-center w-11 h-12 sm:w-12 sm:h-13 rounded-xl font-mono text-xs font-bold transition-all duration-150 ${
           isDisabled
-            ? 'bg-slate-900/70 border border-slate-800 text-slate-600 cursor-not-allowed select-none'
+            ? 'bg-slate-900/70 border border-slate-800 text-slate-500 cursor-not-allowed select-none'
             : isSelected
-            ? 'bg-amber-400 text-slate-950 border-2 border-amber-300 shadow-md font-black ring-2 ring-amber-400/30'
-            : 'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 hover:border-amber-400 cursor-pointer shadow-sm'
+            ? 'bg-amber-400 text-slate-950 border-2 border-amber-300 shadow-md font-black ring-2 ring-amber-400/30 scale-[1.03] active:scale-95'
+            : 'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 hover:border-amber-400 cursor-pointer shadow-sm active:scale-95'
         }`}
       >
         <span className="text-xs sm:text-sm font-black leading-none">{seatNum}</span>
-        <span className="text-[8px] sm:text-[9px] font-sans font-medium mt-0.5 opacity-80">
-          {isSelected ? 'Selected' : isOccupied ? 'Booked' : isWindow ? 'Window' : 'Seat'}
+        <span className="text-[8px] sm:text-[9px] font-sans font-medium mt-0.5 opacity-85">
+          {isSelected ? '● Selected' : isOccupied ? '× Occupied' : isWindow ? '○ Window' : '○ Open'}
         </span>
       </button>
     );
@@ -148,14 +151,14 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
               </span>
               <span className="text-xs text-slate-500 font-medium">
                 {isSixteenSeater
-                  ? '16-Seater HiAce Car Seat View'
+                  ? '16-Seater HiAce Seat Configuration'
                   : isElevenSeater
-                  ? '11-Seater VIP Shuttle Car Seat View'
-                  : '14-Seater Intercity Shuttle Car Seat View'}
+                  ? '11-Seater VIP Shuttle Seat Configuration'
+                  : '14-Seater Intercity Shuttle Seat Configuration'}
               </span>
             </div>
             <h4 className="text-base font-bold text-slate-900 mt-0.5">
-              Select Seats Directly on Your Chosen Car Seat View
+              Select Available Seats from the Vehicle Layout
             </h4>
           </div>
         </div>
@@ -163,7 +166,7 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
         <div className="flex items-center gap-3 text-xs sm:text-right">
           <div className="space-y-0.5">
             <span className="text-[11px] text-slate-500 font-medium block">
-              {activeConfigTab}-Seater View Availability
+              {activeConfigTab}-Seater Availability
             </span>
             <span className="font-mono font-bold text-slate-900 text-sm">
               <strong className="text-emerald-600">{availableCount}</strong> of {totalSeatsInConfig} Available
@@ -183,30 +186,30 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
         </div>
       </div>
 
-      {/* Step 1: Choose Specific Car Seat View */}
+      {/* Step 1: Choose Specific Seat Configuration */}
       <div className="p-3 sm:p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2.5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wider block">
-              1. Choose Your Car Seat View
+              Seat Configuration
             </span>
             <span className="text-[11px] text-slate-600">
-              You can only select seats that belong to the specific car seat view you choose below.
+              Kenyan PSV Right-Hand Drive layout with 2 front passenger seats (P1, P2) beside the driver.
             </span>
           </div>
           {selectedSeatsInActiveView.length > 0 && (
             <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-amber-100 text-amber-950 border border-amber-300 px-2.5 py-1 rounded-lg">
               <Lock className="w-3 h-3 text-amber-700" />
-              <span>Using {activeConfigTab}-Seater View ({selectedSeatsInActiveView.length} selected)</span>
+              <span>{activeConfigTab}-Seater ({selectedSeatsInActiveView.length} selected)</span>
             </span>
           )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {[
-            { cap: 11 as const, label: '11-Seater Car View', sub: 'VIP Shuttle • 3 Rows + Front' },
-            { cap: 14 as const, label: '14-Seater Car View', sub: 'Standard Matatu • 4 Rows + Front' },
-            { cap: 16 as const, label: '16-Seater Car View', sub: 'Maxi HiAce • 5 Rows + Front' },
+            { cap: 11 as const, label: '11-Seater', sub: 'VIP Shuttle • 3 Rows + 2 Front' },
+            { cap: 14 as const, label: '14-Seater', sub: 'Standard Shuttle • 4 Rows + 2 Front' },
+            { cap: 16 as const, label: '16-Seater', sub: 'Maxi HiAce • 5 Rows + 2 Front' },
           ].map((item) => {
             const isActive = activeConfigTab === item.cap;
             return (
@@ -235,25 +238,37 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
         </div>
       </div>
 
-      {/* Status Legend */}
+      {/* 25. Status Legend (Non-Color-Only Symbols + Labels) */}
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs pt-1">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3.5 sm:gap-4">
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded bg-slate-800 border border-slate-700" />
-            <span className="text-slate-600 font-medium">Available</span>
+            <span className="w-4 h-4 rounded bg-slate-800 border border-slate-700 text-slate-100 font-mono text-[10px] flex items-center justify-center">
+              ○
+            </span>
+            <span className="text-slate-700 font-medium">Available</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded bg-amber-400 border border-amber-300" />
+            <span className="w-4 h-4 rounded bg-amber-400 border border-amber-300 text-slate-950 font-mono text-[10px] font-bold flex items-center justify-center">
+              ●
+            </span>
             <span className="text-slate-900 font-bold">Selected ({selectedSeatsInActiveView.length})</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3.5 h-3.5 rounded bg-slate-900/70 border border-slate-800" />
-            <span className="text-slate-400">Booked ({occupiedCount})</span>
+            <span className="w-4 h-4 rounded bg-slate-900/70 border border-slate-800 text-slate-400 font-mono text-[10px] flex items-center justify-center">
+              ×
+            </span>
+            <span className="text-slate-500">Occupied ({occupiedCount})</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-4 h-4 rounded bg-slate-900 border border-slate-700 text-amber-400 font-mono text-[10px] flex items-center justify-center">
+              ▣
+            </span>
+            <span className="text-slate-500">Driver</span>
           </div>
         </div>
 
         <div className="text-slate-600 text-xs font-medium">
-          Fare: <strong className="text-slate-900 font-mono">KES {trip.fareKsh.toLocaleString()}</strong> / seat
+          Fare: <strong className="text-slate-900 font-mono tabular-nums">KSh {trip.fareKsh.toLocaleString()}</strong> / seat
         </div>
       </div>
 
@@ -262,14 +277,14 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
         <div className="p-3 bg-amber-50/80 rounded-xl border border-amber-200 flex flex-wrap items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold text-slate-800">
-              Selected in {activeConfigTab}-Seater View:
+              Selected Seats ({activeConfigTab}-Seater):
             </span>
             <span className="font-mono font-bold text-slate-950 bg-amber-200/80 px-2 py-0.5 rounded">
               {selectedSeatsInActiveView.join(', ')}
             </span>
           </div>
-          <span className="font-mono font-bold text-slate-900 text-sm">
-            Total: KES {(selectedSeatsInActiveView.length * trip.fareKsh).toLocaleString()}
+          <span className="font-mono font-bold text-slate-900 text-sm tabular-nums">
+            Total: KSh {(selectedSeatsInActiveView.length * trip.fareKsh).toLocaleString()}
           </span>
         </div>
       )}

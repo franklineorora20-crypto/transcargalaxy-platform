@@ -1208,115 +1208,192 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
       {/* TAB 1: EXECUTIVE OVERVIEW */}
       {activeTab === 'overview' && summary && (
         <div className="space-y-8">
-          {/* Real-Time Performance & KPI Cards */}
+          {/* 32. MANAGER PORTAL: TOP SUMMARY METRICS (Vercel / Linear Principles) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* CARD 1: TRIP COMPLETION RATE */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3 relative overflow-hidden group hover:border-amber-400 transition-colors">
+            {/* METRIC 1: TODAY'S TRIPS */}
+            <div className="craft-card p-5 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Trip Completion Rate
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                  Today&apos;s Trips
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  Real-Time
-                </span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <p className="text-3xl font-black text-slate-900 font-mono">
-                  {performanceMetrics?.tripCompletionRatePercent ?? 98.4}%
-                </p>
-                <span className="text-xs text-emerald-600 font-bold">
-                  {performanceMetrics?.onTimeDepartureRatePercent ?? 96.2}% On-Time
+                <span className="status-positive text-[11px]">
+                  <span>●</span>
+                  <span>{performanceMetrics?.onTimeDepartureRatePercent ?? 96.2}% On-Time</span>
                 </span>
               </div>
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                <span>
-                  <strong className="text-slate-800 font-semibold">{performanceMetrics?.completedTripsCount ?? trips.filter(t => t.status === 'ARRIVED').length}</strong> Completed
-                </span>
-                <span>•</span>
-                <span>
-                  <strong className="text-emerald-700 font-semibold">{performanceMetrics?.inTransitTripsCount ?? trips.filter(t => t.status === 'IN_TRANSIT').length}</strong> In-Transit
-                </span>
-                <span>•</span>
-                <span>
-                  <strong className="text-amber-700 font-semibold">{performanceMetrics?.scheduledTripsCount ?? trips.filter(t => t.status === 'SCHEDULED' || t.status === 'BOARDING').length}</strong> Queued
-                </span>
-              </div>
-            </div>
-
-            {/* CARD 2: AVERAGE SEAT OCCUPANCY */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3 relative overflow-hidden group hover:border-amber-400 transition-colors">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Average Seat Occupancy
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-900">
-                  Load Factor
-                </span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <p className="text-3xl font-black text-slate-900 font-mono">
-                  {performanceMetrics?.averageSeatOccupancyPercent ?? summary.passengerLoadFactorPercent}%
-                </p>
-                <span className="text-xs text-slate-500 font-medium">
-                  across all chassis
-                </span>
-              </div>
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-600 font-medium">
-                <span>
-                  Filled: <strong className="text-slate-900 font-bold">{performanceMetrics?.totalOccupiedSeatsAcrossTrips ?? trips.reduce((acc, t) => acc + (t.totalSeats - t.availableSeats), 0)}</strong> / {performanceMetrics?.totalSeatCapacityAcrossTrips ?? trips.reduce((acc, t) => acc + t.totalSeats, 0)} Seats
-                </span>
-                <span className="text-emerald-600 font-bold text-[10px] bg-emerald-50 px-1.5 py-0.5 rounded">
-                  High Demand
-                </span>
-              </div>
-            </div>
-
-            {/* CARD 3: TOTAL GROSS REVENUE */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3 relative overflow-hidden group hover:border-amber-400 transition-colors">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Total Gross Revenue
-                </span>
-                <span className="text-xs text-emerald-600 font-semibold flex items-center gap-0.5">
-                  <TrendingUp className="w-3.5 h-3.5" /> +14.2%
-                </span>
-              </div>
-              <p className="text-3xl font-black text-slate-900 font-mono">
-                KES {summary.totalRevenueKsh.toLocaleString()}
+              <p className="text-3xl font-extrabold text-slate-950 font-mono tabular-nums">
+                {trips.length}
               </p>
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
                 <span>
-                  Net Profit: <strong className="text-emerald-600 font-bold">KES {summary.netProfitKsh.toLocaleString()}</strong>
+                  <strong className="text-slate-900 font-semibold">{performanceMetrics?.inTransitTripsCount ?? trips.filter(t => t.status === 'IN_TRANSIT').length}</strong> In-Transit
                 </span>
-                <span className="text-slate-700 font-semibold">
+                <span>•</span>
+                <span>
+                  <strong className="text-slate-900 font-semibold">{performanceMetrics?.scheduledTripsCount ?? trips.filter(t => t.status === 'SCHEDULED' || t.status === 'BOARDING').length}</strong> Scheduled
+                </span>
+              </div>
+            </div>
+
+            {/* METRIC 2: SEATS BOOKED */}
+            <div className="craft-card p-5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                  Seats Booked
+                </span>
+                <span className="status-neutral font-mono">
+                  {performanceMetrics?.averageSeatOccupancyPercent ?? summary.passengerLoadFactorPercent}% Load
+                </span>
+              </div>
+              <p className="text-3xl font-extrabold text-slate-950 font-mono tabular-nums">
+                {performanceMetrics?.totalOccupiedSeatsAcrossTrips ?? trips.reduce((acc, t) => acc + (t.totalSeats - t.availableSeats), 0)}
+                <span className="text-sm font-medium text-slate-400 ml-1.5">
+                  / {performanceMetrics?.totalSeatCapacityAcrossTrips ?? trips.reduce((acc, t) => acc + t.totalSeats, 0)}
+                </span>
+              </p>
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                <span>Across all active departures</span>
+                <span className="text-emerald-700 font-semibold">Live Sync</span>
+              </div>
+            </div>
+
+            {/* METRIC 3: REVENUE TODAY */}
+            <div className="craft-card p-5 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                  Revenue Today
+                </span>
+                <span className="text-xs text-emerald-700 font-semibold flex items-center gap-0.5">
+                  <TrendingUp className="w-3.5 h-3.5" /> +14.2%
+                </span>
+              </div>
+              <p className="text-3xl font-extrabold text-slate-950 font-mono tabular-nums">
+                KSh {summary.totalRevenueKsh.toLocaleString()}
+              </p>
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                <span>
+                  Net: <strong className="text-emerald-700 font-semibold">KSh {summary.netProfitKsh.toLocaleString()}</strong>
+                </span>
+                <span className="text-slate-600 font-medium">
                   ({summary.operatingMarginPercent}% margin)
                 </span>
               </div>
             </div>
 
-            {/* CARD 4: ACTIVE FLEET COACHES */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-3 relative overflow-hidden group hover:border-amber-400 transition-colors">
+            {/* METRIC 4: ACTIVE VEHICLES */}
+            <div className="craft-card p-5 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Fleet Readiness & Status
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                  Active Vehicles
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-800">
+                <span className="status-neutral">
                   {performanceMetrics?.fleetReadinessRatePercent ?? 90}% Ready
                 </span>
               </div>
-              <p className="text-3xl font-black text-slate-900 font-mono">
-                {vehicles.filter((v) => v.status === 'AVAILABLE' || v.status === 'ON_TRIP' || v.status === 'ASSIGNED').length} / {vehicles.length}
+              <p className="text-3xl font-extrabold text-slate-950 font-mono tabular-nums">
+                {vehicles.filter((v) => v.status === 'AVAILABLE' || v.status === 'ON_TRIP' || v.status === 'ASSIGNED').length}
+                <span className="text-sm font-medium text-slate-400 ml-1.5">/ {vehicles.length}</span>
               </p>
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
                 <span className="text-emerald-700 font-semibold">
                   {vehicles.filter((v) => v.status === 'ON_TRIP').length} on Highway
                 </span>
                 <span>•</span>
-                <span className="text-amber-600 font-semibold">
+                <span className="text-amber-700 font-semibold">
                   {vehicles.filter((v) => v.status === 'MAINTENANCE').length} in Workshop
                 </span>
               </div>
+            </div>
+          </div>
+
+          {/* 32. OPERATIONAL TABLE: Trip | Departure | Vehicle | Seats | Driver | Status | Actions */}
+          <div className="craft-card overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base font-extrabold text-slate-950">Live Operational Schedule</h3>
+                <p className="text-xs text-slate-500">
+                  Real-time departure roster, seat occupancy, and assigned captains
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('trips')}
+                className="craft-btn-secondary text-xs px-3.5 py-2 font-bold"
+              >
+                Manage All Trips
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    <th className="py-3 px-4">Trip</th>
+                    <th className="py-3 px-4">Departure</th>
+                    <th className="py-3 px-4">Vehicle</th>
+                    <th className="py-3 px-4">Seats</th>
+                    <th className="py-3 px-4">Driver</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {trips.slice(0, 6).map((t) => {
+                    const cap = t.vehicle?.seatingCapacity || t.totalSeats || 14;
+                    const booked = Math.max(0, cap - t.availableSeats);
+                    return (
+                      <tr key={`ops-row-${t.id}`} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3 px-4">
+                          <span className="font-bold text-slate-950 block">
+                            {t.route.origin} → {t.route.destination}
+                          </span>
+                          <span className="font-mono text-[11px] text-slate-500">{t.tripCode}</span>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-slate-900 tabular-nums">
+                          {new Date(t.departureTime).toLocaleTimeString('en-KE', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="font-semibold text-slate-900 block">{cap}-Seater</span>
+                          <span className="font-mono text-[11px] text-slate-500">
+                            {t.vehicle?.registrationNumber}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-semibold text-slate-800">
+                          {booked} / {cap} booked
+                        </td>
+                        <td className="py-3 px-4 font-medium text-slate-700">
+                          {t.driver?.name || 'Capt. Frankline Orora'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={
+                              t.status === 'DELAYED'
+                                ? 'status-warning'
+                                : t.status === 'CANCELLED'
+                                ? 'status-error'
+                                : 'status-positive'
+                            }
+                          >
+                            <span>●</span>
+                            <span>{t.status.replace('_', ' ')}</span>
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditTripFare(t)}
+                            className="craft-btn-secondary text-[11px] py-1.5 px-3 font-semibold"
+                          >
+                            Edit Fare
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
 
