@@ -120,7 +120,7 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
             ? `Seat ${seatNum} — selected (click to deselect)`
             : `Seat ${seatNum} — available • KSh ${trip.fareKsh.toLocaleString()}`
         }
-        className={`relative flex flex-col items-center justify-center w-11 h-12 sm:w-12 sm:h-13 rounded-xl font-mono text-xs font-bold transition-all duration-150 ${
+        className={`relative flex flex-col items-center justify-center w-10 h-11 sm:w-12 sm:h-13 rounded-xl font-mono text-xs font-bold transition-all duration-150 ${
           isDisabled
             ? 'bg-slate-900/70 border border-slate-800 text-slate-500 cursor-not-allowed select-none'
             : isSelected
@@ -294,7 +294,7 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
       {/* ========================================================================= */}
       <div
         data-car-seat-view={activeConfigTab}
-        className="w-fit mx-auto bg-slate-950 text-white rounded-2xl border border-slate-800 p-4 sm:p-5 shadow-lg relative min-w-[270px] sm:min-w-[300px]"
+        className="w-full max-w-[330px] sm:max-w-[350px] mx-auto bg-slate-950 text-white rounded-2xl border border-slate-800 p-3 sm:p-5 shadow-lg relative min-w-0 overflow-x-auto"
       >
         {/* Windscreen / Front Marker */}
         <div className="text-center mb-3.5 pb-2 border-b border-slate-800/80">

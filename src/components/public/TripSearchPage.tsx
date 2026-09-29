@@ -190,10 +190,10 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
 
         <form
           onSubmit={handleFormSubmit}
-          className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-3.5 items-end"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-3.5 items-end"
         >
           {/* From + Swap + To */}
-          <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-2.5 items-end">
+          <div className="sm:col-span-2 lg:col-span-5 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-2.5 items-end">
             <div>
               <label
                 htmlFor="search-origin"
@@ -259,7 +259,7 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
           </div>
 
           {/* Date */}
-          <div className="lg:col-span-3">
+          <div className="sm:col-span-1 lg:col-span-3">
             <label
               htmlFor="search-date"
               className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5"
@@ -276,7 +276,7 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
           </div>
 
           {/* Vehicle */}
-          <div className="lg:col-span-2">
+          <div className="sm:col-span-1 lg:col-span-2">
             <label
               htmlFor="search-vehicle"
               className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1.5"
@@ -300,7 +300,7 @@ export const TripSearchPage: React.FC<TripSearchPageProps> = ({
           </div>
 
           {/* Primary Search CTA */}
-          <div className="lg:col-span-2">
+          <div className="sm:col-span-2 lg:col-span-2">
             <button
               id="search-submit-btn"
               type="submit"

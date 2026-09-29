@@ -216,7 +216,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           role="dialog"
           aria-modal="false"
           aria-label="Choose travel date"
-          className="absolute left-0 sm:left-auto sm:right-0 lg:left-0 z-50 mt-2 w-[290px] sm:w-[310px] rounded-2xl bg-white border-2 border-slate-900 shadow-2xl p-3.5 text-slate-900 animate-in fade-in zoom-in-95 duration-150"
+          className="absolute left-0 sm:left-auto sm:right-0 lg:left-0 z-50 mt-2 w-[min(310px,calc(100vw-2rem))] rounded-2xl bg-white border-2 border-slate-900 shadow-2xl p-3 sm:p-3.5 text-slate-900 animate-in fade-in zoom-in-95 duration-150"
         >
           {/* Quick Select Presets */}
           <div className="grid grid-cols-3 gap-1.5 pb-3 mb-3 border-b border-slate-100">

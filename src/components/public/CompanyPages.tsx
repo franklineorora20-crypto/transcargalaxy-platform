@@ -140,7 +140,7 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({
   }, [fleetFilter]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 sm:space-y-12">
       {/* FLEET PAGE */}
       {page === 'fleet' && (
         <div className="space-y-12">
@@ -521,7 +521,7 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({
 
 
           {/* Corporate Offices & Operating Hours */}
-          <div className="bg-black text-white p-8 rounded-3xl space-y-6 border-2 border-amber-400/40">
+          <div className="bg-black text-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl space-y-6 border-2 border-amber-400/40">
             <div>
               <h2 className="text-2xl font-black font-serif text-white">Regional Station Terminals & Operating Hours</h2>
               <p className="text-xs text-neutral-300 mt-1 font-medium">
@@ -800,7 +800,7 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({
             <p className="text-xs text-neutral-600 font-medium">Official operating guidelines and regulatory standards.</p>
           </div>
 
-          <div className="space-y-6 text-sm text-neutral-700 leading-relaxed bg-white p-8 rounded-3xl border-2 border-neutral-200 shadow-sm">
+          <div className="space-y-6 text-sm text-neutral-700 leading-relaxed bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl border-2 border-neutral-200 shadow-sm">
             <section className="space-y-2">
               <h3 className="font-black text-base text-black flex items-center gap-2">
                 <FileText className="w-4 h-4 text-amber-500" />
@@ -866,7 +866,7 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({
             </p>
           </div>
 
-          <div className="space-y-6 text-xs text-neutral-700 leading-relaxed bg-white p-8 rounded-3xl border-2 border-neutral-200 shadow-sm font-medium">
+          <div className="space-y-6 text-xs text-neutral-700 leading-relaxed bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl border-2 border-neutral-200 shadow-sm font-medium">
             <section className="space-y-2">
               <h3 className="font-black text-sm text-black">1. Contract of Carriage</h3>
               <p>
@@ -962,7 +962,7 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({
             </p>
           </div>
 
-          <div className="space-y-6 text-xs text-neutral-700 leading-relaxed bg-white p-8 rounded-3xl border-2 border-neutral-200 shadow-sm font-medium">
+          <div className="space-y-6 text-xs text-neutral-700 leading-relaxed bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl border-2 border-neutral-200 shadow-sm font-medium">
             <section className="space-y-2">
               <h3 className="font-black text-sm text-black">1. Commitment to Data Privacy</h3>
               <p>

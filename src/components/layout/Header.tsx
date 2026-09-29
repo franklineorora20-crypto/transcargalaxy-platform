@@ -123,19 +123,19 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* 2 & 3. Main Navigation Bar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-[72px] gap-2">
+        <div className="flex items-center justify-between h-16 sm:h-[72px] gap-1.5 sm:gap-2">
           {/* Brand Logo Hierarchy with Sufficient Breathing Room */}
           <button
             id="brand-logo-btn"
             type="button"
             onClick={() => handleNav('home')}
-            className="flex items-center text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-xl py-1.5 px-1.5 -ml-1.5 transition-transform active:scale-[0.99] shrink-0"
+            className="flex items-center text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-xl py-1.5 px-1 sm:px-1.5 -ml-1 sm:-ml-1.5 transition-transform active:scale-[0.99] shrink-0 min-w-0"
           >
-            <div className="flex flex-col">
-              <BrandName className="font-extrabold text-lg sm:text-2xl tracking-tight text-slate-950" />
-              <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium tracking-wide flex items-center gap-1.5 mt-1 pl-11 sm:pl-12">
+            <div className="flex flex-col min-w-0">
+              <BrandName className="font-extrabold text-base sm:text-2xl tracking-tight text-slate-950" />
+              <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium tracking-wide hidden sm:flex items-center gap-1.5 mt-1 pl-11 sm:pl-12 truncate">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" aria-hidden="true"></span>
-                <span>Intercity & Rongai Express</span>
+                <span className="truncate">Intercity & Rongai Express</span>
               </p>
             </div>
           </button>
@@ -149,7 +149,7 @@ export const Header: React.FC<HeaderProps> = ({
               id="nav-home"
               type="button"
               onClick={() => handleNav('home')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 whitespace-nowrap cursor-pointer ${
+              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 whitespace-nowrap cursor-pointer ${
                 currentView === 'home'
                   ? 'bg-white text-slate-950 shadow-sm border border-slate-200/90 font-bold'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-white/60'
@@ -162,7 +162,7 @@ export const Header: React.FC<HeaderProps> = ({
               id="nav-routes"
               type="button"
               onClick={() => handleNav('routes')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 whitespace-nowrap cursor-pointer ${
+              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 whitespace-nowrap cursor-pointer ${
                 currentView === 'routes'
                   ? 'bg-white text-slate-950 shadow-sm border border-slate-200/90 font-bold'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-white/60'
@@ -175,7 +175,7 @@ export const Header: React.FC<HeaderProps> = ({
               id="nav-schedules"
               type="button"
               onClick={() => handleNav('schedules')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 whitespace-nowrap cursor-pointer ${
+              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 whitespace-nowrap cursor-pointer ${
                 currentView === 'schedules'
                   ? 'bg-white text-slate-950 shadow-sm border border-slate-200/90 font-bold'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-white/60'
@@ -188,7 +188,7 @@ export const Header: React.FC<HeaderProps> = ({
               id="nav-fleet"
               type="button"
               onClick={() => handleNav('fleet')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 whitespace-nowrap cursor-pointer ${
+              className={`px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 whitespace-nowrap cursor-pointer ${
                 currentView === 'fleet'
                   ? 'bg-white text-slate-950 shadow-sm border border-slate-200/90 font-bold'
                   : 'text-slate-600 hover:text-slate-950 hover:bg-white/60'
@@ -202,7 +202,7 @@ export const Header: React.FC<HeaderProps> = ({
                 id="nav-how-it-works"
                 type="button"
                 onClick={handleOpenTutorial}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 text-slate-600 hover:text-slate-950 hover:bg-white/60 whitespace-nowrap cursor-pointer"
+                className="px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 text-slate-600 hover:text-slate-950 hover:bg-white/60 whitespace-nowrap cursor-pointer"
               >
                 How It Works
               </button>
@@ -215,7 +215,7 @@ export const Header: React.FC<HeaderProps> = ({
                 aria-haspopup="menu"
                 aria-expanded={servicesOpen}
                 onClick={() => setServicesOpen((open) => !open)}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 whitespace-nowrap cursor-pointer ${
+                className={`flex items-center gap-1 px-2.5 xl:px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all duration-150 whitespace-nowrap cursor-pointer ${
                   ['services', 'tracking', 'retrieve-ticket', 'about', 'terms', 'privacy', 'policies'].includes(currentView)
                     ? 'bg-white text-slate-950 shadow-sm border border-slate-200/90 font-bold'
                     : 'text-slate-600 hover:text-slate-950 hover:bg-white/60'
@@ -303,14 +303,14 @@ export const Header: React.FC<HeaderProps> = ({
           </nav>
 
           {/* Right Side Actions: Help | Find a Trip | Staff Login */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {onOpenTutorial && (
               <button
                 id="header-help-tutorial-btn"
                 type="button"
                 onClick={handleOpenTutorial}
                 title="Open Interactive Booking Guide"
-                className="craft-btn-secondary text-xs px-2.5 py-2 hidden sm:inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+                className="craft-btn-secondary text-xs px-2.5 py-2 hidden xl:inline-flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
               >
                 <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
                 <span>Help</span>
@@ -324,9 +324,9 @@ export const Header: React.FC<HeaderProps> = ({
               id="header-find-trip-btn"
               type="button"
               onClick={() => handleNav('search')}
-              className="craft-btn-amber text-xs px-3.5 py-2 inline-flex items-center gap-1.5 whitespace-nowrap font-bold cursor-pointer"
+              className="craft-btn-amber text-xs px-2.5 sm:px-3.5 py-2 inline-flex items-center gap-1.5 whitespace-nowrap font-bold cursor-pointer"
             >
-              <Search className="w-3.5 h-3.5" />
+              <Search className="w-3.5 h-3.5 shrink-0" />
               <span>Find a Trip</span>
             </button>
 

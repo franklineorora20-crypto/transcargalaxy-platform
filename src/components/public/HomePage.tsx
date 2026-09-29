@@ -433,10 +433,10 @@ export const HomePage: React.FC<HomePageProps> = ({
           <form
             onSubmit={handleSearchSubmit}
             aria-label="Find available shuttle trips"
-            className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-3.5 items-end"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-3.5 items-end"
           >
-            {/* FROM + SWAP + TO Group (5 cols on desktop) */}
-            <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-2.5 items-end">
+            {/* FROM + SWAP + TO Group (5 cols on desktop, full width on tablet) */}
+            <div className="sm:col-span-2 lg:col-span-5 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-2.5 items-end">
               {/* FROM */}
               <div>
                 <label
@@ -504,7 +504,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             {/* TRAVEL DATE (3 cols on desktop) */}
-            <div className="lg:col-span-3">
+            <div className="sm:col-span-1 lg:col-span-3">
               <label
                 htmlFor="hero-date"
                 className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5"
@@ -521,7 +521,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             {/* VEHICLE FILTER (2 cols on desktop) */}
-            <div className="lg:col-span-2">
+            <div className="sm:col-span-1 lg:col-span-2">
               <label
                 htmlFor="hero-vehicle-filter"
                 className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5"
@@ -545,7 +545,7 @@ export const HomePage: React.FC<HomePageProps> = ({
             </div>
 
             {/* PRIMARY SEARCH CTA: FIND TRIPS (2 cols on desktop) */}
-            <div className="lg:col-span-2">
+            <div className="sm:col-span-2 lg:col-span-2">
               <button
                 id="hero-search-btn"
                 type="submit"
