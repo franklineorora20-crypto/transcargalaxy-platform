@@ -118,7 +118,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
     <button
       type="button"
       onClick={handleClick}
-      className={`craft-btn-secondary text-[11px] px-2.5 py-1 inline-flex items-center gap-1 whitespace-nowrap font-semibold border-slate-300 hover:border-amber-400 hover:bg-amber-50/70 text-slate-800 transition-all cursor-pointer h-8 min-h-[32px] rounded-lg ${className}`}
+      className={`craft-btn-secondary text-[11px] px-2 py-1 inline-flex items-center gap-1 whitespace-nowrap font-semibold border-slate-300 hover:border-amber-400 hover:bg-amber-50/70 text-slate-800 transition-all cursor-pointer h-7 sm:h-8 min-h-[28px] rounded-lg ${className}`}
       title="Install TransCar App on your phone or computer for fast offline access"
     >
       <Download className="w-3 h-3 text-amber-600 shrink-0 stroke-[2.25]" />

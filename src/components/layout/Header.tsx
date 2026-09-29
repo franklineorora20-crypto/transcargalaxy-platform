@@ -79,8 +79,10 @@ export const Header: React.FC<HeaderProps> = ({
             <BrandName className="font-extrabold text-base sm:text-lg tracking-tight text-slate-950" />
           </button>
 
-          {/* Single Dropdown for All Functions */}
-          <div className="flex items-center shrink-0">
+          {/* Small Install Button + Single Menu Dropdown */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <PWAInstallButton />
+
             <div ref={dashboardRef} className="relative">
               <button
                 id="services-dashboard-dropdown-btn"
@@ -88,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({
                 aria-haspopup="menu"
                 aria-expanded={dashboardOpen}
                 onClick={() => setDashboardOpen((prev) => !prev)}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 h-8 min-h-[32px] rounded-lg text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer border ${
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 h-7 sm:h-8 min-h-[28px] rounded-lg text-[11px] font-bold whitespace-nowrap transition-all cursor-pointer border ${
                   dashboardOpen
                     ? 'bg-slate-950 text-amber-400 border-slate-950 shadow-sm'
                     : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-800'
