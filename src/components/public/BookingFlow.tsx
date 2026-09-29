@@ -60,7 +60,7 @@ interface BookingFlowProps {
   initialCarSeatView?: 11 | 14 | 16 | null;
   onDone?: () => void;
   onTrackBus?: (ref: string) => void;
-  onOpenDriverPortal?: () => void;
+  onOpenDriverPortal?: (verifyToken?: string, tripId?: string) => void;
 }
 
 export const BookingFlow: React.FC<BookingFlowProps> = ({

@@ -29,7 +29,18 @@ export type BookingStatus =
   | 'CONFIRMED'
   | 'CHECKED_IN'
   | 'CANCELLED'
+  | 'EXPIRED'
   | 'REFUNDED';
+
+export type TicketStatus =
+  | 'ISSUED'
+  | 'VALIDATED'
+  | 'BOARDED'
+  | 'CANCELLED'
+  | 'EXPIRED'
+  | 'REFUNDED';
+
+export type BoardingStatus = 'NOT_BOARDED' | 'BOARDED';
 
 export type IncidentSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
@@ -133,29 +144,101 @@ export interface Passenger {
   fareKsh: number;
   hasBoarded: boolean;
   boardedAt?: string;
+  ticketId?: string; // e.g. "TCR-7X4K9P2M"
+  qrToken?: string; // Cryptographically strong unique QR token
+  ticketStatus?: TicketStatus;
+  boardingStatus?: BoardingStatus;
+  verifiedAt?: string;
+  verifiedBy?: string;
+  verifiedByName?: string;
+}
+
+export interface TicketRecord {
+  ticket_id: string;
+  booking_id: string;
+  booking_reference: string;
+  trip_id: string;
+  trip_code: string;
+  passenger_name: string;
+  passenger_phone: string;
+  passenger_id_number?: string;
+  route: string;
+  route_origin: string;
+  route_destination: string;
+  travel_date: string;
+  departure_time: string;
+  departure_iso: string;
+  vehicle_id: string;
+  vehicle_registration: string;
+  seat_number: string;
+  fare: number;
+  payment_status: PaymentStatus;
+  payment_method?: 'MPESA' | 'CASH';
+  booking_status: BookingStatus;
+  ticket_status: TicketStatus;
+  qr_token: string;
+  created_at: string;
+  verified_at?: string | null;
+  verified_by?: string | null;
+  verified_by_name?: string | null;
+  boarding_status: BoardingStatus;
+}
+
+export type VerificationOutcomeCode =
+  | 'VALID'
+  | 'BOARDED_CONFIRMED'
+  | 'ALREADY_BOARDED'
+  | 'WRONG_TRIP'
+  | 'DATE_MISMATCH'
+  | 'PAYMENT_PENDING'
+  | 'INVALID_BOOKING_STATUS'
+  | 'TICKET_NOT_FOUND';
+
+export interface TicketVerificationResult {
+  valid: boolean;
+  code: VerificationOutcomeCode;
+  status_label: string;
+  message: string;
+  ticket?: TicketRecord;
+  driver_trip?: {
+    trip_id: string;
+    trip_code: string;
+    route: string;
+    travel_date: string;
+    departure_time: string;
+    vehicle_registration: string;
+  };
 }
 
 export interface Booking {
   id: string;
   bookingReference: string; // e.g. "TRP-48291"
+  ticketId?: string; // Primary ticket ID e.g. "TCR-7X4K9P2M"
+  qrToken?: string; // Primary cryptographic QR token
   tripId: string;
   tripCode: string;
   routeOrigin: string;
   routeDestination: string;
   departureTime: string;
   busRegistration: string;
+  vehicleId?: string;
   contactName: string;
   contactPhone: string;
   contactEmail: string;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
   passengers: Passenger[];
+  tickets?: TicketRecord[];
   totalFareKsh: number;
   bookingStatus: BookingStatus;
   paymentStatus: PaymentStatus;
   paymentMethod: 'MPESA' | 'CASH';
   mpesaTransactionCode?: string;
   createdAt: string;
+  verifiedAt?: string;
+  verifiedBy?: string;
+  verifiedByName?: string;
+  boardingStatus?: BoardingStatus;
 }
 
 export interface PaymentRecord {

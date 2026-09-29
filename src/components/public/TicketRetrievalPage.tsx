@@ -8,11 +8,13 @@ import { useToast } from '../common/Toast';
 interface TicketRetrievalPageProps {
   onBackToHome: () => void;
   onTrackBus: (bookingRef: string) => void;
+  onOpenDriverPortal?: (verifyToken?: string, tripId?: string) => void;
 }
 
 export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
   onBackToHome,
   onTrackBus,
+  onOpenDriverPortal,
 }) => {
   const toast = useToast();
   const [bookingReference, setBookingReference] = React.useState('');
@@ -73,6 +75,7 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
           booking={retrievedBooking}
           onTrackBus={(ref) => onTrackBus(ref)}
           onDone={onBackToHome}
+          onOpenDriverPortal={onOpenDriverPortal}
         />
       </div>
     );
@@ -94,7 +97,7 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
         <form onSubmit={handleRetrieve} className="space-y-4">
           <div>
             <label className="block text-xs font-black uppercase tracking-wider text-black mb-1">
-              Booking Reference *
+              Ticket ID or Booking Reference *
             </label>
             <div className="relative">
               <Ticket className="w-4 h-4 text-amber-500 absolute left-3.5 top-3" />
@@ -102,13 +105,13 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
                 id="retrieve-ref"
                 type="text"
                 required
-                placeholder="e.g. TRP-48291"
+                placeholder="e.g. TCR-7X4K9P2M or TRP-48291"
                 value={bookingReference}
                 onChange={(e) => setBookingReference(e.target.value.toUpperCase())}
                 className="w-full pl-10 pr-3 py-2.5 text-sm uppercase font-mono font-bold border-2 border-neutral-300 bg-neutral-50 rounded-xl text-black focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none"
               />
             </div>
-            <span className="text-[11px] text-neutral-500 mt-1 block font-medium">Found on your M-Pesa SMS or booking confirmation screen</span>
+            <span className="text-[11px] text-neutral-500 mt-1 block font-medium">Found on your E-Ticket, M-Pesa SMS, or booking confirmation screen</span>
           </div>
 
           <div>
@@ -196,10 +199,10 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
           <div className="font-mono text-[11px] space-y-1.5 text-neutral-300">
             <button
               type="button"
-              onClick={() => handleFillSampleCredentials('TRP-48291', '0722998877')}
+              onClick={() => handleFillSampleCredentials('TCR-7X4K9P2M', '0724626199')}
               className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-left transition-colors cursor-pointer"
             >
-              <span>Reference: <strong className="text-[#FFC300]">TRP-48291</strong> • Phone: <strong className="text-white">0722998877</strong></span>
+              <span>Ticket ID: <strong className="text-[#FFC300]">TCR-7X4K9P2M</strong> • Phone: <strong className="text-white">0724626199</strong></span>
               <Copy className="w-3.5 h-3.5 text-[#FFC300] flex-shrink-0" />
             </button>
             <button

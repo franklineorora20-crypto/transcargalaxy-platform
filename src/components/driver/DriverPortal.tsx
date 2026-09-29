@@ -40,16 +40,34 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import jsQR from 'jsqr';
-import { Trip, Passenger, VehicleInspection, IncidentReport } from '../../types';
+import QRCode from 'qrcode';
+import {
+  Trip,
+  Passenger,
+  VehicleInspection,
+  IncidentReport,
+  TicketRecord,
+  TicketVerificationResult,
+} from '../../types';
 import { ApiService } from '../../services/api';
 import { playBoardingSound } from '../../utils/audio';
 
 interface DriverPortalProps {
   driverData: any;
   onLogout: () => void;
+  initialVerifyToken?: string | null;
+  initialVerifyTripId?: string | null;
+  onClearInitialVerify?: () => void;
 }
 
-export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout }) => {
+export const DriverPortal: React.FC<DriverPortalProps> = ({
+  driverData,
+  onLogout,
+  initialVerifyToken,
+  initialVerifyTripId,
+  onClearInitialVerify,
+}) => {
+  const [allAssignedTrips, setAllAssignedTrips] = useState<Trip[]>([]);
   const [activeTrip, setActiveTrip] = useState<Trip | null>(null);
   const [assignedVehicle, setAssignedVehicle] = useState<any>(null);
   const [manifestPassengers, setManifestPassengers] = useState<any[]>([]);
@@ -82,9 +100,12 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
   const [fuelStation, setFuelStation] = useState('Shell Rongai Express Hub');
   const [isLoggingFuel, setIsLoggingFuel] = useState(false);
 
-  // QR Boarding Validator State
+  // QR Boarding Validator & Unified Ticket Verification State
   const [qrScanInput, setQrScanInput] = useState('');
   const [isScanning, setIsScanning] = useState(false);
+  const [isBoardingConfirming, setIsBoardingConfirming] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<TicketVerificationResult | null>(null);
+  const [searchMatches, setSearchMatches] = useState<TicketVerificationResult[]>([]);
   const [scanResult, setScanResult] = useState<{
     status: 'SUCCESS' | 'ALREADY_BOARDED' | 'ERROR';
     message: string;
@@ -97,6 +118,8 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [scanFlash, setScanFlash] = useState(false);
   const [isDecodingFile, setIsDecodingFile] = useState(false);
+  const [showSampleQrCards, setShowSampleQrCards] = useState(false);
+  const [sampleQrImages, setSampleQrImages] = useState<Record<string, string>>({});
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -159,7 +182,19 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
     try {
       const data = await ApiService.getDriverDashboard();
       if (data.assignedTrips && data.assignedTrips.length > 0) {
-        const trip = data.assignedTrips[0];
+        setAllAssignedTrips(data.assignedTrips);
+        const preferredTrip =
+          (initialVerifyTripId
+            ? data.assignedTrips.find(
+                (t: Trip) => t.id === initialVerifyTripId || t.tripCode === initialVerifyTripId,
+              )
+            : null) ||
+          (activeTrip
+            ? data.assignedTrips.find((t: Trip) => t.id === activeTrip.id)
+            : null) ||
+          data.assignedTrips[0];
+
+        const trip = preferredTrip || data.assignedTrips[0];
         setActiveTrip(trip);
         setAssignedVehicle(trip.vehicle);
         setCurrentStatus(trip.status);
@@ -169,7 +204,16 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
 
         // Fetch manifest
         const manifestData = await ApiService.getTripManifest(trip.id);
-        setManifestPassengers(manifestData.passengers || []);
+        const loadedManifest = manifestData.manifest || manifestData.passengers || [];
+        setManifestPassengers(loadedManifest);
+        try {
+          localStorage.setItem(
+            `transcar_offline_manifest_${trip.id}`,
+            JSON.stringify(loadedManifest),
+          );
+        } catch {
+          // ignore storage quota
+        }
       }
       setAnnouncements(data.announcements || []);
     } catch (err) {
@@ -179,7 +223,26 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [initialVerifyTripId]);
+
+  const handleSelectDriverTrip = async (tripId: string) => {
+    const chosen = allAssignedTrips.find((t) => t.id === tripId || t.tripCode === tripId);
+    if (!chosen) return;
+    setActiveTrip(chosen);
+    setAssignedVehicle(chosen.vehicle);
+    setCurrentStatus(chosen.status);
+    setCurrentStopName(chosen.currentStop || chosen.route.origin);
+    setCurrentSpeed(chosen.speedKmH || 72);
+    setDelayMinutes(chosen.delayMinutes || 0);
+    try {
+      const manifestData = await ApiService.getTripManifest(chosen.id);
+      const loadedManifest = manifestData.manifest || manifestData.passengers || [];
+      setManifestPassengers(loadedManifest);
+      showToast(`Switched active cockpit to ${chosen.route.origin} → ${chosen.route.destination} (${chosen.tripCode})`, 'info');
+    } catch {
+      showToast('Could not load manifest for selected trip.', 'warning');
+    }
+  };
 
   useEffect(() => {
     loadDriverDashboard();
@@ -244,75 +307,278 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
     }
   };
 
-  // Handle Quick QR Code / Barcode Boarding Validation
-  const handleValidateTicket = async (ticketCodeToValidate?: string) => {
-    const code = (ticketCodeToValidate || qrScanInput).trim();
-    if (!code) {
-      showToast('Please provide a ticket code or booking reference.', 'warning');
+  // Unified Ticket Verification (Search + QR Scan use the same server-side verification pipeline)
+  const handleValidateTicket = async (
+    ticketCodeToValidate?: string,
+    mode: 'SEARCH' | 'QR' = 'SEARCH',
+    overrideTripId?: string,
+  ) => {
+    const rawInput = (ticketCodeToValidate ?? qrScanInput).trim();
+    if (!rawInput) {
+      showToast(
+        'Enter a Ticket ID, Booking ID, passenger name, or phone number.',
+        'warning',
+      );
       return;
     }
 
     setIsScanning(true);
     setScanResult(null);
+    const targetTripId = overrideTripId || activeTrip?.id;
 
     try {
-      const res = await ApiService.boardPassenger({
-        ticketCode: code,
-        tripId: activeTrip?.id,
-      });
+      const looksLikeQrPayload =
+        mode === 'QR' ||
+        rawInput.includes('/ticket/verify/') ||
+        rawInput.toLowerCase().startsWith('tcr_tok_') ||
+        rawInput.startsWith('{');
 
-      if (res.alreadyBoarded) {
-        playBoardingSound('warning');
-        setScanResult({
-          status: 'ALREADY_BOARDED',
-          message: res.message || 'Passenger already checked in.',
-          passenger: res.passenger,
-          booking: res.booking,
+      if (looksLikeQrPayload) {
+        const result = await ApiService.verifyDriverTicket({
+          qr_token: rawInput,
+          trip_id: targetTripId,
         });
-        showToast(`Passenger in Seat ${res.passenger?.seatNumber || ''} already boarded.`, 'warning');
+        setVerificationResult(result);
+        setSearchMatches([]);
+
+        if (result.valid) {
+          playBoardingSound('success');
+          showToast(
+            `Valid Ticket: ${result.ticket?.passenger_name} (Seat ${result.ticket?.seat_number}) — Ready for Boarding`,
+            'success',
+          );
+        } else if (result.code === 'ALREADY_BOARDED') {
+          playBoardingSound('warning');
+          showToast(result.title, 'warning');
+        } else {
+          playBoardingSound('error');
+          showToast(result.title || 'Ticket verification failed', 'error');
+        }
       } else {
-        playBoardingSound('success');
-        setScanResult({
-          status: 'SUCCESS',
-          message: res.message || 'Passenger verified and boarded successfully!',
-          passenger: res.passenger,
-          booking: res.booking,
-        });
-        showToast(`Boarded passenger: ${res.passenger?.fullName || ''} (Seat ${res.passenger?.seatNumber || ''})`, 'success');
-      }
-
-      // Update passenger status in manifest table immediately
-      if (res.passenger) {
-        setManifestPassengers((prev) =>
-          prev.map((p) => {
-            const matchesSeat = p.seatNumber === res.passenger.seatNumber;
-            const matchesRef = res.booking ? p.bookingReference === res.booking.bookingReference : true;
-            if (matchesSeat && matchesRef) {
-              return { ...p, boarded: true, hasBoarded: true, boardedAt: new Date().toISOString() };
-            }
-            return p;
-          })
+        const searchResponse = await ApiService.searchDriverTickets(
+          rawInput,
+          targetTripId,
         );
-      } else if (activeTrip) {
-        ApiService.getTripManifest(activeTrip.id).then((m) => {
-          if (m?.passengers) setManifestPassengers(m.passengers);
-        });
-      }
+        const primary =
+          searchResponse.exactMatch || searchResponse.results[0] || null;
+        setVerificationResult(primary);
+        setSearchMatches(
+          searchResponse.results.length > 1 ? searchResponse.results : [],
+        );
 
-      setQrScanInput('');
+        if (primary?.valid) {
+          playBoardingSound('success');
+          showToast(
+            `Ticket Found: ${primary.ticket?.passenger_name} (${primary.ticket?.ticket_id})`,
+            'success',
+          );
+        } else if (primary?.code === 'ALREADY_BOARDED') {
+          playBoardingSound('warning');
+          showToast(primary.title, 'warning');
+        } else {
+          playBoardingSound('error');
+          showToast(primary?.title || 'Ticket not found', 'error');
+        }
+      }
     } catch (err: any) {
-      playBoardingSound('error');
-      setScanResult({
-        status: 'ERROR',
-        message: err.message || 'Validation failed. Ticket invalid or not found on this trip.',
+      // Offline / Poor Network Fallback using cached trip manifest
+      const offlineMatch = manifestPassengers.find((p) => {
+        const q = rawInput.toUpperCase();
+        return (
+          (p.ticketId && p.ticketId.toUpperCase() === q) ||
+          (p.bookingReference && p.bookingReference.toUpperCase() === q) ||
+          (p.qrToken && rawInput.includes(p.qrToken)) ||
+          (p.fullName && p.fullName.toUpperCase().includes(q)) ||
+          (p.contactPhone && p.contactPhone.replace(/\D+/g, '').includes(rawInput.replace(/\D+/g, '')))
+        );
       });
-      showToast(err.message || 'Invalid or unregistered ticket code.', 'error');
+
+      if (offlineMatch && offlineMatch.ticket) {
+        const isAlreadyBoarded =
+          offlineMatch.boarded || offlineMatch.hasBoarded;
+        const fallbackResult: TicketVerificationResult = {
+          valid: !isAlreadyBoarded && offlineMatch.paymentStatus === 'PAID',
+          code: isAlreadyBoarded
+            ? 'ALREADY_BOARDED'
+            : offlineMatch.paymentStatus !== 'PAID'
+              ? 'PAYMENT_PENDING'
+              : 'VALID',
+          title: isAlreadyBoarded
+            ? '⚠️ ALREADY BOARDED'
+            : offlineMatch.paymentStatus !== 'PAID'
+              ? '⚠️ Payment Pending'
+              : '✓ VALID TICKET (Offline Cache)',
+          message: isAlreadyBoarded
+            ? 'Passenger was already marked as boarded.'
+            : 'READY FOR BOARDING (Verified via Offline Trip Cache)',
+          ticket: offlineMatch.ticket,
+        };
+        setVerificationResult(fallbackResult);
+        playBoardingSound(fallbackResult.valid ? 'success' : 'warning');
+      } else {
+        playBoardingSound('error');
+        setVerificationResult({
+          valid: false,
+          code: 'NOT_FOUND',
+          title: '❌ Ticket Not Found',
+          message:
+            err.message ||
+            'Could not verify ticket. Check network connection or ticket ID.',
+        });
+        showToast(err.message || 'Ticket verification failed.', 'error');
+      }
     } finally {
       setIsScanning(false);
     }
   };
 
-  // Camera video stream handling & real-time frame QR scanner loop
+  // Boarding Confirmation when Driver presses MARK AS BOARDED
+  const handleConfirmBoarding = async (ticketToBoard?: TicketRecord) => {
+    const targetTicket = ticketToBoard || verificationResult?.ticket;
+    if (!targetTicket) return;
+
+    setIsBoardingConfirming(true);
+    try {
+      const res = await ApiService.boardVerifiedTicket({
+        qr_token: targetTicket.qr_token,
+        ticket_id: targetTicket.ticket_id,
+        booking_id: targetTicket.booking_reference,
+        seat_number: targetTicket.seat_number,
+        trip_id: activeTrip?.id,
+      });
+
+      setVerificationResult(res);
+      setSearchMatches((prev) =>
+        prev.map((m) =>
+          m.ticket?.ticket_id === targetTicket.ticket_id ? res : m,
+        ),
+      );
+
+      if (res.alreadyBoarded) {
+        playBoardingSound('warning');
+        showToast(
+          `Already Boarded: ${targetTicket.passenger_name} (Seat ${targetTicket.seat_number})`,
+          'warning',
+        );
+      } else if (res.boarded || res.code === 'BOARDED') {
+        playBoardingSound('success');
+        showToast(
+          `✓ PASSENGER BOARDED: ${targetTicket.passenger_name} (Seat ${targetTicket.seat_number})`,
+          'success',
+        );
+
+        const nowIso = res.ticket?.verified_at || new Date().toISOString();
+        setManifestPassengers((prev) => {
+          const updated = prev.map((p) => {
+            const matchesTicket =
+              (p.ticketId && p.ticketId === targetTicket.ticket_id) ||
+              (p.bookingReference === targetTicket.booking_reference &&
+                p.seatNumber === targetTicket.seat_number);
+            if (matchesTicket) {
+              return {
+                ...p,
+                boarded: true,
+                hasBoarded: true,
+                boardingStatus: 'BOARDED',
+                ticketStatus: 'BOARDED',
+                boardedAt: nowIso,
+                verifiedAt: nowIso,
+                verifiedBy: res.ticket?.verified_by,
+                verifiedByName: res.ticket?.verified_by_name,
+                ticket: res.ticket || p.ticket,
+              };
+            }
+            return p;
+          });
+          if (activeTrip) {
+            try {
+              localStorage.setItem(
+                `transcar_offline_manifest_${activeTrip.id}`,
+                JSON.stringify(updated),
+              );
+            } catch {
+              // ignore quota
+            }
+          }
+          return updated;
+        });
+
+        if (activeTrip) {
+          ApiService.getTripManifest(activeTrip.id)
+            .then((m) => {
+              const list = m?.manifest || m?.passengers;
+              if (list) setManifestPassengers(list);
+            })
+            .catch(() => {});
+        }
+      } else {
+        playBoardingSound('error');
+        showToast(res.message || 'Boarding denied.', 'error');
+      }
+    } catch (err: any) {
+      playBoardingSound('error');
+      showToast(err.message || 'Failed to confirm boarding.', 'error');
+    } finally {
+      setIsBoardingConfirming(false);
+    }
+  };
+
+  // Automatically verify ticket if opened via QR URL deep link (/ticket/verify/:token) or customer ticket handoff
+  useEffect(() => {
+    if (!loading && activeTrip && initialVerifyToken) {
+      const tokenToVerify = initialVerifyToken;
+      const tripToUse = initialVerifyTripId || activeTrip.id;
+      setQrScanInput(tokenToVerify);
+      handleValidateTicket(tokenToVerify, 'QR', tripToUse);
+      if (onClearInitialVerify) onClearInitialVerify();
+      setTimeout(() => {
+        const card = document.getElementById('passenger-verification-card') || document.getElementById('driver-manifest-panel');
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 250);
+    }
+  }, [loading, activeTrip, initialVerifyToken, initialVerifyTripId]);
+
+  // Generate sample scannable QR images when the sample QR drawer is opened
+  useEffect(() => {
+    if (!showSampleQrCards) return;
+    const origin =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'https://transcar.co.ke';
+
+    const sampleTokens: Record<string, string> = {
+      'TCR-7X4K9P2M': `${origin}/ticket/verify/tcr_tok_7x4k9p2m_f9a8c3d2e1b0476589ab`,
+      'TCR-4M8Q2L9K': `${origin}/ticket/verify/tcr_tok_4m8q2l9k_81c4d7e2a9f30b1654cd`,
+      'TCR-5P2H8K6D': `${origin}/ticket/verify/tcr_tok_5p2h8k6d_90f1e4c7b2a83d6519cd`,
+      'TCR-9W3N5V8R': `${origin}/ticket/verify/tcr_tok_9w3n5v8r_32d7b4a9c6e180f523ab`,
+    };
+
+    const recentBooking = ApiService.getOfflineLastTicket();
+    if (recentBooking) {
+      const recentPax = recentBooking.passengers?.[0];
+      const recentId = recentPax?.ticketId || recentBooking.ticketId || recentBooking.bookingReference;
+      const recentTok = recentPax?.qrToken || recentBooking.qrToken || recentId;
+      sampleTokens[recentId] = `${origin}/ticket/verify/${encodeURIComponent(recentTok)}`;
+    }
+
+    Promise.all(
+      Object.entries(sampleTokens).map(async ([id, url]) => {
+        const dataUrl = await QRCode.toDataURL(url, {
+          errorCorrectionLevel: 'M',
+          margin: 3,
+          width: 320,
+          color: { dark: '#000000', light: '#FFFFFF' },
+        });
+        return [id, dataUrl] as const;
+      }),
+    )
+      .then((entries) => {
+        setSampleQrImages(Object.fromEntries(entries));
+      })
+      .catch(console.error);
+  }, [showSampleQrCards]);
+
+  // Camera video stream handling & dual-engine (BarcodeDetector + multi-region jsQR) frame scanner loop
   useEffect(() => {
     let stream: MediaStream | null = null;
     let scanIntervalTimer: any = null;
@@ -321,6 +587,32 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
     if (cameraActive) {
       setCameraLoading(true);
       setCameraError(null);
+
+      let nativeDetector: any = null;
+      try {
+        if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+          nativeDetector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
+        }
+      } catch {
+        nativeDetector = null;
+      }
+
+      const triggerDetectedQr = (rawCode: string) => {
+        const detected = rawCode.trim();
+        if (!detected) return;
+        const now = Date.now();
+        if (
+          detected !== lastScannedCodeRef.current.code ||
+          now - lastScannedCodeRef.current.time > 2500
+        ) {
+          lastScannedCodeRef.current = { code: detected, time: now };
+          setScanFlash(true);
+          setTimeout(() => setScanFlash(false), 1000);
+          setQrScanInput(detected);
+          handleValidateTicket(detected, 'QR');
+          setCameraActive(false);
+        }
+      };
 
       const startCamera = async () => {
         try {
@@ -331,7 +623,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
           try {
             stream = await navigator.mediaDevices.getUserMedia({
               video: {
-                facingMode: cameraFacing,
+                facingMode: { ideal: cameraFacing },
                 width: { ideal: 1280 },
                 height: { ideal: 720 },
               },
@@ -359,8 +651,8 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
           }
           setCameraLoading(false);
 
-          // Continuous Frame Scanning Loop
-          const processFrame = () => {
+          // Continuous Dual-Engine Frame Scanning Loop
+          const processFrame = async () => {
             if (isCancelled || !cameraActive) return;
 
             const video = videoRef.current;
@@ -370,49 +662,77 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
               video.videoWidth > 0 &&
               video.videoHeight > 0
             ) {
+              // Engine 1: Hardware-accelerated BarcodeDetector API when available
+              if (nativeDetector) {
+                try {
+                  const barcodes = await nativeDetector.detect(video);
+                  if (barcodes && barcodes.length > 0 && barcodes[0]?.rawValue) {
+                    triggerDetectedQr(barcodes[0].rawValue);
+                    return;
+                  }
+                } catch {
+                  // Fall through to jsQR canvas engine
+                }
+              }
+
+              // Engine 2: High-resolution jsQR (Full Frame + 1:1 Native Center Viewfinder Crop)
               if (!canvasRef.current) {
                 canvasRef.current = document.createElement('canvas');
               }
               const canvas = canvasRef.current;
-              const maxDim = Math.max(video.videoWidth, video.videoHeight);
-              const scale = maxDim > 640 ? 640 / maxDim : 1;
-              const w = Math.floor(video.videoWidth * scale);
-              const h = Math.floor(video.videoHeight * scale);
+              const ctx = canvas.getContext('2d', { willReadFrequently: true });
+              if (!ctx) return;
 
-              if (canvas.width !== w || canvas.height !== h) {
-                canvas.width = w;
-                canvas.height = h;
+              const vw = video.videoWidth;
+              const vh = video.videoHeight;
+
+              // Pass A: Full frame at up to 960px
+              const maxDim = Math.max(vw, vh);
+              const scale = maxDim > 960 ? 960 / maxDim : 1;
+              const w = Math.floor(vw * scale);
+              const h = Math.floor(vh * scale);
+
+              canvas.width = w;
+              canvas.height = h;
+              ctx.drawImage(video, 0, 0, w, h);
+              const fullImageData = ctx.getImageData(0, 0, w, h);
+              try {
+                const qrFull = jsQR(fullImageData.data, fullImageData.width, fullImageData.height, {
+                  inversionAttempts: 'attemptBoth',
+                });
+                if (qrFull && qrFull.data && qrFull.data.trim()) {
+                  triggerDetectedQr(qrFull.data);
+                  return;
+                }
+              } catch {
+                // ignore
               }
 
-              const ctx = canvas.getContext('2d', { willReadFrequently: true });
-              if (ctx) {
-                ctx.drawImage(video, 0, 0, w, h);
-                const imageData = ctx.getImageData(0, 0, w, h);
+              // Pass B: 1:1 Native Resolution Center Crop (Viewfinder Target Box)
+              const cropSize = Math.floor(Math.min(vw, vh) * 0.65);
+              if (cropSize > 120) {
+                const sx = Math.floor((vw - cropSize) / 2);
+                const sy = Math.floor((vh - cropSize) / 2);
+                canvas.width = cropSize;
+                canvas.height = cropSize;
+                ctx.drawImage(video, sx, sy, cropSize, cropSize, 0, 0, cropSize, cropSize);
+                const cropData = ctx.getImageData(0, 0, cropSize, cropSize);
                 try {
-                  const qr = jsQR(imageData.data, imageData.width, imageData.height, {
+                  const qrCrop = jsQR(cropData.data, cropData.width, cropData.height, {
                     inversionAttempts: 'attemptBoth',
                   });
-                  if (qr && qr.data && qr.data.trim()) {
-                    const detected = qr.data.trim();
-                    const now = Date.now();
-                    if (
-                      detected !== lastScannedCodeRef.current.code ||
-                      now - lastScannedCodeRef.current.time > 3000
-                    ) {
-                      lastScannedCodeRef.current = { code: detected, time: now };
-                      setScanFlash(true);
-                      setTimeout(() => setScanFlash(false), 1000);
-                      handleValidateTicket(detected);
-                    }
+                  if (qrCrop && qrCrop.data && qrCrop.data.trim()) {
+                    triggerDetectedQr(qrCrop.data);
+                    return;
                   }
-                } catch (qrErr) {
-                  // Ignore frame decode exceptions
+                } catch {
+                  // ignore
                 }
               }
             }
           };
 
-          scanIntervalTimer = setInterval(processFrame, 90);
+          scanIntervalTimer = setInterval(processFrame, 85);
         } catch (err: any) {
           console.error('Camera access error:', err);
           setCameraLoading(false);
@@ -420,7 +740,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
           if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
             msg = 'Camera permission was blocked. Please allow camera permissions in your browser URL bar.';
           } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-            msg = 'No camera device found on this system. You can upload an image or type the booking reference.';
+            msg = 'No camera device found on this system. You can upload a QR image or use Ticket Search.';
           } else if (err.name === 'NotReadableError') {
             msg = 'Camera is in use by another tab. Please close other camera apps and retry.';
           }
@@ -440,7 +760,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
     };
   }, [cameraActive, cameraFacing]);
 
-  // Handle QR image file upload
+  // Handle QR image file upload (supports standalone QR PNGs, mobile screenshots, and full ticket photos)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -449,27 +769,82 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
         try {
+          // 1. Try hardware BarcodeDetector first if available
+          if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+            try {
+              const detector = new (window as any).BarcodeDetector({ formats: ['qr_code'] });
+              const found = await detector.detect(img);
+              if (found && found.length > 0 && found[0]?.rawValue) {
+                const decoded = found[0].rawValue.trim();
+                setScanFlash(true);
+                setTimeout(() => setScanFlash(false), 1000);
+                setQrScanInput(decoded);
+                handleValidateTicket(decoded, 'QR');
+                return;
+              }
+            } catch {
+              // Fall through to multi-scale jsQR
+            }
+          }
+
+          // 2. Multi-scale & multi-region jsQR decoding
           const canvas = document.createElement('canvas');
-          canvas.width = img.naturalWidth || img.width;
-          canvas.height = img.naturalHeight || img.height;
           const ctx = canvas.getContext('2d', { willReadFrequently: true });
           if (!ctx) throw new Error('Canvas rendering context unavailable');
 
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const natW = img.naturalWidth || img.width;
+          const natH = img.naturalHeight || img.height;
 
-          const qr = jsQR(imageData.data, imageData.width, imageData.height, {
-            inversionAttempts: 'attemptBoth',
-          });
+          const tryDecodeRegion = (
+            sx: number,
+            sy: number,
+            sw: number,
+            sh: number,
+            targetMaxDim: number,
+          ): string | null => {
+            const maxDim = Math.max(sw, sh);
+            const scale = maxDim > targetMaxDim ? targetMaxDim / maxDim : 1;
+            const dw = Math.max(1, Math.floor(sw * scale));
+            const dh = Math.max(1, Math.floor(sh * scale));
+            canvas.width = dw;
+            canvas.height = dh;
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, dw, dh);
+            ctx.drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
+            const imageData = ctx.getImageData(0, 0, dw, dh);
+            const qr = jsQR(imageData.data, imageData.width, imageData.height, {
+              inversionAttempts: 'attemptBoth',
+            });
+            return qr && qr.data && qr.data.trim() ? qr.data.trim() : null;
+          };
 
-          if (qr && qr.data && qr.data.trim()) {
+          const attempts: Array<() => string | null> = [
+            () => tryDecodeRegion(0, 0, natW, natH, 1200),
+            () => tryDecodeRegion(0, 0, natW, natH, 700),
+            () => tryDecodeRegion(0, 0, natW, natH, 1800),
+            // Center crop (for mobile boarding pass screenshots)
+            () => tryDecodeRegion(natW * 0.1, natH * 0.15, natW * 0.8, natH * 0.7, 1000),
+            // Right-half crop (for desktop ticket screenshots where QR is on the right column)
+            () => tryDecodeRegion(natW * 0.45, 0, natW * 0.55, natH, 1000),
+            // Bottom-half crop
+            () => tryDecodeRegion(0, natH * 0.35, natW, natH * 0.65, 1000),
+          ];
+
+          let decodedPayload: string | null = null;
+          for (const attempt of attempts) {
+            decodedPayload = attempt();
+            if (decodedPayload) break;
+          }
+
+          if (decodedPayload) {
             setScanFlash(true);
             setTimeout(() => setScanFlash(false), 1000);
-            handleValidateTicket(qr.data.trim());
+            setQrScanInput(decodedPayload);
+            handleValidateTicket(decodedPayload, 'QR');
           } else {
-            showToast('No readable QR code found in this photo. Try another image.', 'warning');
+            showToast('No readable QR code found in this image. Try saving the QR PNG directly from the ticket.', 'warning');
           }
         } catch (err: any) {
           console.error('Failed to parse uploaded QR image:', err);
@@ -1277,32 +1652,69 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
           </div>
         </div>
 
-        {/* Right Columns (Span 2): Fast QR Boarding Scanner & Passenger Manifest */}
+        {/* Right Columns (Span 2): Verify Passenger (Search + QR Scanner) & Passenger Manifest */}
         <div id="driver-manifest-panel" className="lg:col-span-2 space-y-6">
-          {/* Quick Boarding QR Scanner & Ticket Validator */}
+          {/* VERIFY PASSENGER SECTION (Unified Ticket Search + QR Scanner) */}
           <div className="bg-slate-950 text-white rounded-3xl border-2 border-amber-400 p-6 sm:p-7 shadow-2xl space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center font-black shadow-md border border-slate-950">
-                  <QrCode className="w-5 h-5 stroke-[2.5]" />
+                <div className="w-11 h-11 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center font-black shadow-md border border-slate-950">
+                  <ShieldCheck className="w-6 h-6 stroke-[2.5]" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
-                      Mobile Ticket QR Boarding Scanner
+                    <h2 className="text-lg sm:text-xl font-black text-white tracking-tight">
+                      Verify Passenger
                     </h2>
                     <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-md uppercase">
-                      Fast Gate
+                      Search + QR
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400">
-                    Scan passenger phone screen or type booking reference for instant check-in
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <span className="text-xs text-slate-400">Assigned Trip:</span>
+                    {allAssignedTrips.length > 1 ? (
+                      <select
+                        value={activeTrip?.id || ''}
+                        onChange={(e) => handleSelectDriverTrip(e.target.value)}
+                        className="bg-slate-900 text-amber-400 font-bold text-xs px-2.5 py-1 rounded-lg border border-slate-700 focus:border-amber-400 focus:outline-none cursor-pointer"
+                      >
+                        {allAssignedTrips.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.route.origin} → {t.route.destination} (
+                            {new Date(t.departureTime).toLocaleTimeString('en-KE', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                            ) • {t.vehicle?.registrationNumber}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <strong className="text-amber-400 text-xs">
+                        {activeTrip
+                          ? `${activeTrip.route.origin} → ${activeTrip.route.destination} (${new Date(
+                              activeTrip.departureTime,
+                            ).toLocaleTimeString('en-KE', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })})`
+                          : 'Loading Trip...'}
+                      </strong>
+                    )}
+                    <span className="text-xs text-slate-400">
+                      • Vehicle:{' '}
+                      <strong className="text-white font-mono">
+                        {assignedVehicle?.registrationNumber ||
+                          activeTrip?.vehicle?.registrationNumber ||
+                          'KDE 416Q'}
+                      </strong>
+                    </span>
+                  </div>
                 </div>
               </div>
 
+              {/* Dedicated "Scan Ticket QR" Primary Action Button */}
               <div className="flex flex-wrap items-center gap-2">
-                {/* Toggle Live Camera */}
                 <button
                   type="button"
                   id="toggle-driver-camera-btn"
@@ -1310,44 +1722,46 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
                     setCameraError(null);
                     setCameraActive(!cameraActive);
                   }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black border-2 transition-all flex items-center gap-2 cursor-pointer active:scale-95 ${
                     cameraActive
-                      ? 'bg-amber-400 text-slate-950 border-amber-400 shadow-md font-black'
-                      : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700'
+                      ? 'bg-rose-600 text-white border-rose-400 shadow-lg'
+                      : 'bg-amber-400 hover:bg-amber-300 text-slate-950 border-amber-300 shadow-lg'
                   }`}
                 >
-                  <Camera className="w-3.5 h-3.5" />
-                  <span>{cameraActive ? 'Close Camera' : 'Camera Scanner'}</span>
+                  <Camera className="w-4 h-4 stroke-[2.5]" />
+                  <span>{cameraActive ? 'Close QR Scanner' : '📷 Scan Ticket QR'}</span>
                 </button>
 
-                {/* Flip Camera Facing Mode */}
                 {cameraActive && (
                   <button
                     type="button"
-                    onClick={() => setCameraFacing((prev) => (prev === 'environment' ? 'user' : 'environment'))}
-                    className="px-2.5 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                    title="Switch front and rear camera"
+                    onClick={() =>
+                      setCameraFacing((prev) =>
+                        prev === 'environment' ? 'user' : 'environment',
+                      )
+                    }
+                    className="px-3 py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    title="Switch Rear / Front Camera"
                   >
-                    <SwitchCamera className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="hidden sm:inline">{cameraFacing === 'environment' ? 'Rear' : 'Front'}</span>
+                    <SwitchCamera className="w-4 h-4 text-amber-400" />
+                    <span>{cameraFacing === 'environment' ? 'Rear Cam' : 'Front Cam'}</span>
                   </button>
                 )}
 
-                {/* Upload QR Photo */}
                 <button
                   type="button"
                   id="upload-qr-photo-btn"
                   disabled={isDecodingFile}
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                  title="Upload or take a photo of the QR code"
+                  className="px-3 py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  title="Upload or take a photo of a ticket QR code"
                 >
                   {isDecodingFile ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                    <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
                   ) : (
-                    <Upload className="w-3.5 h-3.5 text-amber-400" />
+                    <Upload className="w-4 h-4 text-amber-400" />
                   )}
-                  <span>{isDecodingFile ? 'Scanning Image...' : 'Upload QR'}</span>
+                  <span>{isDecodingFile ? 'Reading QR...' : 'Upload QR'}</span>
                 </button>
                 <input
                   ref={fileInputRef}
@@ -1357,8 +1771,127 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
                   className="hidden"
                   onChange={handleFileUpload}
                 />
+
+                <button
+                  type="button"
+                  onClick={() => setShowSampleQrCards((prev) => !prev)}
+                  className={`px-3 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
+                    showSampleQrCards
+                      ? 'bg-amber-400/20 text-amber-300 border-amber-400'
+                      : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700'
+                  }`}
+                  title="Show scannable sample passenger QR codes to test camera or image scanner"
+                >
+                  <QrCode className="w-4 h-4 text-amber-400" />
+                  <span>{showSampleQrCards ? 'Hide Sample QRs' : 'Sample QR Codes'}</span>
+                </button>
               </div>
             </div>
+
+            {/* Interactive Sample Scannable QR Cards Drawer */}
+            {showSampleQrCards && (
+              <div className="p-4 rounded-2xl bg-slate-900/95 border border-slate-700 space-y-3 animate-in fade-in duration-150">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                      <QrCode className="w-3.5 h-3.5" />
+                      Live Scannable Passenger QR Codes (Test Camera, Upload, or 1-Tap Scan)
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      Scan any QR below with another device camera, save its PNG to test &quot;Upload QR&quot;, or click &quot;Simulate QR Scan&quot;.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowSampleQrCards(false)}
+                    className="text-xs text-slate-400 hover:text-white cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {[
+                    {
+                      id: 'TCR-7X4K9P2M',
+                      tokenUrl: `${typeof window !== 'undefined' ? window.location.origin : 'https://transcar.co.ke'}/ticket/verify/tcr_tok_7x4k9p2m_f9a8c3d2e1b0476589ab`,
+                      label: 'Valid Ticket • Seat 2B',
+                      pax: 'Frankline Gwaro',
+                      badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+                    },
+                    {
+                      id: 'TCR-4M8Q2L9K',
+                      tokenUrl: `${typeof window !== 'undefined' ? window.location.origin : 'https://transcar.co.ke'}/ticket/verify/tcr_tok_4m8q2l9k_81c4d7e2a9f30b1654cd`,
+                      label: 'Already Boarded • Seat 1A',
+                      pax: 'Frankline Orora',
+                      badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+                    },
+                    {
+                      id: 'TCR-5P2H8K6D',
+                      tokenUrl: `${typeof window !== 'undefined' ? window.location.origin : 'https://transcar.co.ke'}/ticket/verify/tcr_tok_5p2h8k6d_90f1e4c7b2a83d6519cd`,
+                      label: 'Payment Pending • Seat 3A',
+                      pax: 'Brian Ochieng Otieno',
+                      badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+                    },
+                    {
+                      id: 'TCR-9W3N5V8R',
+                      tokenUrl: `${typeof window !== 'undefined' ? window.location.origin : 'https://transcar.co.ke'}/ticket/verify/tcr_tok_9w3n5v8r_32d7b4a9c6e180f523ab`,
+                      label: 'Wrong Trip • 07:00 AM',
+                      pax: 'Kelvin Mogaka Ombati',
+                      badge: 'bg-rose-500/20 text-rose-300 border-rose-500/40',
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.id}
+                      className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex flex-col items-center text-center gap-2"
+                    >
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-black border ${item.badge}`}>
+                        {item.label}
+                      </span>
+                      <div className="bg-white p-2 rounded-xl border border-slate-700">
+                        {sampleQrImages[item.id] ? (
+                          <img
+                            src={sampleQrImages[item.id]}
+                            alt={item.id}
+                            className="w-28 h-28 object-contain"
+                          />
+                        ) : (
+                          <div className="w-28 h-28 flex items-center justify-center text-[10px] text-slate-400">
+                            Generating...
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-white">{item.pax}</p>
+                        <p className="text-[11px] font-mono text-amber-400 font-bold">{item.id}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 w-full pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setQrScanInput(item.tokenUrl);
+                            handleValidateTicket(item.tokenUrl, 'QR');
+                          }}
+                          className="flex-1 py-1.5 px-2 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[11px] cursor-pointer"
+                        >
+                          Simulate QR Scan
+                        </button>
+                        {sampleQrImages[item.id] && (
+                          <a
+                            href={sampleQrImages[item.id]}
+                            download={`TransCar-QR-${item.id}.png`}
+                            className="py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-[11px]"
+                            title="Download QR PNG to test Upload QR"
+                          >
+                            PNG
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Live Camera Viewfinder & QR Frame Processor */}
             {cameraActive && (
@@ -1377,8 +1910,12 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-neutral-950/90 text-amber-400 gap-3 p-4 text-center">
                     <Loader2 className="w-8 h-8 animate-spin" />
                     <div>
-                      <p className="text-xs font-bold text-white">Initializing Optical QR Scanner...</p>
-                      <p className="text-[11px] text-neutral-400 mt-0.5">Please allow camera permissions</p>
+                      <p className="text-xs font-bold text-white">
+                        Starting Rear Camera QR Scanner...
+                      </p>
+                      <p className="text-[11px] text-neutral-400 mt-0.5">
+                        Point camera at passenger&apos;s TransCar QR code
+                      </p>
                     </div>
                   </div>
                 )}
@@ -1389,8 +1926,12 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
                       <AlertTriangle className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-black uppercase tracking-wider text-rose-400">Camera Access Blocked</h4>
-                      <p className="text-xs text-neutral-300 max-w-sm mt-1 leading-relaxed">{cameraError}</p>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-rose-400">
+                        Camera Unavailable
+                      </h4>
+                      <p className="text-xs text-neutral-300 max-w-sm mt-1 leading-relaxed">
+                        {cameraError}
+                      </p>
                     </div>
                     <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
                       <button
@@ -1405,7 +1946,7 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
                         onClick={() => setCameraActive(false)}
                         className="px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-neutral-400 text-xs font-bold rounded-xl transition-all cursor-pointer"
                       >
-                        Dismiss
+                        Use Ticket Search
                       </button>
                     </div>
                   </div>
@@ -1425,14 +1966,14 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
                       <div className="absolute inset-0 bg-emerald-500/30 border-4 border-emerald-400 rounded-2xl flex items-center justify-center z-10 animate-in fade-in zoom-in-95 duration-150">
                         <div className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black shadow-2xl flex items-center gap-2 border-2 border-white">
                           <CheckCircle2 className="w-4 h-4" />
-                          <span>QR CODE DETECTED • CHECKING PASS...</span>
+                          <span>QR TOKEN EXTRACTED • VALIDATING...</span>
                         </div>
                       </div>
                     )}
 
                     <div className="absolute top-3 left-3 bg-black/80 backdrop-blur-sm border border-neutral-700 px-2.5 py-1 rounded-lg text-[10px] text-amber-300 font-mono flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                      <span>LIVE SCANNER ACTIVE</span>
+                      <span>REAR CAMERA QR SCANNER ACTIVE</span>
                     </div>
 
                     <button
@@ -1447,30 +1988,34 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
               </div>
             )}
 
-            {/* Scanner / Barcode Input Form */}
+            {/* Ticket / Booking / Passenger Search Input Form */}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleValidateTicket();
+                handleValidateTicket(qrScanInput, 'SEARCH');
               }}
               className="space-y-3"
             >
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col sm:flex-row gap-2.5">
                 <div className="relative flex-1">
-                  <Scan className="w-4 h-4 text-amber-400 absolute left-3.5 top-3.5" />
+                  <Search className="w-4 h-4 text-amber-400 absolute left-3.5 top-3.5" />
                   <input
                     type="text"
                     id="driver-qr-scan-input"
                     value={qrScanInput}
                     onChange={(e) => setQrScanInput(e.target.value)}
-                    placeholder="Scan QR barcode or enter Booking Ref (e.g. TRP-10492)..."
-                    className="w-full pl-10 pr-10 py-2.5 bg-slate-900 text-white placeholder:text-slate-500 text-xs sm:text-sm font-mono rounded-xl border-2 border-slate-700 focus:border-amber-400 focus:outline-none transition-all"
+                    placeholder="Search ticket ID, booking ID, passenger name or phone number"
+                    className="w-full pl-10 pr-10 py-3 bg-slate-900 text-white placeholder:text-slate-400 text-xs sm:text-sm font-medium rounded-xl border-2 border-slate-700 focus:border-amber-400 focus:outline-none transition-all"
                   />
                   {qrScanInput && (
                     <button
                       type="button"
-                      onClick={() => setQrScanInput('')}
-                      className="absolute right-3 top-3 text-slate-400 hover:text-white cursor-pointer"
+                      onClick={() => {
+                        setQrScanInput('');
+                        setVerificationResult(null);
+                        setSearchMatches([]);
+                      }}
+                      className="absolute right-3 top-3.5 text-slate-400 hover:text-white cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -1481,117 +2026,434 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
                   type="submit"
                   id="driver-validate-ticket-btn"
                   disabled={isScanning || !qrScanInput.trim()}
-                  className="px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-slate-950 font-black text-xs sm:text-sm border border-slate-950 shadow transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                  className="px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-slate-950 font-black text-xs sm:text-sm border-2 border-amber-300 shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                 >
                   {isScanning ? (
                     <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
                   ) : (
-                    <Zap className="w-4 h-4 fill-slate-950" />
+                    <Search className="w-4 h-4 stroke-[2.5]" />
                   )}
-                  <span>Validate Ticket</span>
+                  <span>🔍 Search Ticket</span>
                 </button>
               </div>
 
-              {/* Quick Scan Test Shortcuts from Current Manifest */}
-              {manifestPassengers.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 mr-1 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-amber-400" />
-                    <span>Quick Scan Simulators:</span>
-                  </span>
-                  {manifestPassengers.slice(0, 4).map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => handleValidateTicket(p.bookingReference || p.id)}
-                      className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-800 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer active:scale-95"
-                      title={`Simulate scanning mobile ticket for Seat ${p.seatNumber}`}
-                    >
-                      <span>Seat {p.seatNumber}</span>
-                      <span className="text-amber-400 font-mono">({p.bookingReference || 'REF'})</span>
-                      {p.boarded ? (
-                        <Check className="w-3 h-3 text-emerald-400" />
-                      ) : (
-                        <Scan className="w-3 h-3 text-amber-400" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* Quick Verification Simulators for Testing All Scenarios */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] uppercase font-bold text-slate-400 mr-1 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  <span>Quick Verify Tests:</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQrScanInput('TCR-7X4K9P2M');
+                    handleValidateTicket('TCR-7X4K9P2M', 'SEARCH');
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-emerald-300 border border-slate-700 text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <span>TCR-7X4K9P2M (Valid)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQrScanInput('TCR-5B8W4K9P');
+                    handleValidateTicket('TCR-5B8W4K9P', 'SEARCH');
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-amber-300 border border-slate-700 text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <span>TCR-5B8W4K9P (Payment Pending)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQrScanInput('TCR-8H2N6V4Q');
+                    handleValidateTicket('TCR-8H2N6V4Q', 'SEARCH');
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-orange-300 border border-slate-700 text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <span>TCR-8H2N6V4Q (Wrong Trip)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQrScanInput('TCR-INVALID99');
+                    handleValidateTicket('TCR-INVALID99', 'SEARCH');
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-rose-300 border border-slate-700 text-[11px] font-mono font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <span>TCR-INVALID99 (Not Found)</span>
+                </button>
+              </div>
             </form>
 
-            {/* Validation Feedback Display Banner */}
-            {scanResult && (
+            {/* Multiple Search Results Selector (if phone/name matched several passengers) */}
+            {searchMatches.length > 1 && (
+              <div className="p-3 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 block">
+                  Matching Tickets Found ({searchMatches.length}) — Select Passenger:
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {searchMatches.map((match, idx) => {
+                    const t = match.ticket;
+                    if (!t) return null;
+                    const isSelected =
+                      verificationResult?.ticket?.ticket_id === t.ticket_id;
+                    return (
+                      <button
+                        key={t.ticket_id || idx}
+                        type="button"
+                        onClick={() => setVerificationResult(match)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-amber-400 text-slate-950 border-amber-300 font-black'
+                            : 'bg-slate-950 text-slate-200 border-slate-700 hover:border-amber-400'
+                        }`}
+                      >
+                        {t.passenger_name} • Seat {t.seat_number} ({t.ticket_id})
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* PASSENGER VERIFICATION CARD */}
+            {verificationResult && (
               <div
-                className={`p-4 rounded-2xl border-2 animate-in fade-in duration-150 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
-                  scanResult.status === 'SUCCESS'
-                    ? 'bg-emerald-950/90 border-emerald-500 text-white'
-                    : scanResult.status === 'ALREADY_BOARDED'
-                    ? 'bg-amber-950/90 border-amber-500 text-white'
-                    : 'bg-rose-950/90 border-rose-500 text-white'
+                id="passenger-verification-card"
+                className={`rounded-3xl border-2 p-5 sm:p-6 animate-in fade-in duration-150 space-y-5 ${
+                  verificationResult.code === 'VALID' ||
+                  verificationResult.code === 'BOARDED'
+                    ? 'bg-emerald-950/95 border-emerald-400 text-white'
+                    : verificationResult.code === 'ALREADY_BOARDED' ||
+                        verificationResult.code === 'WRONG_TRIP' ||
+                        verificationResult.code === 'DATE_MISMATCH' ||
+                        verificationResult.code === 'PAYMENT_PENDING'
+                      ? 'bg-amber-950/95 border-amber-400 text-white'
+                      : 'bg-rose-950/95 border-rose-500 text-white'
                 }`}
               >
-                <div className="flex items-start gap-3">
-                  <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                      scanResult.status === 'SUCCESS'
-                        ? 'bg-emerald-500 text-slate-950'
-                        : scanResult.status === 'ALREADY_BOARDED'
-                        ? 'bg-amber-400 text-slate-950'
-                        : 'bg-rose-600 text-white'
-                    }`}
-                  >
-                    {scanResult.status === 'SUCCESS' ? (
-                      <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
-                    ) : scanResult.status === 'ALREADY_BOARDED' ? (
-                      <AlertTriangle className="w-5 h-5 stroke-[2.5]" />
-                    ) : (
-                      <AlertCircle className="w-5 h-5 stroke-[2.5]" />
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs uppercase tracking-widest font-black">
-                        {scanResult.status === 'SUCCESS'
-                          ? '✅ BOARDING APPROVED'
-                          : scanResult.status === 'ALREADY_BOARDED'
-                          ? '⚠️ ALREADY CHECKED IN'
-                          : '❌ TICKET REJECTED'}
-                      </span>
+                {/* Verification Header Row */}
+                <div className="flex items-start justify-between gap-3 border-b border-white/15 pb-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 font-black ${
+                        verificationResult.code === 'VALID' ||
+                        verificationResult.code === 'BOARDED'
+                          ? 'bg-emerald-400 text-slate-950'
+                          : verificationResult.code === 'ALREADY_BOARDED' ||
+                              verificationResult.code === 'WRONG_TRIP' ||
+                              verificationResult.code === 'DATE_MISMATCH' ||
+                              verificationResult.code === 'PAYMENT_PENDING'
+                            ? 'bg-amber-400 text-slate-950'
+                            : 'bg-rose-500 text-white'
+                      }`}
+                    >
+                      {verificationResult.code === 'VALID' ||
+                      verificationResult.code === 'BOARDED' ? (
+                        <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
+                      ) : (
+                        <AlertTriangle className="w-6 h-6 stroke-[2.5]" />
+                      )}
                     </div>
-
-                    <p className="text-sm font-black mt-0.5">{scanResult.message}</p>
-
-                    {scanResult.passenger && (
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                        <span className="bg-black/60 px-2.5 py-0.5 rounded text-amber-300 font-mono font-bold">
-                          Seat: {scanResult.passenger.seatNumber}
-                        </span>
-                        <span className="bg-black/60 px-2.5 py-0.5 rounded text-white font-bold">
-                          {scanResult.passenger.fullName}
-                        </span>
-                        {scanResult.passenger.idNumber && (
-                          <span className="bg-black/60 px-2.5 py-0.5 rounded text-neutral-300 font-mono text-[11px]">
-                            ID: {scanResult.passenger.idNumber}
-                          </span>
-                        )}
-                        {scanResult.booking && (
-                          <span className="bg-black/60 px-2.5 py-0.5 rounded text-emerald-300 font-black text-[11px]">
-                            PAID ({scanResult.booking.paymentMethod})
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    <div>
+                      <h3 className="text-base sm:text-lg font-black tracking-wide uppercase">
+                        {verificationResult.title}
+                      </h3>
+                      <p className="text-xs text-white/80 font-medium mt-0.5">
+                        {verificationResult.message}
+                      </p>
+                    </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVerificationResult(null);
+                      setSearchMatches([]);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-black/40 hover:bg-black/70 text-xs font-bold text-white/80 hover:text-white border border-white/15 cursor-pointer"
+                  >
+                    Close
+                  </button>
                 </div>
 
-                <button
-                  onClick={() => setScanResult(null)}
-                  className="self-end sm:self-center px-3 py-1.5 rounded-xl bg-black/60 hover:bg-black text-neutral-300 hover:text-white text-xs font-bold border border-neutral-700 transition-colors cursor-pointer"
-                >
-                  Clear
-                </button>
+                {/* Detailed Ticket Data when a Ticket Record exists */}
+                {verificationResult.ticket && (
+                  <div className="space-y-4">
+                    {/* Passenger Name & Primary Status */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-black/35 p-4 rounded-2xl border border-white/10">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/60 block">
+                          PASSENGER
+                        </span>
+                        <p className="text-xl sm:text-2xl font-black text-white">
+                          {verificationResult.ticket.passenger_name}
+                        </p>
+                        <span className="text-xs text-white/75 font-mono">
+                          Phone: {verificationResult.ticket.passenger_phone}
+                        </span>
+                      </div>
+
+                      <div className="sm:text-right">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/60 block">
+                          STATUS
+                        </span>
+                        <span
+                          className={`inline-block mt-1 px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border ${
+                            verificationResult.code === 'VALID'
+                              ? 'bg-emerald-400 text-slate-950 border-white'
+                              : verificationResult.code === 'BOARDED'
+                                ? 'bg-emerald-300 text-slate-950 border-white'
+                                : verificationResult.code === 'ALREADY_BOARDED'
+                                  ? 'bg-amber-400 text-slate-950 border-amber-200'
+                                  : 'bg-rose-500 text-white border-rose-300'
+                          }`}
+                        >
+                          {verificationResult.code === 'VALID'
+                            ? 'READY FOR BOARDING'
+                            : verificationResult.code === 'BOARDED'
+                              ? '✓ PASSENGER BOARDED'
+                              : verificationResult.code.replace('_', ' ')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Wrong Trip Comparison Box (Section 10) */}
+                    {verificationResult.code === 'WRONG_TRIP' &&
+                      verificationResult.expectedTrip && (
+                        <div className="p-4 rounded-2xl bg-black/50 border-2 border-amber-400/80 text-xs space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <span className="text-[10px] font-black uppercase text-rose-300 block">
+                                THIS TICKET BELONGS TO:
+                              </span>
+                              <p className="font-black text-sm text-white">
+                                {verificationResult.ticket.route}
+                              </p>
+                              <p className="text-white/80 font-mono">
+                                Departure:{' '}
+                                <strong>
+                                  {verificationResult.ticket.departure_time}
+                                </strong>{' '}
+                                • Vehicle:{' '}
+                                <strong>
+                                  {verificationResult.ticket.vehicle_registration}
+                                </strong>
+                              </p>
+                            </div>
+                            <div className="space-y-1 sm:border-l border-white/15 sm:pl-3">
+                              <span className="text-[10px] font-black uppercase text-emerald-300 block">
+                                CURRENT DRIVER TRIP:
+                              </span>
+                              <p className="font-black text-sm text-white">
+                                {verificationResult.expectedTrip.route}
+                              </p>
+                              <p className="text-white/80 font-mono">
+                                Departure:{' '}
+                                <strong>
+                                  {verificationResult.expectedTrip.departureTime}
+                                </strong>{' '}
+                                • Vehicle:{' '}
+                                <strong>
+                                  {
+                                    verificationResult.expectedTrip
+                                      .vehicleRegistration
+                                  }
+                                </strong>
+                              </p>
+                            </div>
+                          </div>
+                          {verificationResult.ticket.trip_id &&
+                            allAssignedTrips.some(
+                              (t) => t.id === verificationResult.ticket?.trip_id,
+                            ) && (
+                              <div className="pt-2 border-t border-white/15 flex items-center justify-between gap-2">
+                                <span className="text-[11px] text-amber-200">
+                                  Operating {verificationResult.ticket.route} ({verificationResult.ticket.departure_time}) instead?
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    const targetId = verificationResult.ticket!.trip_id;
+                                    await handleSelectDriverTrip(targetId);
+                                    handleValidateTicket(
+                                      verificationResult.ticket!.qr_token ||
+                                        verificationResult.ticket!.ticket_id,
+                                      'QR',
+                                      targetId,
+                                    );
+                                  }}
+                                  className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs cursor-pointer shrink-0"
+                                >
+                                  Switch Driver Trip & Re-Verify
+                                </button>
+                              </div>
+                            )}
+                        </div>
+                      )}
+
+                    {/* Already Boarded Protection Details (Section 9) */}
+                    {(verificationResult.code === 'ALREADY_BOARDED' ||
+                      verificationResult.code === 'BOARDED') && (
+                      <div className="p-4 rounded-2xl bg-black/45 border border-white/15 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-white/60 block">
+                            Passenger
+                          </span>
+                          <span className="font-black text-white">
+                            {verificationResult.ticket.passenger_name}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-white/60 block">
+                            Seat
+                          </span>
+                          <span className="font-black font-mono text-amber-300 text-sm">
+                            {verificationResult.ticket.seat_number}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-white/60 block">
+                            Boarded At
+                          </span>
+                          <span className="font-black font-mono text-white">
+                            {verificationResult.ticket.verified_at
+                              ? new Date(
+                                  verificationResult.ticket.verified_at,
+                                ).toLocaleTimeString('en-KE', {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })
+                              : 'Just now'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-white/60 block">
+                            Verified By
+                          </span>
+                          <span className="font-black text-emerald-300">
+                            {verificationResult.ticket.verified_by_name ||
+                              driverData?.name ||
+                              'Frankline Orora'}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Ticket Attributes Grid (Section 7) */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                      <div className="p-3 rounded-xl bg-black/35 border border-white/10">
+                        <span className="text-[10px] font-bold uppercase text-white/60 block">
+                          Ticket
+                        </span>
+                        <span className="font-mono font-black text-amber-300 text-sm">
+                          {verificationResult.ticket.ticket_id}
+                        </span>
+                        <span className="text-[10px] font-mono text-white/60 block">
+                          Ref: {verificationResult.ticket.booking_reference}
+                        </span>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-black/35 border border-white/10">
+                        <span className="text-[10px] font-bold uppercase text-white/60 block">
+                          Route
+                        </span>
+                        <span className="font-black text-white text-sm block">
+                          {verificationResult.ticket.route}
+                        </span>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-black/35 border border-white/10">
+                        <span className="text-[10px] font-bold uppercase text-white/60 block">
+                          Travel Date
+                        </span>
+                        <span className="font-black text-white block">
+                          {new Date(
+                            verificationResult.ticket.travel_date,
+                          ).toLocaleDateString('en-KE', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-black/35 border border-white/10">
+                        <span className="text-[10px] font-bold uppercase text-white/60 block">
+                          Departure
+                        </span>
+                        <span className="font-black font-mono text-white text-sm block">
+                          {verificationResult.ticket.departure_time}
+                        </span>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-black/35 border border-white/10">
+                        <span className="text-[10px] font-bold uppercase text-white/60 block">
+                          Seat
+                        </span>
+                        <span className="font-black font-mono text-amber-300 text-base block">
+                          {verificationResult.ticket.seat_number}
+                        </span>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-black/35 border border-white/10">
+                        <span className="text-[10px] font-bold uppercase text-white/60 block">
+                          Vehicle
+                        </span>
+                        <span className="font-black font-mono text-white text-sm block">
+                          {verificationResult.ticket.vehicle_registration}
+                        </span>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-black/35 border border-white/10">
+                        <span className="text-[10px] font-bold uppercase text-white/60 block">
+                          Payment
+                        </span>
+                        <span
+                          className={`font-black text-sm block ${
+                            verificationResult.ticket.payment_status === 'PAID'
+                              ? 'text-emerald-300'
+                              : 'text-amber-300'
+                          }`}
+                        >
+                          {verificationResult.ticket.payment_status} (KES{' '}
+                          {verificationResult.ticket.fare.toLocaleString()})
+                        </span>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-black/35 border border-white/10">
+                        <span className="text-[10px] font-bold uppercase text-white/60 block">
+                          Booking Status
+                        </span>
+                        <span className="font-black text-white text-sm block">
+                          {verificationResult.ticket.booking_status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Large Touch Action: MARK AS BOARDED (Sections 7 & 8) */}
+                    {verificationResult.valid &&
+                      verificationResult.code === 'VALID' && (
+                        <button
+                          type="button"
+                          id="mark-as-boarded-btn"
+                          disabled={isBoardingConfirming}
+                          onClick={() =>
+                            handleConfirmBoarding(verificationResult.ticket)
+                          }
+                          className="w-full py-4 px-6 rounded-2xl bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 text-slate-950 font-black text-base sm:text-lg tracking-wide uppercase shadow-xl border-2 border-white flex items-center justify-center gap-2.5 transition-all cursor-pointer active:scale-98"
+                        >
+                          {isBoardingConfirming ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <UserCheck className="w-6 h-6 stroke-[2.5]" />
+                          )}
+                          <span>MARK AS BOARDED</span>
+                        </button>
+                      )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1673,8 +2535,8 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
                   <tr className="border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-wider">
                     <th className="py-3 px-2">Seat</th>
                     <th className="py-3 px-2">Passenger Legal Name</th>
-                    <th className="py-3 px-2">ID / Passport</th>
-                    <th className="py-3 px-2">Reference</th>
+                    <th className="py-3 px-2">ID / Phone</th>
+                    <th className="py-3 px-2">Ticket ID / Ref</th>
                     <th className="py-3 px-2">Status</th>
                     <th className="py-3 px-2 text-right">Quick Action</th>
                   </tr>
@@ -1698,8 +2560,22 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
                           <span className="font-bold text-slate-900 block">{p.fullName}</span>
                           <span className="text-[10px] text-slate-400">Class: {p.seatClass || 'Standard'}</span>
                         </td>
-                        <td className="py-3 px-2 font-mono font-bold text-slate-700">{p.idNumber || '—'}</td>
-                        <td className="py-3 px-2 font-mono text-amber-700 font-bold">{p.bookingReference}</td>
+                        <td className="py-3 px-2 font-mono font-bold text-slate-700">
+                          <span className="block">{p.idNumber || '—'}</span>
+                          {p.contactPhone && (
+                            <span className="text-[10px] text-slate-400 block">{p.contactPhone}</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-2 font-mono">
+                          <span className="text-slate-900 font-black block">
+                            {p.ticketId || p.bookingReference}
+                          </span>
+                          {p.ticketId && (
+                            <span className="text-[10px] text-amber-700 font-bold block">
+                              Ref: {p.bookingReference}
+                            </span>
+                          )}
+                        </td>
                         <td className="py-3 px-2">
                           <span
                             className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1 w-fit ${
@@ -1725,12 +2601,16 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({ driverData, onLogout
                           <div className="flex items-center justify-end gap-1.5">
                             <button
                               type="button"
-                              onClick={() => handleValidateTicket(p.bookingReference || p.id)}
-                              className="px-2 py-1 rounded-lg bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-900 font-bold text-[11px] border border-slate-200 flex items-center gap-1 transition-colors cursor-pointer active:scale-95"
-                              title="Validate passenger ticket"
+                              onClick={() => {
+                                const codeToVerify = p.ticketId || p.bookingReference || p.id;
+                                setQrScanInput(codeToVerify);
+                                handleValidateTicket(codeToVerify, 'SEARCH');
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-900 font-bold text-[11px] border border-slate-200 flex items-center gap-1 transition-colors cursor-pointer active:scale-95"
+                              title="Verify passenger ticket"
                             >
                               <Scan className="w-3 h-3 text-amber-600" />
-                              <span className="hidden sm:inline">Scan</span>
+                              <span className="hidden sm:inline">Verify</span>
                             </button>
 
                             <button

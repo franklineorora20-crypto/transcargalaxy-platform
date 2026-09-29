@@ -77,6 +77,8 @@ export default function App() {
   const [routes, setRoutes] = React.useState<Route[]>([]);
   const [selectedTripForBooking, setSelectedTripForBooking] = React.useState<Trip | null>(null);
   const [trackingCode, setTrackingCode] = React.useState<string>('TRP-48291');
+  const [initialVerifyToken, setInitialVerifyToken] = React.useState<string | null>(null);
+  const [initialVerifyTripId, setInitialVerifyTripId] = React.useState<string | null>(null);
 
   // Search defaults
   const [searchOrigin, setSearchOrigin] = React.useState('');
@@ -93,9 +95,18 @@ export default function App() {
         setRoutes(data);
 
         // Check if there is a deep link in window.location.pathname
-        const path = window.location.pathname.toLowerCase();
+        const rawPath = window.location.pathname;
+        const path = rawPath.toLowerCase();
 
-        if (path.startsWith('/booking/') && path.length > 9) {
+        if (path.startsWith('/ticket/verify/') && rawPath.length > 15) {
+          const tokenPart = decodeURIComponent(rawPath.slice('/ticket/verify/'.length).replace(/\/$/, ''));
+          if (tokenPart) {
+            setInitialVerifyToken(tokenPart);
+            setDriverData({ id: 'drv-frankline', name: 'Frankline Orora', licenseNumber: 'DL-FRK8492', email: 'franklineorora20@gmail.com' });
+            setUserRole('DRIVER');
+            setCurrentView('driver-portal');
+          }
+        } else if (path.startsWith('/booking/') && path.length > 9) {
           const slug = path.replace('/booking/', '').replace(/\/$/, '');
           const slugMap: Record<string, { origin: string; destination: string }> = {
             'massai-mall-kisii': { origin: 'Rongai', destination: 'Kisii' },
@@ -106,20 +117,19 @@ export default function App() {
             'kisii-ngong': { origin: 'Kisii', destination: 'Ngong' },
             'kiserian-kisii': { origin: 'Kiserian', destination: 'Kisii' },
             'kisii-kiserian': { origin: 'Kisii', destination: 'Kiserian' },
-            'massai-mall-oyugis': { origin: 'Rongai', destination: 'Oyugis' },
-            'ongata-rongai-oyugis': { origin: 'Rongai', destination: 'Oyugis' },
-            'oyugis-massai-mall': { origin: 'Oyugis', destination: 'Rongai' },
-            'massai-mall-kendu-bay': { origin: 'Rongai', destination: 'Kendu Bay' },
-            'ongata-rongai-kendu-bay': { origin: 'Rongai', destination: 'Kendu Bay' },
-            'kendu-bay-massai-mall': { origin: 'Kendu Bay', destination: 'Rongai' },
-            'massai-mall-migori': { origin: 'Rongai', destination: 'Mogongo' },
-            'migori-massai-mall': { origin: 'Mogongo', destination: 'Rongai' },
+            'massai-mall-sirare': { origin: 'Rongai', destination: 'Sirare' },
+            'ongata-rongai-sirare': { origin: 'Rongai', destination: 'Sirare' },
+            'sirare-massai-mall': { origin: 'Sirare', destination: 'Rongai' },
+            'massai-mall-migori': { origin: 'Rongai', destination: 'Migori' },
+            'ongata-rongai-migori': { origin: 'Rongai', destination: 'Migori' },
+            'migori-massai-mall': { origin: 'Migori', destination: 'Rongai' },
+            'massai-mall-awendo': { origin: 'Rongai', destination: 'Awendo' },
+            'ongata-rongai-awendo': { origin: 'Rongai', destination: 'Awendo' },
+            'awendo-massai-mall': { origin: 'Awendo', destination: 'Rongai' },
             'massai-mall-rongo': { origin: 'Rongai', destination: 'Rongo' },
             'rongo-massai-mall': { origin: 'Rongo', destination: 'Rongai' },
             'massai-mall-kehancha': { origin: 'Rongai', destination: 'Kehancha' },
             'kehancha-massai-mall': { origin: 'Kehancha', destination: 'Rongai' },
-            'massai-mall-bongo': { origin: 'Rongai', destination: 'Bongo' },
-            'bongo-massai-mall': { origin: 'Bongo', destination: 'Rongai' },
           };
 
           const matched = slugMap[slug];
@@ -274,11 +284,13 @@ export default function App() {
               initialCarSeatView={searchCarSeatView}
               onDone={() => setCurrentView('home')}
               onTrackBus={handleTrackBusFromRef}
-              onOpenDriverPortal={() => {
+              onOpenDriverPortal={(verifyToken?: string, tripId?: string) => {
                 if (!driverData) {
-                  setDriverData({ name: 'Frankline Orora', licenseNumber: 'DL-8492019' });
+                  setDriverData({ id: 'drv-frankline', name: 'Frankline Orora', licenseNumber: 'DL-FRK8492' });
                   setUserRole('DRIVER');
                 }
+                if (verifyToken) setInitialVerifyToken(verifyToken);
+                if (tripId) setInitialVerifyTripId(tripId);
                 setCurrentView('driver-portal');
               }}
             />
@@ -295,6 +307,15 @@ export default function App() {
             <TicketRetrievalPage
               onBackToHome={() => setCurrentView('home')}
               onTrackBus={handleTrackBusFromRef}
+              onOpenDriverPortal={(verifyToken?: string, tripId?: string) => {
+                if (!driverData) {
+                  setDriverData({ id: 'drv-frankline', name: 'Frankline Orora', licenseNumber: 'DL-FRK8492' });
+                  setUserRole('DRIVER');
+                }
+                if (verifyToken) setInitialVerifyToken(verifyToken);
+                if (tripId) setInitialVerifyTripId(tripId);
+                setCurrentView('driver-portal');
+              }}
             />
           )}
 
@@ -322,7 +343,16 @@ export default function App() {
           )}
 
           {currentView === 'driver-portal' && (
-            <DriverPortal driverData={driverData} onLogout={handleLogout} />
+            <DriverPortal
+              driverData={driverData}
+              onLogout={handleLogout}
+              initialVerifyToken={initialVerifyToken}
+              initialVerifyTripId={initialVerifyTripId}
+              onClearInitialVerify={() => {
+                setInitialVerifyToken(null);
+                setInitialVerifyTripId(null);
+              }}
+            />
           )}
 
           {currentView === 'manager-login' && (

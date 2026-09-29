@@ -357,7 +357,7 @@ export const Footer: React.FC<{ onNavigate: (view: string) => void; onOpenTutori
               Premier Intercity & Rongai Regional Express Transportation
             </p>
             <p className="text-slate-400 leading-relaxed text-xs">
-              Daily express passenger shuttles connecting Ongata Rongai, Nairobi, Ngong, Kiserian, Kisii, Oyugis, Kendu Bay, and Rongo.
+              Daily express passenger shuttles connecting Ongata Rongai, Nairobi, Ngong, Kiserian, Kisii, Rongo, Awendo, Migori, Sirare, and Kehancha.
             </p>
             <div className="flex items-center gap-2 pt-1 font-mono text-[11px] text-amber-400">
               <Shield className="w-3.5 h-3.5 shrink-0" />

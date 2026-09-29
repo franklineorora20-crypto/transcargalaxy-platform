@@ -432,6 +432,8 @@ CREATE TABLE IF NOT EXISTS public.tickets (
 
     ticket_number TEXT NOT NULL UNIQUE,
 
+    ticket_id TEXT GENERATED ALWAYS AS (ticket_number) STORED,
+
     booking_id UUID NOT NULL
         REFERENCES public.bookings(id)
         ON DELETE CASCADE,
@@ -446,12 +448,30 @@ CREATE TABLE IF NOT EXISTS public.tickets (
 
     passenger_phone TEXT,
 
+    route TEXT,
+
+    travel_date DATE,
+
+    departure_time TIMESTAMPTZ,
+
+    vehicle_id UUID
+        REFERENCES public.vehicles(id)
+        ON DELETE SET NULL,
+
+    vehicle_registration TEXT,
+
     seat_number TEXT NOT NULL,
 
     seat_class TEXT NOT NULL DEFAULT 'STANDARD',
 
     fare_ksh NUMERIC(10,2) NOT NULL
         CHECK (fare_ksh >= 0),
+
+    payment_status TEXT NOT NULL DEFAULT 'PAID',
+
+    booking_status TEXT NOT NULL DEFAULT 'CONFIRMED',
+
+    qr_token TEXT NOT NULL UNIQUE,
 
     qr_code TEXT NOT NULL,
 
@@ -461,7 +481,17 @@ CREATE TABLE IF NOT EXISTS public.tickets (
                 'ISSUED',
                 'VALIDATED',
                 'BOARDED',
-                'CANCELLED'
+                'CANCELLED',
+                'EXPIRED',
+                'REFUNDED'
+            )
+        ),
+
+    boarding_status TEXT NOT NULL DEFAULT 'NOT_BOARDED'
+        CHECK (
+            boarding_status IN (
+                'NOT_BOARDED',
+                'BOARDED'
             )
         ),
 
@@ -469,9 +499,15 @@ CREATE TABLE IF NOT EXISTS public.tickets (
 
     boarded_at TIMESTAMPTZ,
 
+    verified_at TIMESTAMPTZ,
+
     boarded_by_driver_id UUID
         REFERENCES public.drivers(id)
         ON DELETE SET NULL,
+
+    verified_by TEXT,
+
+    verified_by_name TEXT,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 
@@ -899,6 +935,9 @@ CREATE INDEX IF NOT EXISTS idx_tickets_trip
 
 CREATE INDEX IF NOT EXISTS idx_tickets_number
     ON public.tickets(ticket_number);
+
+CREATE INDEX IF NOT EXISTS idx_tickets_qr_token
+    ON public.tickets(qr_token);
 
 CREATE INDEX IF NOT EXISTS idx_payments_booking
     ON public.payments(booking_id);
@@ -2474,7 +2513,7 @@ VALUES
         },
         {
             "id": "stp-304",
-            "name": "Oyugis Stage",
+            "name": "Awendo Stage",
             "order": 4,
             "distanceFromOriginKm": 345,
             "estimatedMinutes": 360

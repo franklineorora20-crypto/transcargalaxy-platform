@@ -13,6 +13,8 @@ import {
   Announcement,
   AuditLog,
   TrackingData,
+  TicketRecord,
+  TicketVerificationResult,
 } from '../types';
 
 const API_BASE = '/api';
@@ -330,13 +332,13 @@ export class ApiService {
   }
 
   static async getDriverMyTrips(): Promise<Trip[]> {
-    const res = await fetch(`${API_BASE}/driver/my-trips`, { headers: this.getHeaders() });
+    const res = await fetch(`${API_BASE}/driver/my-trips`, { headers: this.getHeaders('DRIVER') });
     if (!res.ok) throw new Error('Failed to load assigned trips');
     return res.json();
   }
 
   static async getDriverActiveTrip(): Promise<Trip> {
-    const res = await fetch(`${API_BASE}/driver/active-trip`, { headers: this.getHeaders() });
+    const res = await fetch(`${API_BASE}/driver/active-trip`, { headers: this.getHeaders('DRIVER') });
     if (!res.ok) throw new Error('Failed to load active trip');
     return res.json();
   }
@@ -347,7 +349,7 @@ export class ApiService {
   ) {
     const res = await fetch(`${API_BASE}/driver/trips/${tripId}/status`, {
       method: 'PATCH',
-      headers: this.getHeaders(),
+      headers: this.getHeaders('DRIVER'),
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error('Failed to update trip status');
@@ -360,7 +362,7 @@ export class ApiService {
   ) {
     const res = await fetch(`${API_BASE}/driver/trips/${tripId}/status`, {
       method: 'PATCH',
-      headers: this.getHeaders(),
+      headers: this.getHeaders('DRIVER'),
       body: JSON.stringify({
         status: 'IN_TRANSIT',
         ...payload,
@@ -371,9 +373,70 @@ export class ApiService {
   }
 
   static async getTripManifest(tripId: string) {
-    const res = await fetch(`${API_BASE}/driver/passengers/${tripId}`, { headers: this.getHeaders() });
+    const res = await fetch(`${API_BASE}/driver/passengers/${tripId}`, { headers: this.getHeaders('DRIVER') });
     if (!res.ok) throw new Error('Failed to load manifest');
     return res.json();
+  }
+
+  static async searchDriverTickets(
+    query: string,
+    tripId?: string,
+  ): Promise<{
+    valid: boolean;
+    exactMatch: TicketVerificationResult | null;
+    results: TicketVerificationResult[];
+    total: number;
+  }> {
+    const params = new URLSearchParams({ q: query.trim() });
+    if (tripId) params.set('tripId', tripId);
+
+    const res = await fetch(`${API_BASE}/driver/tickets/search?${params.toString()}`, {
+      method: 'GET',
+      headers: this.getHeaders('DRIVER'),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to search tickets');
+    }
+    return data;
+  }
+
+  static async verifyDriverTicket(payload: {
+    qr_token?: string;
+    ticket_id?: string;
+    booking_id?: string;
+    seat_number?: string;
+    trip_id?: string;
+  }): Promise<TicketVerificationResult> {
+    const res = await fetch(`${API_BASE}/driver/tickets/verify`, {
+      method: 'POST',
+      headers: this.getHeaders('DRIVER'),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok && !data.code) {
+      throw new Error(data.error || 'Failed to verify ticket');
+    }
+    return data as TicketVerificationResult;
+  }
+
+  static async boardVerifiedTicket(payload: {
+    qr_token?: string;
+    ticket_id?: string;
+    booking_id?: string;
+    seat_number?: string;
+    trip_id?: string;
+  }): Promise<TicketVerificationResult & { boarded?: boolean; alreadyBoarded?: boolean }> {
+    const res = await fetch(`${API_BASE}/driver/tickets/board`, {
+      method: 'POST',
+      headers: this.getHeaders('DRIVER'),
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok && !data.code) {
+      throw new Error(data.error || 'Failed to mark ticket as boarded');
+    }
+    return data;
   }
 
   static async boardPassenger(payload: {
@@ -387,7 +450,7 @@ export class ApiService {
   }) {
     const res = await fetch(`${API_BASE}/driver/board-passenger`, {
       method: 'POST',
-      headers: this.getHeaders(),
+      headers: this.getHeaders('DRIVER'),
       body: JSON.stringify(payload),
     });
     const data = await res.json();

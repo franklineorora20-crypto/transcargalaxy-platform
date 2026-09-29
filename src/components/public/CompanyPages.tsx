@@ -85,7 +85,7 @@ const FULL_FLEET_ROSTER = [
     category: '14-Seater' as const,
     cap: 14 as const,
     status: 'Active on Route',
-    corridor: 'Rongai • Narok • Bomet • Oyugis • Kisii',
+    corridor: 'Rongai • Narok • Bomet • Kisii • Awendo',
     image: '/images/transcar_white_highway.webp',
     frontSeats: '2 Front Seats (P1, P2) beside Driver (RHD)',
     rearRows: 'Rows 1–2 (3 seats), Row 3 (2 seats + aisle), Row 4 (4 seats)',
@@ -99,7 +99,7 @@ const FULL_FLEET_ROSTER = [
     category: '16-Seater' as const,
     cap: 16 as const,
     status: 'Active on Route',
-    corridor: 'Rongai • Kilgoris • Rongo • Kehancha',
+    corridor: 'Rongai • Rongo • Awendo • Migori • Sirare',
     image: '/images/transcar_highway_rear.webp',
     frontSeats: '2 Front Seats (P1, P2) beside Driver (RHD)',
     rearRows: 'Rows 1–3 (3 seats), Row 4 (1 window seat), Row 5 (4 rear seats)',
@@ -551,12 +551,6 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({
                 <p className="text-neutral-400">Hours: 05:00 - 22:00 Daily • Tel: +254 724 626199 / +254 717 747626</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-neutral-900 border border-neutral-700 space-y-2">
-                <span className="font-black text-amber-400 text-sm block">Kisumu Western Hub</span>
-                <p className="text-neutral-300">Mega Plaza Junction, Oginga Odinga Road</p>
-                <p className="text-neutral-400">Hours: 06:00 - 21:00 Daily • Tel: +254 700 800 903</p>
-              </div>
-
             </div>
           </div>
         </div>
@@ -584,7 +578,7 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({
               </div>
               <h3 className="text-xl font-black text-black">Scheduled Intercity Passenger Travel</h3>
               <p className="text-xs text-neutral-600 leading-relaxed font-medium">
-                Daily scheduled express shuttles connecting Ongata Rongai, Ngong, and Kiserian with Kisii, Oyugis, Kendu Bay, Rongo, and South Nyanza destinations.
+                Daily scheduled express shuttles connecting Ongata Rongai, Ngong, and Kiserian with Kisii, Rongo, Awendo, Migori, Sirare, and Kehancha.
                 Features high-speed onboard Wi-Fi, air conditioning, 240V USB phone charging ports, and spacious reclining seating.
               </p>
               <ul className="text-xs text-neutral-800 space-y-1.5 font-medium">

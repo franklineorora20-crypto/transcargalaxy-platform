@@ -169,12 +169,12 @@ export const ManagerAnalyticsComponent: React.FC<ManagerAnalyticsComponentProps>
     // Realistic baselines if fresh instance
     const fallbackDemands: Record<string, { booked: number; cap: number; trips: number; rev: number }> = {
       'Rongai → Kisii': { booked: 184, cap: 196, trips: 14, rev: 294400 },
-      'Rongai → Kendu Bay': { booked: 142, cap: 168, trips: 12, rev: 227200 },
+      'Rongai → Sirare': { booked: 142, cap: 168, trips: 12, rev: 241400 },
       'Rongai → Rongo': { booked: 118, cap: 140, trips: 10, rev: 200600 },
       'Kisii → Rongai': { booked: 106, cap: 126, trips: 9, rev: 169600 },
-      'Rongai → Homa Bay': { booked: 92, cap: 112, trips: 8, rev: 156400 },
-      'Rongai → Oyugis': { booked: 78, cap: 98, trips: 7, rev: 124800 },
-      'Rongai → Migori': { booked: 64, cap: 84, trips: 6, rev: 108800 },
+      'Rongai → Awendo': { booked: 92, cap: 112, trips: 8, rev: 156400 },
+      'Rongai → Migori': { booked: 78, cap: 98, trips: 7, rev: 132600 },
+      'Rongai → Kehancha': { booked: 64, cap: 84, trips: 6, rev: 108800 },
     };
 
     const rawList = Array.from(routeAgg.values()).map((r) => {
