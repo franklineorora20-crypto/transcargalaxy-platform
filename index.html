@@ -11,7 +11,23 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="TransCar" />
-    <link rel="apple-touch-icon" href="/icons/icon-512.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
+    <script>
+      window.__deferredPWAInstallPrompt = null;
+      window.__isPWAInstalled = false;
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        window.__deferredPWAInstallPrompt = e;
+        window.dispatchEvent(new CustomEvent('pwa-prompt-captured'));
+      });
+      window.addEventListener('appinstalled', function () {
+        window.__deferredPWAInstallPrompt = null;
+        window.__isPWAInstalled = true;
+        window.dispatchEvent(new CustomEvent('pwa-app-installed'));
+      });
+    </script>
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -47,7 +63,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400..800;1,400..800&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased selection:bg-[#FFC300] selection:text-[#0A0A0A] font-sans">
     <div id="root"></div>

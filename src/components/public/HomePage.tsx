@@ -16,12 +16,17 @@ import {
   Package,
   HelpCircle,
   Calendar,
+  Download,
+  Smartphone,
+  Monitor,
+  QrCode,
 } from 'lucide-react';
 import { Route, Trip } from '../../types';
 import { DatePicker } from '../common/DatePicker';
 import { ApiService } from '../../services/api';
 import { CAR_SEAT_VIEW_SEATS } from './SeatSelector';
 import { TripDetailsDrawer } from './TripDetailsDrawer';
+import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 interface HomePageProps {
   routes: Route[];
@@ -278,6 +283,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   onOpenFleet,
 }) => {
   const todayIso = React.useMemo(() => new Date().toISOString().split('T')[0], []);
+  const { isInstalled, isInstallable, triggerInstallOrGuide, openInstallModal } = usePWAInstall();
 
   const [selectedOrigin, setSelectedOrigin] = React.useState('Rongai');
   const [selectedDestination, setSelectedDestination] = React.useState('Kisii');
@@ -611,6 +617,19 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <Ticket className="w-3.5 h-3.5 text-amber-500" />
                 <span>Retrieve Ticket</span>
               </button>
+              {!isInstalled && (
+                <>
+                  <span className="text-slate-300" aria-hidden="true">|</span>
+                  <button
+                    type="button"
+                    onClick={() => triggerInstallOrGuide()}
+                    className="text-slate-900 hover:text-amber-600 font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Install App</span>
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -907,7 +926,70 @@ export const HomePage: React.FC<HomePageProps> = ({
       </section>
 
       {/* Safety & Parcel Services Banner Grid */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6">
+      <section className="max-w-6xl mx-auto px-3 sm:px-6 space-y-5">
+        {/* Easy App Installation Banner Card (Hidden once already running as installed standalone app) */}
+        {!isInstalled && (
+          <div className="bg-slate-950 text-white rounded-2xl p-5 sm:p-7 border border-slate-800 craft-shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+            <div className="space-y-2.5 max-w-2xl">
+              <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-amber-400 font-bold">
+                <Download className="w-3.5 h-3.5" />
+                <span>Fast & Offline-Ready App</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                Install the TransCar rongai App in Seconds
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Add TransCar directly to your phone or computer home screen — no app store download required. Access your booked QR boarding passes offline, track active shuttles, and reserve seats in one tap.
+              </p>
+              <div className="pt-1 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => openInstallModal('android')}
+                  className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Android Guide</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openInstallModal('ios')}
+                  className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+                  <span>iPhone / iPad Guide</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openInstallModal('desktop')}
+                  className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Monitor className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Computer Guide</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openInstallModal('qr')}
+                  className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <QrCode className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Scan QR to Phone</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center gap-2.5 w-full lg:w-auto shrink-0">
+              <button
+                type="button"
+                onClick={() => triggerInstallOrGuide()}
+                className="craft-btn-amber text-xs sm:text-sm px-5 py-3 font-extrabold inline-flex items-center justify-center gap-2 min-h-[46px] cursor-pointer whitespace-nowrap shadow-lg"
+              >
+                <Download className="w-4 h-4 stroke-[2.5]" />
+                <span>{isInstallable ? 'Install App Now (1-Click)' : 'Install TransCar App'}</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Safety Box */}
           <div className="bg-slate-950 text-white rounded-2xl p-7 flex flex-col justify-between gap-6 relative overflow-hidden craft-shadow-lg border border-slate-800">

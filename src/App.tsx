@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Header, Footer } from './components/layout/Header';
 import { OfflineBanner } from './components/common/OfflineBanner';
+import { PWAInstallManager } from './components/common/PWAInstallButton';
 import { ToastProvider } from './components/common/Toast';
 import { HomePage } from './components/public/HomePage';
 import { TripSearchPage } from './components/public/TripSearchPage';
@@ -83,16 +84,8 @@ export default function App() {
   const [searchDate, setSearchDate] = React.useState('');
   const [searchCarSeatView, setSearchCarSeatView] = React.useState<11 | 14 | 16 | null>(null);
 
-  // Interactive Onboarding Tutorial state (auto-shows on first visit for public users)
-  const [isTutorialOpen, setIsTutorialOpen] = React.useState<boolean>(() => {
-    try {
-      const hasSeen = localStorage.getItem(ONBOARDING_STORAGE_KEY);
-      const role = ApiService.getUserRole();
-      return !hasSeen && (!role || role === 'CUSTOMER_PUBLIC');
-    } catch {
-      return false;
-    }
-  });
+  // Interactive Onboarding Tutorial state (opened on user request via How It Works / Help)
+  const [isTutorialOpen, setIsTutorialOpen] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     ApiService.getRoutes()
@@ -363,6 +356,9 @@ export default function App() {
 
       {/* Offline Status Notification Banner */}
       <OfflineBanner />
+
+      {/* Global PWA Install Banner & Unified Device-Aware Install Modal */}
+      <PWAInstallManager />
 
       {/* WhatsApp Floating Widget */}
       <a
