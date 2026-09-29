@@ -113,20 +113,19 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
     );
   }
 
-  // Default 'header' variant: visible on both mobile and desktop headers
+  // Default 'header' variant: compact button for top bar
   return (
     <button
       type="button"
       onClick={handleClick}
-      className={`craft-btn-secondary text-xs px-2.5 sm:px-3 py-2 inline-flex items-center gap-1.5 whitespace-nowrap font-bold border-slate-300 hover:border-amber-400 hover:bg-amber-50/70 text-slate-900 transition-all cursor-pointer min-h-[38px] sm:min-h-[40px] ${className}`}
+      className={`craft-btn-secondary text-[11px] px-2.5 py-1 inline-flex items-center gap-1 whitespace-nowrap font-semibold border-slate-300 hover:border-amber-400 hover:bg-amber-50/70 text-slate-800 transition-all cursor-pointer h-8 min-h-[32px] rounded-lg ${className}`}
       title="Install TransCar App on your phone or computer for fast offline access"
     >
-      <Download className="w-3.5 h-3.5 text-amber-600 shrink-0 stroke-[2.25]" />
-      <span className="hidden xs:inline sm:inline">Install App</span>
-      <span className="xs:hidden">Install</span>
+      <Download className="w-3 h-3 text-amber-600 shrink-0 stroke-[2.25]" />
+      <span>Install</span>
       {isInstallable && (
         <span
-          className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"
+          className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"
           title="1-Click Direct Install Ready"
         />
       )}

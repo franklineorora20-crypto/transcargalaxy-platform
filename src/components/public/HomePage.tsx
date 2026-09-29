@@ -555,82 +555,26 @@ export const HomePage: React.FC<HomePageProps> = ({
               <button
                 id="hero-search-btn"
                 type="submit"
-                className="craft-btn-amber w-full py-2.5 px-4 text-sm font-bold flex items-center justify-center gap-2 min-h-[44px] whitespace-nowrap cursor-pointer"
+                className="craft-btn-amber w-full py-2 px-3.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 min-h-[40px] whitespace-nowrap cursor-pointer"
               >
-                <Search className="w-4 h-4 text-slate-950 stroke-[2.5]" />
+                <Search className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
                 <span>Find Trips</span>
               </button>
             </div>
           </form>
 
-          {/* 18. SERVICE INDICATORS + PASSENGER TOOLS */}
-          <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-600">
-            {/* Visually Secondary Service Indicators */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] sm:text-xs font-medium text-slate-600">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
-                <span>Daily Departures</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" aria-hidden="true"></span>
-                <span>Live Availability</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" aria-hidden="true"></span>
-                <span>M-Pesa</span>
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" aria-hidden="true"></span>
-                <span>Pay on Boarding</span>
-              </span>
+          {/* 18. QUIET SERVICE INDICATORS (No duplicate Install App or repeated top service buttons) */}
+          <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-medium">
+              <span>Daily Departures</span>
+              <span aria-hidden="true">·</span>
+              <span>Live Seat Map</span>
+              <span aria-hidden="true">·</span>
+              <span>M-Pesa & Cash on Boarding</span>
             </div>
-
-            {/* Secondary Quick Utility Links */}
-            <div className="flex items-center gap-3 text-[11px] font-semibold text-slate-600 w-full sm:w-auto justify-between sm:justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-              {onOpenTutorial && (
-                <>
-                  <button
-                    type="button"
-                    onClick={onOpenTutorial}
-                    className="hover:text-slate-950 flex items-center gap-1 transition-colors cursor-pointer"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
-                    <span>How It Works</span>
-                  </button>
-                  <span className="text-slate-300" aria-hidden="true">|</span>
-                </>
-              )}
-              <button
-                type="button"
-                onClick={onTrackBus}
-                className="hover:text-slate-950 flex items-center gap-1 transition-colors cursor-pointer"
-              >
-                <Navigation className="w-3.5 h-3.5 text-amber-500" />
-                <span>Track Shuttle</span>
-              </button>
-              <span className="text-slate-300" aria-hidden="true">|</span>
-              <button
-                type="button"
-                onClick={onRetrieveTicket}
-                className="hover:text-slate-950 flex items-center gap-1 transition-colors cursor-pointer"
-              >
-                <Ticket className="w-3.5 h-3.5 text-amber-500" />
-                <span>Retrieve Ticket</span>
-              </button>
-              {!isInstalled && (
-                <>
-                  <span className="text-slate-300" aria-hidden="true">|</span>
-                  <button
-                    type="button"
-                    onClick={() => triggerInstallOrGuide()}
-                    className="text-slate-900 hover:text-amber-600 font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                  >
-                    <Download className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Install App</span>
-                  </button>
-                </>
-              )}
-            </div>
+            <span className="font-mono text-[11px] text-slate-500">
+              Support: +254 724 626199
+            </span>
           </div>
         </div>
       </section>
