@@ -230,7 +230,7 @@ export default function App() {
 
   return (
     <ToastProvider>
-      <div className="min-h-screen min-h-[100dvh] w-full max-w-[100vw] flex flex-col bg-slate-100 font-sans text-slate-900 selection:bg-[#FFC300] selection:text-[#0A0A0A] overflow-x-hidden relative">
+      <div className="min-h-screen min-h-[100dvh] w-full max-w-[100vw] flex flex-col bg-slate-100 font-sans text-slate-900 selection:bg-[#FFC300] selection:text-[#0A0A0A] relative">
       <div
         ref={topSentinelRef}
         id="app-top-sentinel"
@@ -249,7 +249,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main key={currentView} className="flex-grow animate-in fade-in duration-150">
+      <main key={currentView} className="flex-grow w-full max-w-[100vw] overflow-x-hidden animate-in fade-in duration-150">
         <Suspense fallback={
           <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 text-slate-800">
             <div className="w-8 h-8 border-4 border-amber-400 border-t-slate-900 rounded-full animate-spin"></div>

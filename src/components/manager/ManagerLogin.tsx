@@ -8,7 +8,7 @@ interface ManagerLoginProps {
 }
 
 export const ManagerLogin: React.FC<ManagerLoginProps> = ({ onLoginSuccess, onCancel }) => {
-  const [email, setEmail] = React.useState('');
+  const [email, setEmail] = React.useState('admintranscar');
   const [password, setPassword] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);

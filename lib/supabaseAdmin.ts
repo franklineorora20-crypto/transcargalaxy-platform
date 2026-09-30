@@ -5,9 +5,20 @@ if (typeof window !== 'undefined') {
   throw new Error('supabaseAdmin must only be imported by server-side code');
 }
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const anonKey = process.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl =
+  process.env.VITE_SUPABASE_URL ||
+  process.env.SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  '';
+const serviceRoleKey =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.VITE_SUPABASE_SERVICE_ROLE_KEY ||
+  '';
+const anonKey =
+  process.env.VITE_SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  '';
 
 // TODO: Rotate service-role key in Supabase dashboard > API > Reset service_role key before production
 const leakedServiceRoleKeySha256 = '75c006ee052b7ab7481a3d76a3749e5c8620a5d8738e85491e0f2935d4ad36e5';

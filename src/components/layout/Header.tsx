@@ -60,7 +60,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-50 glass-surface border-b border-slate-200/80 transition-colors gpu-accelerated [backface-visibility:hidden] [transform:translateZ(0)] w-full max-w-[100vw]">
+    <header className="sticky top-0 z-[1000] bg-white border-b border-slate-200 w-full">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between h-14 gap-2">
           {/* Left: Brand Logo Only */}
@@ -83,20 +83,24 @@ export const Header: React.FC<HeaderProps> = ({
                 type="button"
                 aria-haspopup="menu"
                 aria-expanded={menuOpen}
+                aria-controls="mobile-menu-dropdown"
                 aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
-                onClick={() => setMenuOpen((prev) => !prev)}
-                className={`inline-flex items-center justify-center gap-1.5 px-3 min-h-[44px] min-w-[44px] rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer border ${
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMenuOpen((prev) => !prev);
+                }}
+                className={`inline-flex items-center justify-center gap-1.5 px-3.5 min-h-[44px] min-w-[44px] rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer border ${
                   menuOpen
-                    ? 'bg-slate-950 text-amber-400 border-slate-950 shadow-sm'
+                    ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-sm'
                     : 'bg-slate-900 hover:bg-slate-800 text-white border-slate-800'
                 }`}
               >
                 {menuOpen ? (
-                  <X className="w-5 h-5 text-amber-400 shrink-0" />
+                  <X className="w-5 h-5 text-slate-950 shrink-0" />
                 ) : (
                   <Menu className="w-5 h-5 text-amber-400 shrink-0" />
                 )}
-                <span className="hidden sm:inline">Menu</span>
+                <span>Menu</span>
               </button>
 
               <MobileMenuDropdown

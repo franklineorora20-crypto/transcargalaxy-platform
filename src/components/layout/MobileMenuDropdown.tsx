@@ -68,11 +68,21 @@ export const MobileMenuDropdown: React.FC<MobileMenuDropdownProps> = ({
   ];
 
   return (
-    <div
-      role="menu"
-      aria-label="Navigation Menu"
-      className="fixed inset-x-0 top-14 bottom-0 w-full max-w-[100vw] md:absolute md:inset-x-auto md:top-full md:right-0 md:bottom-auto md:mt-2 md:w-[280px] md:max-h-[calc(100vh-5rem)] overflow-y-auto bg-white border-t md:border border-slate-200 md:rounded-2xl shadow-2xl z-50 p-4 space-y-4 animate-in fade-in duration-150"
-    >
+    <>
+      {/* Mobile Backdrop below header */}
+      <div
+        aria-hidden="true"
+        onClick={onClose}
+        className="fixed inset-x-0 top-14 bottom-0 bg-slate-950/40 backdrop-blur-[1px] z-[9998] md:hidden"
+      />
+
+      {/* Dropdown Menu: Fixed full-screen below header on mobile, absolute 280px right-aligned card on desktop */}
+      <div
+        id="mobile-menu-dropdown"
+        role="menu"
+        aria-label="Navigation Menu"
+        className="fixed top-14 left-0 right-0 bottom-0 w-full max-w-[100vw] border-t border-slate-200 md:absolute md:top-full md:left-auto md:right-0 md:bottom-auto md:mt-2 md:w-[280px] md:min-w-[280px] md:max-w-[calc(100vw-32px)] md:max-h-[calc(100vh-5rem)] md:rounded-2xl md:border bg-white text-slate-900 overflow-y-auto shadow-2xl z-[9999] p-4 space-y-4"
+      >
       {/* Navigation Links */}
       <div className="space-y-1.5">
         <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 pb-1">
@@ -117,7 +127,7 @@ export const MobileMenuDropdown: React.FC<MobileMenuDropdownProps> = ({
       </div>
 
       {/* Staff Access Section */}
-      <div className="pt-3 border-t border-slate-200 space-y-2">
+      <div className="pt-3 border-t border-slate-200 space-y-2 pb-4 md:pb-0">
         <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">
           Staff Access
         </div>
@@ -178,5 +188,6 @@ export const MobileMenuDropdown: React.FC<MobileMenuDropdownProps> = ({
         )}
       </div>
     </div>
+    </>
   );
 };
