@@ -50,16 +50,17 @@ test.describe('TransCar Galaxy — Phase 4 Critical E2E & Production Hardening F
     request,
   }) => {
     // 1. Search available trips
-    const searchRes = await request.get(`${baseUrl}/api/trips/search?origin=Rongai&destination=Kisii`);
+    const searchRes = await request.get(`${baseUrl}/api/trips?origin=Rongai&destination=Kisii`);
     expect(searchRes.status()).toBe(200);
     const availableTrips = await searchRes.json();
     expect(Array.isArray(availableTrips)).toBe(true);
     expect(availableTrips.length).toBeGreaterThan(0);
 
     // 2. Select Trip & verify seat map availability
-    const selectedTrip = availableTrips[0];
+    const selectedTrip =
+      availableTrips.find((t: any) => t.id === 'trip-rng-ksi-01') || availableTrips[0];
     const tripId = selectedTrip.id;
-    const seatToBook = '2C';
+    const seatToBook = '3D';
 
     const storeTrip = trips.find((t) => t.id === tripId);
     if (storeTrip) {
@@ -83,7 +84,7 @@ test.describe('TransCar Galaxy — Phase 4 Critical E2E & Production Hardening F
           },
         ],
         contactName: 'Wycliffe Ochieng',
-        contactPhone: '0712345678',
+        contactPhone: '0722446688',
         contactEmail: 'wycliffe@example.com',
         paymentMethod: 'MPESA',
       },
@@ -119,7 +120,7 @@ test.describe('TransCar Galaxy — Phase 4 Critical E2E & Production Hardening F
     const stkRes = await request.post(`${baseUrl}/api/payments/mpesa-stk`, {
       data: {
         bookingReference: bookingRef,
-        phone: '0712345678',
+        phone: '0722446688',
         amount: booking.totalFareKsh,
       },
     });
@@ -138,7 +139,7 @@ test.describe('TransCar Galaxy — Phase 4 Critical E2E & Production Hardening F
             Item: [
               { Name: 'Amount', Value: booking.totalFareKsh },
               { Name: 'MpesaReceiptNumber', Value: 'QRT5566778' },
-              { Name: 'PhoneNumber', Value: 254712345678 },
+              { Name: 'PhoneNumber', Value: 254722446688 },
             ],
           },
         },
@@ -161,7 +162,12 @@ test.describe('TransCar Galaxy — Phase 4 Critical E2E & Production Hardening F
     expect(ticketStatus.paymentStatus).toBe('PAID');
     expect(ticketStatus.bookingStatus).toBe('CONFIRMED');
 
-    const retrieveRes = await request.get(`${baseUrl}/api/tickets/retrieve?reference=${bookingRef}`);
+    const retrieveRes = await request.post(`${baseUrl}/api/tickets/retrieve`, {
+      data: {
+        bookingReference: bookingRef,
+        phone: '0722446688',
+      },
+    });
     expect(retrieveRes.status()).toBe(200);
 
     // 7. Driver Login, QR Scan Verification & Passenger Boarding

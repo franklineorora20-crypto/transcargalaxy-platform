@@ -303,7 +303,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 12, scale: 0.98 }}
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 w-full max-w-2xl bg-white rounded-2xl border border-slate-200/90 shadow-2xl overflow-hidden my-auto"
+        className="relative z-10 w-full max-w-[calc(100vw-32px)] sm:max-w-2xl bg-white rounded-2xl border border-slate-200/90 shadow-2xl overflow-hidden my-auto"
       >
         {/* Top Brand & Progress Bar Header */}
         <div className="bg-slate-950 text-white px-4 sm:px-6 py-3.5 border-b border-slate-800 flex items-center justify-between gap-3">

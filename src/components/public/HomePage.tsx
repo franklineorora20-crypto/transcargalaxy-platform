@@ -3,34 +3,27 @@ import {
   Search,
   MapPin,
   Bus,
-  Shield,
-  Clock,
   ArrowRight,
   ArrowLeftRight,
-  PhoneCall,
-  Navigation,
-  Ticket,
   Eye,
   X,
   Check,
-  Package,
-  HelpCircle,
   Calendar,
-  Download,
-  Smartphone,
-  Monitor,
-  QrCode,
 } from 'lucide-react';
 import { Route, Trip } from '../../types';
 import { DatePicker } from '../common/DatePicker';
 import { ApiService } from '../../services/api';
 import { CAR_SEAT_VIEW_SEATS } from './SeatSelector';
 import { TripDetailsDrawer } from './TripDetailsDrawer';
-import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 interface HomePageProps {
   routes: Route[];
-  onStartSearch: (origin?: string, destination?: string, date?: string, vehicleCapacity?: 11 | 14 | 16 | null) => void;
+  onStartSearch: (
+    origin?: string,
+    destination?: string,
+    date?: string,
+    vehicleCapacity?: 11 | 14 | 16 | null
+  ) => void;
   onSelectTrip?: (trip: Trip, chosenVehicleCapacity?: 11 | 14 | 16) => void;
   onTrackBus: () => void;
   onRetrieveTicket: () => void;
@@ -67,9 +60,15 @@ export const FLEET_SHOWCASE_DATA: FleetVehicleShowcase[] = [
     image: '/images/transcar_highway_kde4160.webp',
     description:
       'Spacious 11-seater Toyota HiAce with 2 front passenger seats beside the driver and 3 rear rows (3 seats each) for extra legroom.',
-    corridor: 'Rongai • Kiserian • Kisii Express Corridor',
+    corridor: 'Rongai · Kiserian · Kisii Express Corridor',
     seatLayoutSummary: '2 Front Seats beside Driver (P1, P2) + 3 Rear Rows of 3 Seats (1A–3C)',
-    amenities: ['11 Passenger Seats', 'High-Speed Wi-Fi', 'USB Charging Ports', 'Air Conditioning', 'Speed Governor (80 km/h)'],
+    amenities: [
+      '11 Passenger Seats',
+      'High-Speed Wi-Fi',
+      'USB Charging Ports',
+      'Air Conditioning',
+      'Speed Governor (80 km/h)',
+    ],
     searchOrigin: 'Rongai',
     searchDestination: 'Kisii',
   },
@@ -83,9 +82,15 @@ export const FLEET_SHOWCASE_DATA: FleetVehicleShowcase[] = [
     image: '/images/transcar_highway_kde4160.webp',
     description:
       'Reliable 11-passenger Toyota HiAce shuttle for direct intercity travel with reclining seats and real-time GPS tracking.',
-    corridor: 'Kisii • Narok • Rongai Direct',
+    corridor: 'Kisii · Narok · Rongai Direct',
     seatLayoutSummary: '2 Front Seats beside Driver (P1, P2) + 3 Rear Rows of 3 Seats (1A–3C)',
-    amenities: ['11 Passenger Seats', 'Reclining Comfort Seats', 'Air Conditioning', 'GPS Tracking', 'Direct Line: +254 724 626199'],
+    amenities: [
+      '11 Passenger Seats',
+      'Reclining Comfort Seats',
+      'Air Conditioning',
+      'GPS Tracking',
+      'Direct Line: +254 724 626199',
+    ],
     searchOrigin: 'Kisii',
     searchDestination: 'Rongai',
   },
@@ -99,9 +104,16 @@ export const FLEET_SHOWCASE_DATA: FleetVehicleShowcase[] = [
     image: '/images/transcar_stalker_kdv149e.webp',
     description:
       'Standard 14-seater Kenyan PSV Toyota HiAce featuring 2 front passenger seats beside the driver, aisle walkway access, and a 4-seat rear bench.',
-    corridor: 'Rongai • Suswa • Kisii Express Corridor',
-    seatLayoutSummary: '2 Front Seats beside Driver (P1, P2) + Rows 1–3 (8 Seats) + 4-Seat Rear Bench (4A–4D)',
-    amenities: ['14 Passenger Seats', 'High-Speed Wi-Fi', 'USB Phone Charging', 'Individual AC Louvers', 'Satellite GPS Telematics'],
+    corridor: 'Rongai · Suswa · Kisii Express Corridor',
+    seatLayoutSummary:
+      '2 Front Seats beside Driver (P1, P2) + Rows 1–3 (8 Seats) + 4-Seat Rear Bench (4A–4D)',
+    amenities: [
+      '14 Passenger Seats',
+      'High-Speed Wi-Fi',
+      'USB Phone Charging',
+      'Individual AC Louvers',
+      'Satellite GPS Telematics',
+    ],
     searchOrigin: 'Rongai',
     searchDestination: 'Kisii',
   },
@@ -115,9 +127,16 @@ export const FLEET_SHOWCASE_DATA: FleetVehicleShowcase[] = [
     image: '/images/transcar_kde832y_day.webp',
     description:
       'Daytime 14-seater Toyota HiAce intercity shuttle servicing the Rongai, Kiserian, Matasia, Ngong, Suswa, and Kisii corridor.',
-    corridor: 'Rongai • Kiserian • Ngong • Suswa • Kisii',
-    seatLayoutSummary: '2 Front Seats beside Driver (P1, P2) + Rows 1–3 (8 Seats) + 4-Seat Rear Bench (4A–4D)',
-    amenities: ['14 Passenger Seats', 'Certified PSV Captains', 'Overhead Luggage Bins', '24/7 Dispatch Hotline', 'Air Conditioning'],
+    corridor: 'Rongai · Kiserian · Ngong · Suswa · Kisii',
+    seatLayoutSummary:
+      '2 Front Seats beside Driver (P1, P2) + Rows 1–3 (8 Seats) + 4-Seat Rear Bench (4A–4D)',
+    amenities: [
+      '14 Passenger Seats',
+      'Certified PSV Captains',
+      'Overhead Luggage Bins',
+      '24/7 Dispatch Hotline',
+      'Air Conditioning',
+    ],
     searchOrigin: 'Rongai',
     searchDestination: 'Kisii',
   },
@@ -131,9 +150,16 @@ export const FLEET_SHOWCASE_DATA: FleetVehicleShowcase[] = [
     image: '/images/transcar_night_travel.webp',
     description:
       'Night-equipped 14-seater Toyota HiAce shuttle with calibrated reflective chevrons and scheduled express departures.',
-    corridor: 'Rongai • Narok • Bomet • Kisii',
-    seatLayoutSummary: '2 Front Seats beside Driver (P1, P2) + Rows 1–3 (8 Seats) + 4-Seat Rear Bench (4A–4D)',
-    amenities: ['14 Passenger Seats', 'Reflective Chevron Safety', 'Certified PSV Driver', 'Live GPS Tracking', 'Air Conditioning'],
+    corridor: 'Rongai · Narok · Bomet · Kisii',
+    seatLayoutSummary:
+      '2 Front Seats beside Driver (P1, P2) + Rows 1–3 (8 Seats) + 4-Seat Rear Bench (4A–4D)',
+    amenities: [
+      '14 Passenger Seats',
+      'Reflective Chevron Safety',
+      'Certified PSV Driver',
+      'Live GPS Tracking',
+      'Air Conditioning',
+    ],
     searchOrigin: 'Rongai',
     searchDestination: 'Kisii',
   },
@@ -147,20 +173,26 @@ export const FLEET_SHOWCASE_DATA: FleetVehicleShowcase[] = [
     image: '/images/transcar_highway_rear.webp',
     description:
       'Long-wheelbase 16-seater Toyota HiAce van configured with 2 front passenger seats beside the driver, extended cabin rows, and rear luggage bay.',
-    corridor: 'Rongai • Kilgoris • Rongo • Kehancha',
-    seatLayoutSummary: '2 Front Seats beside Driver (P1, P2) + Rows 1–4 (10 Seats) + 4-Seat Rear Bench (5A–5D)',
-    amenities: ['16 Passenger Seats', 'Reclining Bucket Seats', 'Full Cabin AC', 'Luggage Compartment', 'Direct Dispatch'],
+    corridor: 'Rongai · Kilgoris · Rongo · Kehancha',
+    seatLayoutSummary:
+      '2 Front Seats beside Driver (P1, P2) + Rows 1–4 (10 Seats) + 4-Seat Rear Bench (5A–5D)',
+    amenities: [
+      '16 Passenger Seats',
+      'Reclining Bucket Seats',
+      'Full Cabin AC',
+      'Luggage Compartment',
+      'Direct Dispatch',
+    ],
     searchOrigin: 'Rongai',
     searchDestination: 'Rongo',
   },
 ];
 
-/**
- * Compact Kenyan PSV Cabin Diagram showing 2 passenger seats beside the driver (P1, P2)
- * and the exact rear seating arrangement for 11-Seater, 14-Seater, and 16-Seater vehicles.
- */
 export const PsvCabinLayoutDiagram: React.FC<{ capacity: 11 | 14 | 16 }> = ({ capacity }) => {
-  const SeatBox: React.FC<{ label: string; highlight?: boolean }> = ({ label, highlight = false }) => (
+  const SeatBox: React.FC<{ label: string; highlight?: boolean }> = ({
+    label,
+    highlight = false,
+  }) => (
     <div
       className={`w-8 h-8 rounded-lg flex items-center justify-center font-mono text-[10px] font-bold border ${
         highlight
@@ -200,7 +232,6 @@ export const PsvCabinLayoutDiagram: React.FC<{ capacity: 11 | 14 | 16 }> = ({ ca
 
       {/* Rear Rows */}
       <div className="space-y-1.5">
-        {/* Row 1 */}
         <div className="flex items-center justify-between">
           <SeatBox label="1A" />
           <span className="text-[8px] text-slate-600 font-mono">Aisle</span>
@@ -210,7 +241,6 @@ export const PsvCabinLayoutDiagram: React.FC<{ capacity: 11 | 14 | 16 }> = ({ ca
           </div>
         </div>
 
-        {/* Row 2 */}
         <div className="flex items-center justify-between">
           <SeatBox label="2A" />
           <span className="text-[8px] text-slate-600 font-mono">|</span>
@@ -276,20 +306,16 @@ export const HomePage: React.FC<HomePageProps> = ({
   routes,
   onStartSearch,
   onSelectTrip,
-  onTrackBus,
-  onRetrieveTicket,
-  onOpenTutorial,
-  onOpenSchedules,
-  onOpenFleet,
 }) => {
   const todayIso = React.useMemo(() => new Date().toISOString().split('T')[0], []);
-  const { isInstalled, isInstallable, triggerInstallOrGuide, openInstallModal } = usePWAInstall();
 
   const [selectedOrigin, setSelectedOrigin] = React.useState('Rongai');
   const [selectedDestination, setSelectedDestination] = React.useState('Kisii');
   const [travelDate, setTravelDate] = React.useState(todayIso);
   const [vehicleFilter, setVehicleFilter] = React.useState<string>('ALL');
-  const [fleetCategoryTab, setFleetCategoryTab] = React.useState<'ALL' | '11-Seater' | '14-Seater' | '16-Seater'>('ALL');
+  const [fleetCategoryTab, setFleetCategoryTab] = React.useState<
+    'ALL' | '11-Seater' | '14-Seater' | '16-Seater'
+  >('ALL');
   const [inspectedVehicle, setInspectedVehicle] = React.useState<FleetVehicleShowcase | null>(null);
   const [drawerTrip, setDrawerTrip] = React.useState<Trip | null>(null);
 
@@ -299,7 +325,6 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [liveTrips, setLiveTrips] = React.useState<Trip[]>([]);
   const [loadingDepartures, setLoadingDepartures] = React.useState<boolean>(true);
 
-  // Build unified city list from routes so swapping Origin and Destination is always valid
   const allCities = React.useMemo(() => {
     const set = new Set<string>(['Rongai', 'Kisii']);
     routes.forEach((r) => {
@@ -309,7 +334,6 @@ export const HomePage: React.FC<HomePageProps> = ({
     return Array.from(set);
   }, [routes]);
 
-  // Fetch real trips for Today's Departures section whenever departuresDate changes
   const fetchDepartures = React.useCallback(async (targetDate: string) => {
     setLoadingDepartures(true);
     try {
@@ -327,13 +351,11 @@ export const HomePage: React.FC<HomePageProps> = ({
     fetchDepartures(departuresDate);
   }, [departuresDate, fetchDepartures]);
 
-  // Synchronize Today's Departures date when the user changes Travel Date in the search card
   const handleTravelDateChange = (newDate: string) => {
     setTravelDate(newDate);
     setDeparturesDate(newDate);
   };
 
-  // Swap Origin & Destination state
   const handleSwapLocations = () => {
     const prevOrigin = selectedOrigin;
     const prevDest = selectedDestination;
@@ -341,18 +363,27 @@ export const HomePage: React.FC<HomePageProps> = ({
     setSelectedDestination(prevOrigin);
   };
 
+  const triggerTripSearch = () => {
+    const chosenVehicle: 11 | 14 | 16 | null =
+      vehicleFilter === '11'
+        ? 11
+        : vehicleFilter === '14'
+        ? 14
+        : vehicleFilter === '16'
+        ? 16
+        : null;
+    onStartSearch(selectedOrigin, selectedDestination, travelDate, chosenVehicle);
+  };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const chosenVehicle: 11 | 14 | 16 | null =
-      vehicleFilter === '11' ? 11 : vehicleFilter === '14' ? 14 : vehicleFilter === '16' ? 16 : null;
-    onStartSearch(selectedOrigin, selectedDestination, travelDate, chosenVehicle);
+    triggerTripSearch();
   };
 
   const handleBookVehicle = (veh: FleetVehicleShowcase) => {
     onStartSearch(veh.searchOrigin, veh.searchDestination, travelDate, veh.seats);
   };
 
-  // Filter live trips for Today's Departures by corridor and selected vehicle capacity
   const filteredDepartures = React.useMemo(() => {
     return liveTrips.filter((t) => {
       if (departuresCorridorFilter !== 'ALL') {
@@ -396,58 +427,49 @@ export const HomePage: React.FC<HomePageProps> = ({
   };
 
   return (
-    <div className="space-y-14 sm:space-y-16 pb-20">
-      {/* 4 & 5. HERO SECTION WITH LIGHTENED VEHICLE VISIBILITY & CONTROLLED GRADIENT */}
-      <section className="relative text-white pt-12 sm:pt-16 pb-14 sm:pb-18 px-4 sm:px-6 lg:px-8 border-b border-slate-200/80 overflow-hidden isolate gpu-accelerated [backface-visibility:hidden] [transform:translateZ(0)]">
-        {/* Background Image: Clearly Visible TransCar Shuttle with Controlled Directional Scrim */}
-        <div className="pointer-events-none absolute inset-0 z-0 gpu-accelerated [backface-visibility:hidden] bg-slate-950">
-          <img
-            src="/images/transcar_user_uploaded_hero.webp"
-            alt="TransCar rongai Toyota HiAce Express Shuttle"
-            referrerPolicy="no-referrer"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src = '/images/transcar_user_uploaded_hero.jpg';
-            }}
-            className="w-full h-full object-cover object-center opacity-90 sm:scale-[1.02] transition-transform duration-700"
-          />
-          {/* Stronger contrast scrim behind upper text, gradually lighter toward the shuttle vehicle */}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/85 via-slate-950/45 to-slate-950/85"></div>
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/40 to-slate-950/30"></div>
-        </div>
+    <div className="space-y-10 pb-24 md:pb-16 w-full max-w-[100vw] overflow-x-hidden">
+      {/* 1. MERGED HERO + QUICK SEARCH COMPACT CARD */}
+      <section className="max-w-6xl mx-auto px-4 pt-4 sm:pt-6">
+        <div className="w-full rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-lg">
+          {/* Compact Hero Visual Header */}
+          <div className="relative bg-slate-950 text-white p-5 sm:p-8 overflow-hidden isolate">
+            <img
+              src="/images/transcar_user_uploaded_hero.webp"
+              alt="TransCar rongai Toyota HiAce Express Shuttle"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src =
+                  '/images/transcar_user_uploaded_hero.jpg';
+              }}
+              className="absolute inset-0 w-full h-full max-w-full object-cover object-center opacity-50 pointer-events-none"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/65 to-slate-950/50" />
 
-        <div className="max-w-4xl mx-auto text-center space-y-3.5 relative z-10">
-          {/* Corridor Kicker */}
-          <div className="inline-flex items-center gap-2 text-xs sm:text-sm text-amber-300 font-semibold tracking-wide drop-shadow">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" aria-hidden="true"></span>
-            <span>Premier Intercity & Rongai Regional Express Transportation</span>
+            <div className="relative z-10 max-w-2xl space-y-2">
+              <div className="text-xs text-amber-300 font-semibold tracking-wide">
+                Ongata Rongai · Nairobi · Kisii Express Corridor
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight [text-wrap:balance]">
+                Intercity Transit, Refined.
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                Search live departures, choose your exact Kenyan PSV seat, and confirm instantly via M-Pesa.
+              </p>
+            </div>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight drop-shadow-md [text-wrap:balance]">
-            Intercity Transit,{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-200">
-              Refined.
-            </span>
-          </h1>
-
-          <p className="text-sm sm:text-base text-slate-100 max-w-2xl mx-auto font-medium leading-relaxed drop-shadow">
-            Daily express shuttle services between Rongai, Nairobi and Kisii with live trip search, seat selection and flexible payment options.
-          </p>
-        </div>
-
-        {/* 6–11. BOOKING SEARCH CARD */}
-        <div className="max-w-5xl mx-auto mt-7 sm:mt-9 craft-card p-4 sm:p-6 shadow-2xl relative z-10 bg-white border border-slate-200/90">
-          <form
-            onSubmit={handleSearchSubmit}
-            aria-label="Find available shuttle trips"
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-3.5 items-end"
-          >
-            {/* FROM + SWAP + TO Group (5 cols on desktop, full width on tablet) */}
-            <div className="sm:col-span-2 lg:col-span-5 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-2 sm:gap-2.5 items-end">
+          {/* Integrated Quick Search Form */}
+          <div className="p-4 sm:p-6 bg-white">
+            <form
+              onSubmit={handleSearchSubmit}
+              aria-label="Find available shuttle trips"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 items-end"
+            >
               {/* FROM */}
-              <div>
+              <div className="lg:col-span-3">
                 <label
                   htmlFor="hero-origin"
-                  className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5"
+                  className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1"
                 >
                   From
                 </label>
@@ -457,7 +479,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     id="hero-origin"
                     value={selectedOrigin}
                     onChange={(e) => setSelectedOrigin(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer min-h-[44px]"
+                    className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer"
                   >
                     {allCities.map((city) => (
                       <option key={`from-${city}`} value={city}>
@@ -468,26 +490,26 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </div>
               </div>
 
-              {/* ORIGIN / DESTINATION SWAP BUTTON (⇄) */}
-              <div className="flex justify-center sm:pb-0.5">
+              {/* SWAP ROUTE */}
+              <div className="lg:col-span-1">
                 <button
                   id="hero-swap-locations-btn"
                   type="button"
                   onClick={handleSwapLocations}
                   aria-label={`Swap origin and destination (${selectedOrigin} and ${selectedDestination})`}
                   title={`Swap ${selectedOrigin} ↔ ${selectedDestination}`}
-                  className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-2.5 h-10 sm:h-[44px] sm:w-[44px] rounded-xl bg-slate-100 hover:bg-amber-400 text-slate-700 hover:text-slate-950 border border-slate-200 hover:border-slate-900 font-bold text-xs transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                  className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3 rounded-xl bg-slate-100 hover:bg-amber-400 text-slate-700 hover:text-slate-950 border border-slate-200 font-bold text-xs transition-colors cursor-pointer"
                 >
                   <ArrowLeftRight className="w-4 h-4 shrink-0" />
-                  <span className="sm:hidden text-[11px] font-semibold">Swap Route</span>
+                  <span className="lg:hidden">Swap Route</span>
                 </button>
               </div>
 
               {/* TO */}
-              <div>
+              <div className="lg:col-span-3">
                 <label
                   htmlFor="hero-destination"
-                  className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5"
+                  className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1"
                 >
                   To
                 </label>
@@ -497,7 +519,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                     id="hero-destination"
                     value={selectedDestination}
                     onChange={(e) => setSelectedDestination(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer min-h-[44px]"
+                    className="w-full min-h-[44px] pl-9 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer"
                   >
                     {allCities.map((city) => (
                       <option key={`to-${city}`} value={city}>
@@ -507,153 +529,121 @@ export const HomePage: React.FC<HomePageProps> = ({
                   </select>
                 </div>
               </div>
-            </div>
 
-            {/* TRAVEL DATE (3 cols on desktop) */}
-            <div className="sm:col-span-1 lg:col-span-3">
-              <label
-                htmlFor="hero-date"
-                className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5"
-              >
-                Travel Date
-              </label>
-              <DatePicker
-                id="hero-date"
-                value={travelDate}
-                onChange={handleTravelDateChange}
-                variant="light"
-                minDate={todayIso}
-              />
-            </div>
+              {/* TRAVEL DATE */}
+              <div className="lg:col-span-2">
+                <label
+                  htmlFor="hero-date"
+                  className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1"
+                >
+                  Travel Date
+                </label>
+                <DatePicker
+                  id="hero-date"
+                  value={travelDate}
+                  onChange={handleTravelDateChange}
+                  variant="light"
+                  minDate={todayIso}
+                />
+              </div>
 
-            {/* VEHICLE FILTER (2 cols on desktop) */}
-            <div className="sm:col-span-1 lg:col-span-2">
-              <label
-                htmlFor="hero-vehicle-filter"
-                className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1.5"
-              >
-                Vehicle
-              </label>
-              <div className="relative">
-                <Bus className="w-4 h-4 text-amber-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              {/* VEHICLE FILTER */}
+              <div className="lg:col-span-1">
+                <label
+                  htmlFor="hero-vehicle-filter"
+                  className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1"
+                >
+                  Seats
+                </label>
                 <select
                   id="hero-vehicle-filter"
                   value={vehicleFilter}
                   onChange={(e) => setVehicleFilter(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer min-h-[44px]"
+                  className="w-full min-h-[44px] px-2.5 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 rounded-xl text-slate-900 font-semibold text-xs sm:text-sm focus:ring-2 focus:ring-amber-400 focus:bg-white focus:outline-none transition-all cursor-pointer"
                 >
-                  <option value="ALL">All Vehicles</option>
-                  <option value="11">11-Seater</option>
-                  <option value="14">14-Seater</option>
-                  <option value="16">16-Seater</option>
+                  <option value="ALL">All</option>
+                  <option value="11">11-Seat</option>
+                  <option value="14">14-Seat</option>
+                  <option value="16">16-Seat</option>
                 </select>
               </div>
-            </div>
 
-            {/* PRIMARY SEARCH CTA: FIND TRIPS (2 cols on desktop) */}
-            <div className="sm:col-span-2 lg:col-span-2">
-              <button
-                id="hero-search-btn"
-                type="submit"
-                className="craft-btn-amber w-full py-2 px-3.5 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 min-h-[40px] whitespace-nowrap cursor-pointer"
-              >
-                <Search className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
-                <span>Find Trips</span>
-              </button>
-            </div>
-          </form>
-
-          {/* 18. QUIET SERVICE INDICATORS (No duplicate Install App or repeated top service buttons) */}
-          <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-medium">
-              <span>Daily Departures</span>
-              <span aria-hidden="true">·</span>
-              <span>Live Seat Map</span>
-              <span aria-hidden="true">·</span>
-              <span>M-Pesa & Cash on Boarding</span>
-            </div>
-            <span className="font-mono text-[11px] text-slate-500">
-              Support: +254 724 626199
-            </span>
+              {/* SINGLE PRIMARY HERO CTA */}
+              <div className="md:col-span-2 lg:col-span-2">
+                <button
+                  id="hero-search-btn"
+                  type="submit"
+                  className="craft-btn-amber w-full min-h-[44px] py-2.5 px-4 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer"
+                >
+                  <Search className="w-4 h-4 text-slate-950 stroke-[2.5] shrink-0" />
+                  <span>Find Trips</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </section>
 
-      {/* 14. TODAY'S DEPARTURES SECTION (REAL-TIME BACKEND-DRIVEN) */}
-      <section id="todays-departures-section" className="max-w-6xl mx-auto px-4 sm:px-6 space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      {/* 2. TODAY'S DEPARTURES SECTION */}
+      <section id="todays-departures-section" className="max-w-6xl mx-auto px-4 space-y-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <div>
             <div className="text-xs font-bold text-amber-600 tracking-wide">
               Live Schedule & Availability
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5">
-              {departuresDate === todayIso ? "Today's Departures" : `Scheduled Departures (${departuresDate})`}
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+              {departuresDate === todayIso
+                ? "Today's Departures"
+                : `Scheduled Departures (${departuresDate})`}
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 mt-1">
-              Select an available trip below to view the vehicle seat map and choose your seat.
-            </p>
           </div>
 
-          {/* Route Filter Tabs + Full Schedule Link */}
-          <div className="flex flex-wrap items-center gap-2">
-            {availableCorridorsInTrips.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1 bg-slate-200/70 p-1 rounded-xl border border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => setDeparturesCorridorFilter('ALL')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                    departuresCorridorFilter === 'ALL'
-                      ? 'bg-white text-slate-950 shadow-sm font-bold'
-                      : 'text-slate-600 hover:text-slate-950'
-                  }`}
-                >
-                  All Routes
-                </button>
-                {availableCorridorsInTrips.map((corridor) => (
-                  <button
-                    key={corridor}
-                    type="button"
-                    onClick={() => setDeparturesCorridorFilter(corridor)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-                      departuresCorridorFilter === corridor
-                        ? 'bg-white text-slate-950 shadow-sm font-bold'
-                        : 'text-slate-600 hover:text-slate-950'
-                    }`}
-                  >
-                    {corridor}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {onOpenSchedules && (
+          {availableCorridorsInTrips.length > 0 && (
+            <div className="grid grid-cols-1 sm:flex sm:flex-wrap items-center gap-1.5 w-full md:w-auto">
               <button
                 type="button"
-                onClick={onOpenSchedules}
-                className="text-xs font-bold text-slate-700 hover:text-slate-950 flex items-center gap-1 px-2.5 py-1.5 rounded-lg hover:bg-slate-200/60 transition-colors cursor-pointer"
+                onClick={() => setDeparturesCorridorFilter('ALL')}
+                className={`w-full sm:w-auto min-h-[44px] px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                  departuresCorridorFilter === 'ALL'
+                    ? 'bg-slate-900 text-amber-400 font-bold'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                }`}
               >
-                <span>Full Schedule</span>
-                <ArrowRight className="w-3.5 h-3.5 text-amber-500" />
+                All Routes
               </button>
-            )}
-          </div>
+              {availableCorridorsInTrips.map((corridor) => (
+                <button
+                  key={corridor}
+                  type="button"
+                  onClick={() => setDeparturesCorridorFilter(corridor)}
+                  className={`w-full sm:w-auto min-h-[44px] px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+                    departuresCorridorFilter === corridor
+                      ? 'bg-slate-900 text-amber-400 font-bold'
+                      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {corridor}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Loading State */}
         {loadingDepartures ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" aria-label="Loading departures">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="craft-card p-5 space-y-3">
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full"
+            aria-label="Loading departures"
+          >
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="craft-card p-5 space-y-3 w-full">
                 <div className="h-5 w-24 rounded skeleton-shimmer" />
                 <div className="h-6 w-3/4 rounded skeleton-shimmer" />
-                <div className="h-4 w-1/2 rounded skeleton-shimmer" />
-                <div className="h-10 w-full rounded-xl skeleton-shimmer mt-2" />
+                <div className="h-11 w-full rounded-xl skeleton-shimmer mt-2" />
               </div>
             ))}
           </div>
         ) : filteredDepartures.length === 0 ? (
-          /* Empty State as Specified in Section 19 */
-          <div className="craft-card p-8 sm:p-10 text-center space-y-4">
+          <div className="craft-card p-6 sm:p-8 text-center space-y-4 w-full">
             <div className="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto text-slate-600">
               <Calendar className="w-5 h-5 text-amber-500" />
             </div>
@@ -667,7 +657,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                   : 'Please select another travel date to view available scheduled departures.'}
               </p>
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
+            <div className="max-w-xs mx-auto">
               <button
                 type="button"
                 onClick={() => {
@@ -675,21 +665,15 @@ export const HomePage: React.FC<HomePageProps> = ({
                   setTravelDate(todayIso);
                   setVehicleFilter('ALL');
                   setDeparturesCorridorFilter('ALL');
-                  const dateBtn = document.getElementById('hero-date');
-                  if (dateBtn) {
-                    dateBtn.focus();
-                    dateBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }
                 }}
-                className="craft-btn-amber text-xs px-4 py-2.5 font-bold cursor-pointer"
+                className="craft-btn-amber w-full min-h-[44px] text-xs px-4 py-2.5 font-bold cursor-pointer"
               >
-                Choose Another Date
+                Reset to Today&apos;s Trips
               </button>
             </div>
           </div>
         ) : (
-          /* Horizontal Cards on Desktop, Stacked Vertically on Mobile (Section 19) */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full items-stretch">
             {filteredDepartures.map((trip) => {
               const depTime = new Date(trip.departureTime).toLocaleTimeString('en-KE', {
                 hour: '2-digit',
@@ -711,9 +695,9 @@ export const HomePage: React.FC<HomePageProps> = ({
               return (
                 <div
                   key={trip.id}
-                  className="craft-card-interactive p-5 flex flex-col justify-between gap-4"
+                  className="craft-card-interactive p-4 sm:p-5 w-full flex flex-col justify-between gap-4"
                 >
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-mono font-extrabold text-base sm:text-lg text-slate-950 tabular-nums">
                         {depTime}
@@ -731,7 +715,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                         <span>
                           {openSeats === 0
                             ? 'Sold out'
-                            : `${openSeats} ${openSeats === 1 ? 'seat' : 'seats'} available`}
+                            : `${openSeats} ${openSeats === 1 ? 'seat' : 'seats'} left`}
                         </span>
                       </span>
                     </div>
@@ -741,27 +725,27 @@ export const HomePage: React.FC<HomePageProps> = ({
                         {trip.route.origin} → {trip.route.destination}
                       </h3>
                       <p className="text-xs font-medium text-slate-600 mt-0.5">
-                        {vehicleCap}-Seater • <span className="font-mono text-slate-500">{trip.vehicle.registrationNumber}</span>
+                        {vehicleCap}-Seater ·{' '}
+                        <span className="font-mono text-slate-500">
+                          {trip.vehicle.registrationNumber}
+                        </span>{' '}
+                        ·{' '}
+                        <span className="font-mono font-bold text-slate-900 tabular-nums">
+                          KSh {trip.fareKsh.toLocaleString()}
+                        </span>
                       </p>
                     </div>
                   </div>
 
-                  <div className="pt-3.5 border-t border-slate-100 flex items-center justify-between gap-3">
-                    <div>
-                      <span className="text-base sm:text-lg font-extrabold text-slate-950 font-mono tabular-nums">
-                        KSh {trip.fareKsh.toLocaleString()}
-                      </span>
-                      <span className="text-[11px] text-slate-500 ml-1">/ seat</span>
-                    </div>
-
+                  <div className="pt-3 border-t border-slate-100">
                     <button
                       type="button"
                       disabled={openSeats === 0}
                       onClick={() => handleViewTrip(trip)}
-                      className="craft-btn-secondary text-xs py-2 px-4 font-bold inline-flex items-center gap-1.5 min-h-[40px]"
+                      className="craft-btn-secondary w-full min-h-[44px] text-xs py-2.5 px-4 font-bold inline-flex items-center justify-center gap-1.5"
                     >
-                      <span>{openSeats === 0 ? 'Sold Out' : 'View Trip'}</span>
-                      {openSeats > 0 && <ArrowRight className="w-3.5 h-3.5 text-amber-600" />}
+                      <span>{openSeats === 0 ? 'Sold Out' : 'View Trip & Select Seat'}</span>
+                      {openSeats > 0 && <ArrowRight className="w-4 h-4 text-amber-600" />}
                     </button>
                   </div>
                 </div>
@@ -771,32 +755,28 @@ export const HomePage: React.FC<HomePageProps> = ({
         )}
       </section>
 
-      {/* 16. FLEET SECTION (11-SEATER, 14-SEATER, 16-SEATER WITH KENYAN PSV SEAT CONFIGURATIONS) */}
-      <section id="fleet-section" className="max-w-6xl mx-auto px-4 sm:px-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      {/* 3. FLEET SECTION (11-SEATER, 14-SEATER, 16-SEATER) */}
+      <section id="fleet-section" className="max-w-6xl mx-auto px-4 space-y-5">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <div>
             <div className="text-xs font-bold text-amber-600 tracking-wide">
-              Supported Fleet Categories
+              Kenyan PSV Fleet Configurations
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
               11-Seater, 14-Seater & 16-Seater Shuttles
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 mt-1">
-              All vehicles feature 2 front passenger seats beside the driver (P1, P2) and calibrated 80 km/h speed governors.
-            </p>
           </div>
 
-          {/* Interactive Vehicle Category Filter Tabs */}
-          <div className="flex items-center gap-1 bg-slate-200/70 p-1 rounded-xl border border-slate-200 self-start sm:self-auto">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 w-full md:w-auto">
             {(['ALL', '11-Seater', '14-Seater', '16-Seater'] as const).map((cat) => (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setFleetCategoryTab(cat)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
+                className={`w-full sm:w-auto min-h-[44px] px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                   fleetCategoryTab === cat
-                    ? 'bg-white text-slate-950 shadow-sm font-bold'
-                    : 'text-slate-600 hover:text-slate-950'
+                    ? 'bg-slate-900 text-amber-400 font-bold'
+                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
                 }`}
               >
                 {cat === 'ALL' ? 'All Vehicles' : cat}
@@ -805,26 +785,26 @@ export const HomePage: React.FC<HomePageProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
           {filteredFleetShowcase.map((veh) => (
             <div
               key={veh.id}
-              onClick={() => setInspectedVehicle(veh)}
-              className="craft-card-interactive overflow-hidden cursor-pointer flex flex-col justify-between group"
+              className="craft-card-interactive overflow-hidden w-full flex flex-col justify-between group"
             >
               <div>
-                <div className="aspect-[16/10] w-full overflow-hidden relative bg-slate-950">
+                <div className="w-full overflow-hidden relative bg-slate-950">
                   <img
                     src={veh.image}
                     alt={veh.title}
                     loading="lazy"
                     referrerPolicy="no-referrer"
                     onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/images/transcar_white_highway.webp';
+                      (e.currentTarget as HTMLImageElement).src =
+                        '/images/transcar_white_highway.webp';
                     }}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-auto max-w-full aspect-[16/10] object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
                   <span className="absolute top-3 left-3 text-[11px] font-mono font-bold bg-slate-950/90 text-amber-400 px-2.5 py-0.5 rounded-md border border-slate-700">
                     {veh.reg}
                   </span>
@@ -834,187 +814,64 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </div>
 
                 <div className="p-4 space-y-1.5">
-                  <h4 className="font-bold text-sm text-slate-900 group-hover:text-amber-600 transition-colors">
+                  <h3 className="font-bold text-sm sm:text-base text-slate-900">
                     {veh.title}
-                  </h4>
+                  </h3>
                   <p className="text-xs text-slate-600 line-clamp-2">
                     {veh.seatLayoutSummary}
                   </p>
                 </div>
               </div>
 
-              <div className="p-4 pt-2.5 flex items-center justify-between border-t border-slate-100 text-xs">
-                <span className="text-[11px] text-slate-500 font-mono">{veh.category} PSV</span>
-                <span className="font-bold text-slate-900 group-hover:text-amber-600 flex items-center gap-1 transition-colors">
-                  <span>View Seat Layout</span>
-                  <Eye className="w-3.5 h-3.5 text-amber-500" />
-                </span>
+              <div className="p-4 pt-0">
+                <button
+                  type="button"
+                  onClick={() => setInspectedVehicle(veh)}
+                  className="craft-btn-secondary w-full min-h-[44px] text-xs font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Eye className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>View {veh.category} Seat Layout</span>
+                </button>
               </div>
             </div>
           ))}
         </div>
-
-        {onOpenFleet && (
-          <div className="flex justify-center pt-2">
-            <button
-              type="button"
-              onClick={onOpenFleet}
-              className="craft-btn-secondary text-xs px-5 py-2.5 font-bold inline-flex items-center gap-2"
-            >
-              <Bus className="w-4 h-4 text-amber-600" />
-              <span>Open Full Fleet & Seat Configurations Page</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
       </section>
 
-      {/* Safety & Parcel Services Banner Grid */}
-      <section className="max-w-6xl mx-auto px-3 sm:px-6 space-y-5">
-        {/* Easy App Installation Banner Card (Hidden once already running as installed standalone app) */}
-        {!isInstalled && (
-          <div className="bg-slate-950 text-white rounded-2xl p-5 sm:p-7 border border-slate-800 craft-shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            <div className="space-y-2.5 max-w-2xl">
-              <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-amber-400 font-bold">
-                <Download className="w-3.5 h-3.5" />
-                <span>Fast & Offline-Ready App</span>
-              </div>
-              <h3 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-                Install the TransCar rongai App in Seconds
-              </h3>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                Add TransCar directly to your phone or computer home screen — no app store download required. Access your booked QR boarding passes offline, track active shuttles, and reserve seats in one tap.
-              </p>
-              <div className="pt-1 flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => openInstallModal('android')}
-                  className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <Smartphone className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Android Guide</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openInstallModal('ios')}
-                  className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <Smartphone className="w-3.5 h-3.5 text-amber-400" />
-                  <span>iPhone / iPad Guide</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openInstallModal('desktop')}
-                  className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <Monitor className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Computer Guide</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openInstallModal('qr')}
-                  className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-200 inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <QrCode className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Scan QR to Phone</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center gap-2.5 w-full lg:w-auto shrink-0">
-              <button
-                type="button"
-                onClick={() => triggerInstallOrGuide()}
-                className="craft-btn-amber text-xs sm:text-sm px-5 py-3 font-extrabold inline-flex items-center justify-center gap-2 min-h-[46px] cursor-pointer whitespace-nowrap shadow-lg"
-              >
-                <Download className="w-4 h-4 stroke-[2.5]" />
-                <span>{isInstallable ? 'Install App Now (1-Click)' : 'Install TransCar App'}</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Safety Box */}
-          <div className="bg-slate-950 text-white rounded-2xl p-7 flex flex-col justify-between gap-6 relative overflow-hidden craft-shadow-lg border border-slate-800">
-            <div className="space-y-3 relative z-10">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-amber-400/10 border border-amber-400/20 text-amber-400">
-                  <Shield className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-bold text-white tracking-tight">NTSA Regulated Passenger Safety</h3>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                All TransCar rongai shuttles are calibrated with 80 km/h speed governors, real-time GPS tracking, and licensed PSV captains across all intercity corridors.
-              </p>
-            </div>
-            <div className="relative z-10 flex items-center gap-3">
-              <a
-                href="tel:+254724626199"
-                className="craft-btn-secondary text-xs bg-slate-900 text-slate-200 border-slate-700 hover:bg-slate-800 hover:text-white"
-              >
-                <PhoneCall className="w-3.5 h-3.5 mr-1.5 text-amber-400" />
-                <span>Support: +254 724 626199</span>
-              </a>
-            </div>
-          </div>
-
-          {/* Cargo Box */}
-          <div className="bg-amber-400 text-slate-950 rounded-2xl p-7 flex flex-col justify-between gap-6 relative overflow-hidden craft-shadow-lg border border-amber-500/40">
-            <div className="space-y-3 relative z-10">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-black/10 border border-black/10 text-slate-950">
-                  <Package className="w-5 h-5" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-950 tracking-tight">Express Parcel & Courier Service</h3>
-              </div>
-              <p className="text-xs text-slate-900 font-medium leading-relaxed">
-                Same-day parcel dispatch along the Nairobi • Rongai • Kisii corridor with SMS collection verification at all stage offices.
-              </p>
-            </div>
-            <div className="relative z-10 flex items-center gap-3">
-              <a
-                href="tel:+254717747626"
-                className="craft-btn-primary text-xs bg-slate-950 text-white"
-              >
-                <PhoneCall className="w-3.5 h-3.5 mr-1.5 text-amber-400" />
-                <span>Parcel Desk: +254 717 747626</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* SINGLE STICKY BOTTOM CTA ON MOBILE ONLY */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-4 py-2.5">
+        <button
+          id="mobile-sticky-book-cta"
+          type="button"
+          onClick={triggerTripSearch}
+          className="craft-btn-amber w-full min-h-[44px] text-sm font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer"
+        >
+          <Search className="w-4 h-4 text-slate-950 stroke-[2.5] shrink-0" />
+          <span>Book Trip ({selectedOrigin} → {selectedDestination})</span>
+        </button>
+      </div>
 
       {/* Vehicle Inspection & PSV Seat Configuration Modal */}
       {inspectedVehicle && (
         <div
-          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
           onClick={() => setInspectedVehicle(null)}
         >
           <div
-            className="bg-slate-950 border border-slate-800 rounded-2xl max-w-3xl w-full overflow-hidden shadow-2xl relative text-white max-h-[90vh] flex flex-col my-auto"
+            className="bg-slate-950 border border-slate-800 rounded-2xl w-full max-w-[calc(100vw-32px)] md:max-w-3xl overflow-hidden shadow-2xl relative text-white max-h-[90vh] flex flex-col my-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={() => setInspectedVehicle(null)}
-              aria-label="Close vehicle details"
-              className="absolute top-3.5 right-3.5 z-20 w-8 h-8 sm:w-9 sm:h-9 bg-slate-900/80 hover:bg-slate-800 rounded-full flex items-center justify-center text-slate-300 hover:text-white transition-colors border border-slate-700 cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            {/* Photo Container */}
-            <div className="relative w-full bg-slate-900 flex items-center justify-center min-h-[180px] sm:min-h-[240px] max-h-[38vh] overflow-hidden shrink-0">
+            {/* Photo Header */}
+            <div className="relative w-full bg-slate-900 flex items-center justify-center overflow-hidden shrink-0">
               <img
                 src={inspectedVehicle.image}
                 alt={inspectedVehicle.title}
                 referrerPolicy="no-referrer"
                 onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src = '/images/transcar_white_highway.jpg';
+                  (e.currentTarget as HTMLImageElement).src =
+                    '/images/transcar_white_highway.jpg';
                 }}
-                className="w-full h-auto max-h-[38vh] object-contain"
+                className="w-full h-auto max-w-full max-h-[34vh] object-contain"
               />
               <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent p-3 sm:p-4 flex items-center gap-2">
                 <span className="text-xs font-mono font-bold bg-amber-400 text-slate-950 px-2.5 py-0.5 rounded">
@@ -1026,7 +883,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               </div>
             </div>
 
-            {/* Modal Body with Kenyan PSV Layout Diagram */}
+            {/* Modal Body */}
             <div className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
                 <div className="md:col-span-7 space-y-3">
@@ -1043,17 +900,24 @@ export const HomePage: React.FC<HomePageProps> = ({
                   </div>
 
                   <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1 text-xs">
-                    <span className="text-slate-400 uppercase text-[10px] font-bold block">Seat Configuration</span>
-                    <span className="text-amber-300 font-semibold block">{inspectedVehicle.seatLayoutSummary}</span>
+                    <span className="text-slate-400 uppercase text-[10px] font-bold block">
+                      Seat Configuration
+                    </span>
+                    <span className="text-amber-300 font-semibold block">
+                      {inspectedVehicle.seatLayoutSummary}
+                    </span>
                   </div>
 
                   <div className="space-y-1.5">
                     <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">
                       Vehicle Features
                     </span>
-                    <div className="grid grid-cols-2 gap-1.5 text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
                       {inspectedVehicle.amenities.map((item, idx) => (
-                        <div key={idx} className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 flex items-center gap-1.5">
+                        <div
+                          key={idx}
+                          className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 flex items-center gap-1.5"
+                        >
                           <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                           <span className="text-slate-200 text-[11px] truncate">{item}</span>
                         </div>
@@ -1062,18 +926,17 @@ export const HomePage: React.FC<HomePageProps> = ({
                   </div>
                 </div>
 
-                {/* Realistic Kenyan PSV Seat Layout Preview */}
                 <div className="md:col-span-5">
                   <PsvCabinLayoutDiagram capacity={inspectedVehicle.seats} />
                 </div>
               </div>
 
               {/* Modal Actions */}
-              <div className="pt-3 border-t border-slate-800 flex flex-col-reverse xs:flex-row items-stretch xs:items-center justify-end gap-2.5">
+              <div className="pt-3 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <button
                   type="button"
                   onClick={() => setInspectedVehicle(null)}
-                  className="craft-btn-secondary text-xs bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800 min-h-[40px] flex items-center justify-center cursor-pointer"
+                  className="craft-btn-secondary w-full min-h-[44px] text-xs bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800 flex items-center justify-center cursor-pointer"
                 >
                   Close
                 </button>
@@ -1084,10 +947,10 @@ export const HomePage: React.FC<HomePageProps> = ({
                     setInspectedVehicle(null);
                     handleBookVehicle(v);
                   }}
-                  className="craft-btn-amber text-xs font-bold flex items-center justify-center gap-1.5 min-h-[40px] cursor-pointer"
+                  className="craft-btn-amber w-full min-h-[44px] text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <span>Find {inspectedVehicle.category} Trips</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -1095,7 +958,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       )}
 
-      {/* 22. TRIP DETAILS DRAWER */}
+      {/* TRIP DETAILS DRAWER */}
       <TripDetailsDrawer
         trip={drawerTrip}
         selectedVehicleCapacity={

@@ -96,7 +96,8 @@ let seatLockIntervalStarted = false;
 export function startSeatLockCleanupInterval(): void {
   if (seatLockIntervalStarted) return;
   seatLockIntervalStarted = true;
-  setInterval(cleanupExpiredUnpaidBookings, 30 * 1000);
+  const timer = setInterval(cleanupExpiredUnpaidBookings, 30 * 1000);
+  timer.unref?.();
 }
 
 export function markBookingPaid(

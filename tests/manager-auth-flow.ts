@@ -122,7 +122,7 @@ console.log("\n4. Entering manager credentials...");
 
   await username.fill("manager@transcargalaxy.com");
 
-  await password.fill("JaredT");
+  await password.fill(process.env.INITIAL_MANAGER_PASSWORD || "");
 
   console.log("Credentials entered.");
 

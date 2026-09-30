@@ -66,18 +66,18 @@ export const TripDetailsDrawer: React.FC<TripDetailsDrawerProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-end sm:items-stretch sm:justify-end bg-slate-950/50 backdrop-blur-[2px] animate-in fade-in duration-150"
+      className="fixed inset-0 z-[60] flex items-end justify-center sm:items-stretch sm:justify-end bg-slate-950/50 backdrop-blur-[2px] p-4 sm:p-0 animate-in fade-in duration-150"
       role="dialog"
       aria-modal="true"
       aria-labelledby="trip-drawer-title"
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-none sm:rounded-l-2xl border-t sm:border-t-0 sm:border-l border-slate-200 shadow-2xl flex flex-col justify-between max-h-[90dvh] sm:max-h-full overflow-y-auto animate-in slide-in-from-bottom sm:slide-in-from-right duration-200"
+        className="w-full max-w-[calc(100vw-32px)] sm:max-w-md bg-white rounded-2xl sm:rounded-none sm:rounded-l-2xl border sm:border-t-0 sm:border-l border-slate-200 shadow-2xl flex flex-col justify-between max-h-[90dvh] sm:max-h-full overflow-y-auto animate-in slide-in-from-bottom sm:slide-in-from-right duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header */}
-        <div className="p-5 sm:p-6 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10">
+        <div className="p-4 sm:p-6 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10">
           <div>
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">
               Trip Details
@@ -90,7 +90,7 @@ export const TripDetailsDrawer: React.FC<TripDetailsDrawerProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close trip details"
-            className="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>

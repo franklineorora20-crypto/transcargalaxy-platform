@@ -155,7 +155,7 @@ import { chromium } from "playwright";
   );
 
   await passwordInput.fill(
-    "JaredT"
+    process.env.INITIAL_DRIVER_PASSWORD || process.env.INITIAL_MANAGER_PASSWORD || ""
   );
 
   console.log(

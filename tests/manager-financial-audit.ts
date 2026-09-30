@@ -58,7 +58,7 @@ import { chromium } from "playwright";
 
   await page
     .locator('input[type="password"]')
-    .fill("JaredT");
+    .fill(process.env.INITIAL_MANAGER_PASSWORD || "");
 
   await page.getByRole("button", {
     name: "Sign In",

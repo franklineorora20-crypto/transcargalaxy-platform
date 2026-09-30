@@ -331,7 +331,7 @@ const viewports = [
     );
 
     await password.fill(
-      "JaredT"
+      process.env.INITIAL_MANAGER_PASSWORD || ""
     );
 
     await page.getByRole("button", {

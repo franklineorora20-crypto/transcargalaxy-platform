@@ -69,7 +69,7 @@ import { chromium } from "playwright";
   );
 
   await password.fill(
-    "JaredT"
+    process.env.INITIAL_MANAGER_PASSWORD || ""
   );
 
   const signIn = page.getByRole("button", {
