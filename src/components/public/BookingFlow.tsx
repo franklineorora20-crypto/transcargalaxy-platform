@@ -68,7 +68,6 @@ interface BookingFlowProps {
   initialCarSeatView?: 11 | 14 | 16 | null;
   onDone?: () => void;
   onTrackBus?: (ref: string) => void;
-  onOpenDriverPortal?: (verifyToken?: string, tripId?: string) => void;
 }
 
 export const BookingFlow: React.FC<BookingFlowProps> = ({
@@ -76,7 +75,6 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
   initialCarSeatView = null,
   onDone,
   onTrackBus,
-  onOpenDriverPortal,
 }) => {
   const toast = useToast();
   const [step, setStep] = React.useState<number>(initialTrip ? 1 : 0);
@@ -547,7 +545,6 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
         booking={confirmedBooking}
         onTrackBus={(ref) => onTrackBus && onTrackBus(ref)}
         onDone={onDone}
-        onOpenDriverPortal={onOpenDriverPortal}
       />
     );
   }

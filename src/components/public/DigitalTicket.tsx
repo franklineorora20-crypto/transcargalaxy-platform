@@ -44,7 +44,6 @@ interface DigitalTicketProps {
   onBackHome?: () => void;
   onDone?: () => void;
   onTrackBus?: (ref: string) => void;
-  onOpenDriverPortal?: (verifyToken?: string, tripId?: string) => void;
 }
 
 export const DigitalTicket: React.FC<DigitalTicketProps> = ({
@@ -52,7 +51,6 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
   onBackHome,
   onDone,
   onTrackBus,
-  onOpenDriverPortal,
 }) => {
   const handleBackAction = () => {
     if (onBackHome) onBackHome();
@@ -243,16 +241,6 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
             <Printer className="w-4 h-4" />
             Print Ticket
           </button>
-
-          {onOpenDriverPortal && (
-            <button
-              onClick={() => onOpenDriverPortal(qrVerificationUrl, booking.tripId)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs border-2 border-black shadow-md transition-all cursor-pointer"
-            >
-              <ShieldCheck className="w-4 h-4" />
-              Verify on Driver Page
-            </button>
-          )}
         </div>
       </div>
 
@@ -605,16 +593,6 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
                     <Download className="w-3.5 h-3.5 text-amber-600" />
                     Save QR PNG
                   </button>
-                  {onOpenDriverPortal && (
-                    <button
-                      type="button"
-                      onClick={() => onOpenDriverPortal(qrVerificationUrl, booking.tripId)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black hover:bg-neutral-800 text-amber-400 font-black text-[11px] border border-black shadow-xs transition-all cursor-pointer"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5" />
-                      Scan in Driver App
-                    </button>
-                  )}
                 </div>
               </div>
             </div>

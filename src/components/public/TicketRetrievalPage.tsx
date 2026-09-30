@@ -8,13 +8,11 @@ import { useToast } from '../common/Toast';
 interface TicketRetrievalPageProps {
   onBackToHome: () => void;
   onTrackBus: (bookingRef: string) => void;
-  onOpenDriverPortal?: (verifyToken?: string, tripId?: string) => void;
 }
 
 export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
   onBackToHome,
   onTrackBus,
-  onOpenDriverPortal,
 }) => {
   const toast = useToast();
   const [bookingReference, setBookingReference] = React.useState('');
@@ -75,7 +73,6 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
           booking={retrievedBooking}
           onTrackBus={(ref) => onTrackBus(ref)}
           onDone={onBackToHome}
-          onOpenDriverPortal={onOpenDriverPortal}
         />
       </div>
     );

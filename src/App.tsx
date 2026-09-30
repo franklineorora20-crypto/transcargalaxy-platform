@@ -100,9 +100,12 @@ export default function App() {
 
         if (path.startsWith('/ticket/verify/') && rawPath.length > 15) {
           const tokenPart = decodeURIComponent(rawPath.slice('/ticket/verify/'.length).replace(/\/$/, ''));
-          if (tokenPart) {
+          const activeRole = ApiService.getUserRole();
+          if (tokenPart && (activeRole === 'DRIVER' || activeRole === 'MANAGER')) {
             setInitialVerifyToken(tokenPart);
             setCurrentView('driver-portal');
+          } else {
+            setCurrentView('retrieve-ticket');
           }
         } else if (path.startsWith('/booking/') && path.length > 9) {
           const slug = path.replace('/booking/', '').replace(/\/$/, '');
@@ -286,11 +289,6 @@ export default function App() {
               initialCarSeatView={searchCarSeatView}
               onDone={() => setCurrentView('home')}
               onTrackBus={handleTrackBusFromRef}
-              onOpenDriverPortal={(verifyToken?: string, tripId?: string) => {
-                if (verifyToken) setInitialVerifyToken(verifyToken);
-                if (tripId) setInitialVerifyTripId(tripId);
-                setCurrentView('driver-portal');
-              }}
             />
           )}
 
@@ -305,11 +303,6 @@ export default function App() {
             <TicketRetrievalPage
               onBackToHome={() => setCurrentView('home')}
               onTrackBus={handleTrackBusFromRef}
-              onOpenDriverPortal={(verifyToken?: string, tripId?: string) => {
-                if (verifyToken) setInitialVerifyToken(verifyToken);
-                if (tripId) setInitialVerifyTripId(tripId);
-                setCurrentView('driver-portal');
-              }}
             />
           )}
 
