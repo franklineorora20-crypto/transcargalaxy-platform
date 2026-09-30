@@ -99,8 +99,11 @@ export const ManagerLogin: React.FC<ManagerLoginProps> = ({ onLoginSuccess, onCa
           </div>
         </form>
 
-        <div className="pt-4 border-t border-slate-100 text-xs text-slate-500 bg-slate-50 p-3 rounded-xl">
-          Sign in with a manager account created in Supabase Auth and assigned the <span className="font-mono">manager</span> or <span className="font-mono">admin</span> role.
+        <div className="pt-4 border-t border-slate-100 text-xs text-slate-600 bg-slate-50 p-3.5 rounded-xl space-y-1.5">
+          <p className="font-bold text-slate-800">Managed via Supabase Authentication</p>
+          <p>
+            Internal administrative accounts do not use hardcoded passwords. Sign in with your Supabase Auth manager email and password, or reset credentials under <span className="font-mono font-semibold">Authentication → Users</span> in the Supabase console.
+          </p>
         </div>
 
         <div className="text-center pt-2">

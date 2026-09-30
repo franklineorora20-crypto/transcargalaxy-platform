@@ -301,7 +301,7 @@ router.post('/api/auth/driver-login', async (req, res) => {
   const isPasswordAccepted =
     storedMatch !== null
       ? storedMatch
-      : matchesEnvPassword || (password.trim().length >= 4 && !isInvalidTestPass);
+      : matchesEnvPassword && !isInvalidTestPass;
 
   if (isPasswordAccepted) {
     const authUser: AuthUser = {

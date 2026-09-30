@@ -187,6 +187,13 @@ export const DriverLogin: React.FC<DriverLoginProps> = ({ onLoginSuccess, onCanc
           </div>
         </form>
 
+        <div className="p-3 bg-neutral-50 border border-neutral-200 rounded-xl text-xs text-neutral-600 space-y-1">
+          <span className="font-black text-black block">Managed via Supabase Authentication</span>
+          <span>
+            Driver accounts do not use hardcoded passwords. Sign in with your registered driver email and password, or reset your password in the Supabase console under <span className="font-mono font-bold">Authentication → Users</span>.
+          </span>
+        </div>
+
         <div className="pt-1 text-center">
           <button
             type="button"

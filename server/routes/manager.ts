@@ -159,8 +159,7 @@ router.post('/api/auth/manager-login', async (req, res) => {
     password.length === envManagerPassword.length &&
     crypto.timingSafeEqual(Buffer.from(password), Buffer.from(envManagerPassword));
 
-  const isValidPassword =
-    matchesEnvPassword || (password.trim().length >= 4 && !isInvalidTestPass);
+  const isValidPassword = matchesEnvPassword && !isInvalidTestPass;
 
   if (isRecognizedManagerUser && isValidPassword) {
     const managerUser: AuthUser = {
