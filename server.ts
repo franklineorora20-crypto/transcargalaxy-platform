@@ -19,11 +19,18 @@ if (!process.env.MPESA_CALLBACK_URL || process.env.MPESA_CALLBACK_URL.includes('
 }
 
 // Rate limiters for critical booking and M-Pesa payment APIs
+const rateLimitValidationConfig = {
+  xForwardedForHeader: false,
+  forwardedHeader: false,
+  default: true,
+};
+
 const limiter = rateLimit({
   windowMs: 5 * 60 * 1000,
   max: 15,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: rateLimitValidationConfig,
   message: { error: 'Too many requests, jaribu tena baada ya dakika 5' },
 });
 
@@ -32,6 +39,7 @@ const stkLimiter = rateLimit({
   max: 5,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: rateLimitValidationConfig,
   message: { error: 'Too many M-Pesa requests, jaribu tena baada ya dakika 10' },
 });
 
@@ -40,7 +48,26 @@ const verificationLimiter = rateLimit({
   max: 60,
   standardHeaders: true,
   legacyHeaders: false,
+  validate: rateLimitValidationConfig,
   message: { error: 'Too many ticket verification requests. Please wait a moment and try again.' },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: rateLimitValidationConfig,
+  message: { error: 'Too many authentication attempts. Please try again in 15 minutes.' },
+});
+
+const searchLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: rateLimitValidationConfig,
+  message: { error: 'Too many requests. Please slow down.' },
 });
 
 import {
@@ -95,10 +122,12 @@ import {
 
 
 // =============================================================
-// EXPRESS APPLICATION
+// EXPRESS APPLICATION & SECURITY HEADERS
 // =============================================================
 
 const app = express();
+app.set('trust proxy', 1);
+app.disable('x-powered-by');
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
@@ -111,11 +140,25 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 // MIDDLEWARE
 // =============================================================
 
+// SOC2 & OWASP Security Headers
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(self), geolocation=(self), microphone=()');
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+});
+
 app.use(
   express.json({
     verify: (req, _res, buffer) => {
       (req as any).rawBody = Buffer.from(buffer);
     },
+    limit: '2mb',
   }),
 );
 
@@ -1166,7 +1209,7 @@ app.get('/api/routes/by-slug/:slug', (req, res) => {
 // PUBLIC TRIP SEARCH
 // =============================================================
 
-app.get('/api/trips', (req, res) => {
+app.get('/api/trips', searchLimiter, (req, res) => {
   const {
     origin,
     destination,
@@ -2109,6 +2152,7 @@ app.post(
 
 app.post(
   '/api/tickets/retrieve',
+  searchLimiter,
   (req, res) => {
     const {
       bookingReference,
@@ -2188,6 +2232,7 @@ app.post(
 
 app.get(
   '/api/tracking/:code',
+  searchLimiter,
   (req, res) => {
     const code =
       req.params.code
@@ -2372,6 +2417,7 @@ app.get(
 
 app.post(
   '/api/auth/driver-login',
+  authLimiter,
   async (req, res) => {
     const {
       email,
@@ -2603,6 +2649,7 @@ async function createDriverAccount(
 
 app.post(
   '/api/auth/driver-signup',
+  authLimiter,
   async (req, res) => {
     const name = String(
       req.body?.name || '',
@@ -2723,6 +2770,7 @@ app.post(
 
 app.post(
   '/api/auth/manager-login',
+  authLimiter,
   async (req, res) => {
     const {
       email,
