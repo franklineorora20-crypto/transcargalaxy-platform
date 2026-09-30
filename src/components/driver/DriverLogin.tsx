@@ -21,10 +21,24 @@ interface DriverLoginProps {
 }
 
 export const DriverLogin: React.FC<DriverLoginProps> = ({ onLoginSuccess, onCancel }) => {
-  const [email, setEmail] = React.useState('frankline.orora');
+  const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [supaStatus, setSupaStatus] = React.useState<{
+    connected: boolean;
+    projectUrl: string;
+    hasAnonKey: boolean;
+  } | null>(null);
+
+  React.useEffect(() => {
+    fetch('/api/auth/supabase-status')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setSupaStatus(data);
+      })
+      .catch(() => {});
+  }, []);
 
   // In-app signup modal state (replaces window.prompt to avoid iframe blocks)
   const [showSignupModal, setShowSignupModal] = useState(false);
@@ -111,22 +125,30 @@ export const DriverLogin: React.FC<DriverLoginProps> = ({ onLoginSuccess, onCanc
           </p>
         </div>
 
-        {/* Active Roster Captain Info */}
-        <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 flex items-center justify-between">
-          <div>
-            <span className="font-black block">Active Roster Captain:</span>
-            <span className="font-bold text-amber-800">Captain Frankline Orora (KDE 416Q)</span>
+        {supaStatus && !supaStatus.connected ? (
+          <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-300 text-xs text-amber-950 space-y-1.5">
+            <span className="font-black block">Supabase Auth Key Missing in Environment</span>
+            <p className="leading-relaxed">
+              Project <span className="font-mono font-bold">vjhztgdkvrqfhsilhpda.supabase.co</span> is linked, but <span className="font-mono font-bold">VITE_SUPABASE_ANON_KEY</span> is not set in AI Studio Environment Variables / Secrets. Add your <span className="font-mono">anon public</span> key from <strong>Supabase Dashboard → Project Settings → API</strong> to enable Supabase Auth login.
+            </p>
           </div>
-          <span className="px-2.5 py-1 bg-amber-400/30 text-amber-950 font-black text-[11px] rounded-lg border border-amber-400">
-            Authorized Crew
-          </span>
-        </div>
+        ) : (
+          <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-900 flex items-center justify-between">
+            <div>
+              <span className="font-black block">Supabase Authentication Active</span>
+              <span className="font-bold text-emerald-800">Only registered Supabase Auth accounts permitted</span>
+            </div>
+            <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-950 font-black text-[11px] rounded-lg border border-emerald-400">
+              Connected
+            </span>
+          </div>
+        )}
 
         {/* Standard Credentials Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-black uppercase tracking-wider text-black mb-1">
-              Driver Username / ID
+              Supabase Auth Email
             </label>
             <input
               id="driver-email-input"
@@ -134,8 +156,8 @@ export const DriverLogin: React.FC<DriverLoginProps> = ({ onLoginSuccess, onCanc
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. frankline.orora"
-              className="w-full px-3.5 py-2.5 text-sm font-semibold border-2 border-neutral-300 rounded-xl focus:border-black focus:ring-1 focus:ring-black focus:outline-none transition-all"
+              placeholder="fgwaro@kabarak.ac.ke"
+              className="w-full min-h-[44px] px-3.5 py-2.5 text-sm font-semibold border-2 border-neutral-300 rounded-xl focus:border-black focus:ring-1 focus:ring-black focus:outline-none transition-all"
             />
           </div>
 

@@ -3,7 +3,9 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Read public environment variables for browser usage
 const env = (import.meta as any).env || {};
-const supabaseUrl = (env.VITE_SUPABASE_URL as string) || '';
+const supabaseUrl =
+  (env.VITE_SUPABASE_URL as string) ||
+  'https://vjhztgdkvrqfhsilhpda.supabase.co';
 const supabaseAnonKey = (env.VITE_SUPABASE_ANON_KEY as string) || '';
 
 export const isSupabaseConfigured = Boolean(

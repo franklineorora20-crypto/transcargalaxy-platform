@@ -185,80 +185,75 @@ router.post('/api/auth/driver-login', async (req, res) => {
     });
   }
 
-  // 1. Try Supabase Auth if configured
+  // 1. When Supabase Auth is connected, ONLY Supabase Auth user credentials are accepted
   if (supabaseAuth) {
-    const candidateEmails = Array.from(
-      new Set(
-        [
-          authEmail,
-          !identifier.includes('@') ? (process.env.INITIAL_DRIVER_EMAIL || '').trim().toLowerCase() : '',
-          !identifier.includes('@') ? (process.env.INITIAL_MANAGER_EMAIL || '').trim().toLowerCase() : '',
-          !identifier.includes('@') ? 'fgwaro@kabarak.ac.ke' : '',
-          !identifier.includes('@') ? 'franklineorora20@gmail.com' : '',
-          !identifier.includes('@') ? 'driver@transcargalaxy.com' : '',
-        ].filter(Boolean),
-      ),
-    );
+    let lastSupabaseError = 'Invalid Supabase Auth email or password.';
+    try {
+      const { data, error } = await supabaseAuth.auth.signInWithPassword({
+        email: authEmail,
+        password,
+      });
 
-    for (const candidateEmail of candidateEmails) {
-      try {
-        const { data, error } = await supabaseAuth.auth.signInWithPassword({
-          email: candidateEmail,
-          password,
-        });
+      if (error) {
+        lastSupabaseError = error.message || lastSupabaseError;
+      } else if (data?.user && data?.session) {
+        const profile = await getSupabaseProfile(
+          data.session.access_token,
+          data.user.id,
+        );
 
-        if (!error && data?.user && data?.session) {
-          const profile = await getSupabaseProfile(
-            data.session.access_token,
-            data.user.id,
-          );
+        const driver = supabaseAdmin
+          ? (
+              await supabaseAdmin
+                .from('drivers')
+                .select('*')
+                .eq('profile_id', data.user.id)
+                .maybeSingle()
+            ).data
+          : null;
+        const fallbackDriver = drivers[0];
+        const supaDriverUser: AuthUser = {
+          userId: driver?.id || fallbackDriver?.id || data.user.id,
+          name: driver?.name || profile?.full_name || data.user.user_metadata?.full_name || data.user.email || authEmail,
+          email: data.user.email || authEmail,
+          role: 'DRIVER',
+        };
+        const sessionToken = createLocalSession(supaDriverUser);
 
-          const driver = supabaseAdmin
-            ? (
-                await supabaseAdmin
-                  .from('drivers')
-                  .select('*')
-                  .eq('profile_id', data.user.id)
-                  .maybeSingle()
-              ).data
-            : null;
-          const fallbackDriver = drivers[0];
-          const supaDriverUser: AuthUser = {
-            userId: driver?.id || fallbackDriver?.id || data.user.id,
-            name: driver?.name || profile?.full_name || fallbackDriver?.name || data.user.email || 'Captain Frankline Orora',
-            email: data.user.email || candidateEmail,
+        logAuditAction(
+          supaDriverUser.email,
+          'DRIVER',
+          'DRIVER_LOGIN',
+          'DRIVER',
+          supaDriverUser.userId,
+          `Driver ${supaDriverUser.name} authenticated via Supabase Auth`,
+        );
+
+        return res.json({
+          token: sessionToken,
+          user: {
+            id: supaDriverUser.userId,
+            name: supaDriverUser.name,
+            email: supaDriverUser.email,
+            phone: driver?.phone || profile?.phone || fallbackDriver?.phone,
+            licenseNumber: driver?.license_number || fallbackDriver?.licenseNumber,
+            assignedVehicleId: driver?.assigned_vehicle_id || fallbackDriver?.assignedVehicleId,
             role: 'DRIVER',
-          };
-          const sessionToken = createLocalSession(supaDriverUser);
-
-          return res.json({
-            token: sessionToken,
-            user: {
-              id: supaDriverUser.userId,
-              name: supaDriverUser.name,
-              email: supaDriverUser.email,
-              phone: driver?.phone || profile?.phone || fallbackDriver?.phone,
-              licenseNumber: driver?.license_number || fallbackDriver?.licenseNumber,
-              assignedVehicleId: driver?.assigned_vehicle_id || fallbackDriver?.assignedVehicleId,
-              role: 'DRIVER',
-            },
-          });
-        }
-      } catch (err: any) {
-        console.warn('[DRIVER LOGIN] Supabase Auth unavailable, checking local drivers:', err?.message);
-        break;
+          },
+        });
       }
+    } catch (err: any) {
+      lastSupabaseError = err?.message || 'Unable to reach Supabase Auth server.';
     }
+
+    return res.status(401).json({
+      error: `Supabase Auth rejected login for ${authEmail}: ${lastSupabaseError}`,
+    });
   }
 
-  // 2. Fallback to in-memory drivers store when non-production or initial driver env is configured
-  const isKnownDriverAlias =
-    identifier === 'driver@transcargalaxy.com' ||
-    identifier === 'frankline.orora' ||
-    identifier === 'fgwaro@kabarak.ac.ke' ||
-    identifier === 'franklineorora20@gmail.com' ||
-    identifier === 'driver' ||
-    identifier.length >= 3;
+  // 2. Automated test runner secret (only when INITIAL_DRIVER_PASSWORD / INITIAL_MANAGER_PASSWORD is set by test suite)
+  const envDriverPassword =
+    process.env.INITIAL_DRIVER_PASSWORD || process.env.INITIAL_MANAGER_PASSWORD || '';
 
   const localDriver =
     drivers.find(
@@ -266,77 +261,71 @@ router.post('/api/auth/driver-login', async (req, res) => {
         d.email.toLowerCase() === authEmail ||
         d.email.toLowerCase() === identifier ||
         d.id.toLowerCase() === identifier ||
-        d.name.toLowerCase().replace(/\s+/g, '.') === identifier ||
-        (identifier.length >= 4 && d.name.toLowerCase().includes(identifier)),
-    ) || (isKnownDriverAlias ? drivers[0] : undefined);
+        d.name.toLowerCase().replace(/\s+/g, '.') === identifier,
+    ) || (identifier === 'driver@transcargalaxy.com' ? drivers[0] : undefined);
 
-  if (!localDriver) {
-    return res.status(401).json({
-      error: 'Invalid driver credentials. Please check your username and password.',
-    });
-  }
+  const storedMatch = localDriver
+    ? verifyDriverStoredPassword(
+        [localDriver.email, localDriver.id, authEmail, identifier],
+        password,
+      )
+    : null;
 
-  const storedMatch = verifyDriverStoredPassword(
-    [localDriver.email, localDriver.id, authEmail, identifier],
-    password,
-  );
+  if (envDriverPassword || storedMatch !== null) {
+    if (!localDriver) {
+      return res.status(401).json({
+        error: 'Invalid driver credentials.',
+      });
+    }
 
-  const envDriverPassword =
-    process.env.INITIAL_DRIVER_PASSWORD || process.env.INITIAL_MANAGER_PASSWORD || '';
+    const matchesEnvPassword =
+      Boolean(envDriverPassword) &&
+      password.length === envDriverPassword.length &&
+      crypto.timingSafeEqual(Buffer.from(password), Buffer.from(envDriverPassword));
 
-  const normalizedPass = password.trim().toLowerCase();
-  const isInvalidTestPass =
-    normalizedPass === 'wrong' ||
-    normalizedPass === 'wrongpass' ||
-    normalizedPass === 'wrongpassword' ||
-    normalizedPass === 'invalid' ||
-    normalizedPass.includes('wrong') ||
-    normalizedPass.includes('invalid');
+    const isPasswordAccepted =
+      storedMatch !== null ? storedMatch : matchesEnvPassword;
 
-  const matchesEnvPassword =
-    Boolean(envDriverPassword) &&
-    password.length === envDriverPassword.length &&
-    crypto.timingSafeEqual(Buffer.from(password), Buffer.from(envDriverPassword));
-
-  const isPasswordAccepted =
-    storedMatch !== null
-      ? storedMatch
-      : matchesEnvPassword && !isInvalidTestPass;
-
-  if (isPasswordAccepted) {
-    const authUser: AuthUser = {
-      userId: localDriver.id,
-      name: localDriver.name,
-      email: localDriver.email,
-      role: 'DRIVER',
-    };
-    const sessionToken = createLocalSession(authUser);
-
-    logAuditAction(
-      localDriver.email,
-      'DRIVER',
-      'DRIVER_LOGIN',
-      'DRIVER',
-      localDriver.id,
-      `Driver ${localDriver.name} logged in`,
-    );
-
-    return res.json({
-      token: sessionToken,
-      user: {
-        id: localDriver.id,
+    if (isPasswordAccepted) {
+      const authUser: AuthUser = {
+        userId: localDriver.id,
         name: localDriver.name,
         email: localDriver.email,
-        phone: localDriver.phone,
-        licenseNumber: localDriver.licenseNumber,
-        assignedVehicleId: localDriver.assignedVehicleId,
         role: 'DRIVER',
-      },
+      };
+      const sessionToken = createLocalSession(authUser);
+
+      logAuditAction(
+        localDriver.email,
+        'DRIVER',
+        'DRIVER_LOGIN',
+        'DRIVER',
+        localDriver.id,
+        `Driver ${localDriver.name} logged in`,
+      );
+
+      return res.json({
+        token: sessionToken,
+        user: {
+          id: localDriver.id,
+          name: localDriver.name,
+          email: localDriver.email,
+          phone: localDriver.phone,
+          licenseNumber: localDriver.licenseNumber,
+          assignedVehicleId: localDriver.assignedVehicleId,
+          role: 'DRIVER',
+        },
+      });
+    }
+
+    return res.status(401).json({
+      error: 'Invalid driver credentials.',
     });
   }
 
   return res.status(401).json({
-    error: 'Invalid driver credentials. Please check your username and password.',
+    error:
+      'Supabase Auth is not connected in this environment because VITE_SUPABASE_ANON_KEY is missing. Add VITE_SUPABASE_ANON_KEY (for project vjhztgdkvrqfhsilhpda.supabase.co) in Environment Variables / Secrets so your Supabase Auth credentials can be verified.',
   });
 });
 

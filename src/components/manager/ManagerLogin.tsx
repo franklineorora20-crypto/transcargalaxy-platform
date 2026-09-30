@@ -8,10 +8,24 @@ interface ManagerLoginProps {
 }
 
 export const ManagerLogin: React.FC<ManagerLoginProps> = ({ onLoginSuccess, onCancel }) => {
-  const [email, setEmail] = React.useState('admintranscar');
+  const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [supaStatus, setSupaStatus] = React.useState<{
+    connected: boolean;
+    projectUrl: string;
+    hasAnonKey: boolean;
+  } | null>(null);
+
+  React.useEffect(() => {
+    fetch('/api/auth/supabase-status')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setSupaStatus(data);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,23 +53,38 @@ export const ManagerLogin: React.FC<ManagerLoginProps> = ({ onLoginSuccess, onCa
             Manager Login
           </h2>
           <p className="text-sm text-slate-500">
-            Sign in to access the operations dashboard.
+            Sign in with your Supabase Authentication account.
           </p>
         </div>
+
+        {supaStatus && !supaStatus.connected && (
+          <div className="p-3.5 bg-amber-50 border border-amber-300 text-amber-950 text-xs rounded-xl space-y-1.5">
+            <p className="font-bold">Supabase Auth Key Missing in Environment</p>
+            <p className="leading-relaxed">
+              Project <span className="font-mono font-semibold">vjhztgdkvrqfhsilhpda.supabase.co</span> is linked, but <span className="font-mono font-bold">VITE_SUPABASE_ANON_KEY</span> is not set in AI Studio Environment Variables / Secrets. Copy your <span className="font-mono">anon public</span> key from <strong>Supabase Dashboard → Project Settings → API</strong> into <span className="font-mono">VITE_SUPABASE_ANON_KEY</span> to enable login.
+            </p>
+          </div>
+        )}
+
+        {supaStatus?.connected && (
+          <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-xl text-center">
+            Connected to Supabase Auth ({supaStatus.projectUrl.replace('https://', '')})
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-              Username
+              Supabase Auth Email
             </label>
             <input
               id="manager-email-input"
               type="text"
               required
-              placeholder="admintranscar"
+              placeholder="fgwaro@kabarak.ac.ke"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"
+              className="w-full min-h-[44px] px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"
             />
           </div>
 
@@ -69,7 +98,7 @@ export const ManagerLogin: React.FC<ManagerLoginProps> = ({ onLoginSuccess, onCa
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"
+              className="w-full min-h-[44px] px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"
             />
           </div>
 

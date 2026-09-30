@@ -6,6 +6,7 @@ import {
   supabaseAdmin,
   isSupabaseAdminConfigured,
   getSupabaseProfile,
+  getSupabaseAuthStatus,
   supabaseAuth,
 } from '../../lib/supabaseAdmin';
 import {
@@ -44,7 +45,15 @@ import { createDriverAccount, validDriverPassword } from './driver';
 const router = Router();
 
 // =============================================================
-// MANAGER LOGIN
+// SUPABASE AUTH CONNECTION STATUS (PUBLIC DIAGNOSTIC)
+// =============================================================
+
+router.get('/api/auth/supabase-status', (_req, res) => {
+  res.json(getSupabaseAuthStatus());
+});
+
+// =============================================================
+// MANAGER LOGIN (STRICT SUPABASE AUTH)
 // =============================================================
 
 router.post('/api/auth/manager-login', async (req, res) => {
@@ -59,140 +68,131 @@ router.post('/api/auth/manager-login', async (req, res) => {
     ? identifier
     : `${identifier}@transcarrongai.co.ke`;
 
-  if (!identifier || typeof password !== 'string') {
+  if (!identifier || typeof password !== 'string' || !password.trim()) {
     return res.status(400).json({
-      error: 'Manager username/email and password are required.',
+      error: 'Supabase Auth email and password are required.',
     });
   }
 
-  // 1. Try Supabase Auth if available
+  // 1. When Supabase Auth is connected, ONLY Supabase Auth user credentials are accepted
   if (supabaseAuth) {
-    const candidateEmails = Array.from(
-      new Set(
-        [
-          authEmail,
-          !identifier.includes('@') ? (process.env.INITIAL_MANAGER_EMAIL || '').trim().toLowerCase() : '',
-          !identifier.includes('@') ? 'fgwaro@kabarak.ac.ke' : '',
-          !identifier.includes('@') ? 'franklineorora20@gmail.com' : '',
-          !identifier.includes('@') ? 'manager@transcargalaxy.com' : '',
-        ].filter(Boolean),
-      ),
-    );
+    let lastSupabaseError = 'Invalid Supabase Auth email or password.';
+    try {
+      const { data, error } = await supabaseAuth.auth.signInWithPassword({
+        email: authEmail,
+        password,
+      });
 
-    for (const candidateEmail of candidateEmails) {
-      try {
-        const { data, error } = await supabaseAuth.auth.signInWithPassword({
-          email: candidateEmail,
-          password,
-        });
+      if (error) {
+        lastSupabaseError = error.message || lastSupabaseError;
+      } else if (data?.user && data?.session) {
+        const metadataRole = String(
+          data.user.user_metadata?.role || '',
+        ).toLowerCase();
 
-        if (!error && data?.user && data?.session) {
-          const metadataRole = String(
-            data.user.user_metadata?.role || '',
-          ).toLowerCase();
+        const profile = await getSupabaseProfile(
+          data.session.access_token,
+          data.user.id,
+        );
 
-          const profile = await getSupabaseProfile(
-            data.session.access_token,
-            data.user.id,
-          );
+        const role = metadataRole || String(profile?.role || '').toLowerCase();
 
-          if (metadataRole !== 'driver') {
-            const supaManagerUser: AuthUser = {
-              userId: data.user.id,
-              name:
-                profile?.full_name ||
-                data.user.user_metadata?.full_name ||
-                data.user.email ||
-                'Director Frankline Orora',
-              email: data.user.email || candidateEmail,
-              role: 'MANAGER',
-            };
-            const sessionToken = createLocalSession(supaManagerUser);
-            return res.json({
-              token: sessionToken,
-              user: {
-                id: supaManagerUser.userId,
-                name: supaManagerUser.name,
-                email: supaManagerUser.email,
-                role: 'MANAGER',
-              },
-            });
-          }
+        if (metadataRole === 'driver' || role === 'driver') {
+          return res.status(403).json({
+            error: 'This Supabase account is assigned the driver role and cannot access the Manager Portal.',
+          });
         }
-      } catch (err: any) {
-        console.warn('[MANAGER LOGIN] Supabase Auth connection error; switching to manager operations fallback:', err?.message);
-        break;
+
+        const supaManagerUser: AuthUser = {
+          userId: data.user.id,
+          name:
+            profile?.full_name ||
+            data.user.user_metadata?.full_name ||
+            data.user.email ||
+            authEmail,
+          email: data.user.email || authEmail,
+          role: 'MANAGER',
+        };
+        const sessionToken = createLocalSession(supaManagerUser);
+
+        logAuditAction(
+          supaManagerUser.email,
+          'MANAGER',
+          'MANAGER_LOGIN',
+          'AUTH',
+          supaManagerUser.userId,
+          'Manager authenticated via Supabase Auth',
+        );
+
+        return res.json({
+          token: sessionToken,
+          user: {
+            id: supaManagerUser.userId,
+            name: supaManagerUser.name,
+            email: supaManagerUser.email,
+            role: 'MANAGER',
+          },
+        });
       }
+    } catch (err: any) {
+      lastSupabaseError = err?.message || 'Unable to reach Supabase Auth server.';
     }
+
+    return res.status(401).json({
+      error: `Supabase Auth rejected login for ${authEmail}: ${lastSupabaseError}`,
+    });
   }
 
-  // 2. Manager Fallback Authentication
+  // 2. Automated test runner secret (only when INITIAL_MANAGER_PASSWORD is explicitly injected by test suite)
   const envManagerEmail = (process.env.INITIAL_MANAGER_EMAIL || '').trim().toLowerCase();
   const envManagerPassword = process.env.INITIAL_MANAGER_PASSWORD || '';
 
-  const isRecognizedManagerUser =
-    (envManagerEmail && (identifier === envManagerEmail || authEmail === envManagerEmail)) ||
-    identifier === 'admintranscar' ||
-    identifier === 'admin' ||
-    identifier === 'manager' ||
-    identifier === 'director' ||
-    identifier === 'frankline' ||
-    identifier === 'fgwaro@kabarak.ac.ke' ||
-    identifier === 'franklineorora20@gmail.com' ||
-    identifier === 'manager@transcargalaxy.com' ||
-    authEmail === 'manager@transcarrongai.co.ke' ||
-    authEmail === 'admin@transcarrongai.co.ke' ||
-    authEmail === 'director@transcarrongai.co.ke' ||
-    identifier.length >= 3;
+  if (envManagerPassword) {
+    const isRecognizedManagerUser =
+      !envManagerEmail || identifier === envManagerEmail || authEmail === envManagerEmail;
 
-  const normalizedPass = password.trim().toLowerCase();
-  const isInvalidTestPass =
-    normalizedPass === 'wrong' ||
-    normalizedPass === 'wrongpass' ||
-    normalizedPass === 'wrongpassword' ||
-    normalizedPass === 'invalid' ||
-    normalizedPass.includes('wrong') ||
-    normalizedPass.includes('invalid');
+    const matchesEnvPassword =
+      password.length === envManagerPassword.length &&
+      crypto.timingSafeEqual(Buffer.from(password), Buffer.from(envManagerPassword));
 
-  const matchesEnvPassword =
-    Boolean(envManagerPassword) &&
-    password.length === envManagerPassword.length &&
-    crypto.timingSafeEqual(Buffer.from(password), Buffer.from(envManagerPassword));
-
-  const isValidPassword = matchesEnvPassword && !isInvalidTestPass;
-
-  if (isRecognizedManagerUser && isValidPassword) {
-    const managerUser: AuthUser = {
-      userId: 'mgr-transcar-frankline',
-      name: 'Director Frankline Orora',
-      email: authEmail,
-      role: 'MANAGER',
-    };
-
-    const sessionToken = createLocalSession(managerUser);
-
-    logAuditAction(
-      managerUser.email,
-      'MANAGER',
-      'MANAGER_LOGIN',
-      'AUTH',
-      managerUser.userId,
-      'Manager authenticated successfully via operations dashboard',
-    );
-
-    return res.json({
-      token: sessionToken,
-      user: {
-        id: managerUser.userId,
-        name: managerUser.name,
-        email: managerUser.email,
+    if (isRecognizedManagerUser && matchesEnvPassword) {
+      const managerUser: AuthUser = {
+        userId: 'mgr-transcar-frankline',
+        name: 'Director Frankline Orora',
+        email: authEmail,
         role: 'MANAGER',
-      },
+      };
+
+      const sessionToken = createLocalSession(managerUser);
+
+      logAuditAction(
+        managerUser.email,
+        'MANAGER',
+        'MANAGER_LOGIN',
+        'AUTH',
+        managerUser.userId,
+        'Manager authenticated via configured environment secret',
+      );
+
+      return res.json({
+        token: sessionToken,
+        user: {
+          id: managerUser.userId,
+          name: managerUser.name,
+          email: managerUser.email,
+          role: 'MANAGER',
+        },
+      });
+    }
+
+    return res.status(401).json({
+      error: 'Invalid manager credentials.',
     });
   }
 
   return res.status(401).json({
-    error: 'Invalid manager credentials. Please check your username and password.',
+    error:
+      'Supabase Auth is not connected in this environment because VITE_SUPABASE_ANON_KEY is missing. Add VITE_SUPABASE_ANON_KEY (for project vjhztgdkvrqfhsilhpda.supabase.co) in Environment Variables / Secrets so your Supabase Auth credentials can be verified.',
   });
 });
 
