@@ -102,8 +102,6 @@ export default function App() {
           const tokenPart = decodeURIComponent(rawPath.slice('/ticket/verify/'.length).replace(/\/$/, ''));
           if (tokenPart) {
             setInitialVerifyToken(tokenPart);
-            setDriverData({ id: 'drv-frankline', name: 'Frankline Orora', licenseNumber: 'DL-FRK8492', email: 'franklineorora20@gmail.com' });
-            setUserRole('DRIVER');
             setCurrentView('driver-portal');
           }
         } else if (path.startsWith('/booking/') && path.length > 9) {
@@ -155,6 +153,10 @@ export default function App() {
           setCurrentView('fleet');
         } else if (path === '/services') {
           setCurrentView('services');
+        } else if (path === '/driver/login' || path === '/driver-login') {
+          setCurrentView('driver-login');
+        } else if (path === '/manager/login' || path === '/manager-login') {
+          setCurrentView('manager-login');
         } else if (path === '/safety') {
           setCurrentView('safety');
         }
@@ -285,10 +287,6 @@ export default function App() {
               onDone={() => setCurrentView('home')}
               onTrackBus={handleTrackBusFromRef}
               onOpenDriverPortal={(verifyToken?: string, tripId?: string) => {
-                if (!driverData) {
-                  setDriverData({ id: 'drv-frankline', name: 'Frankline Orora', licenseNumber: 'DL-FRK8492' });
-                  setUserRole('DRIVER');
-                }
                 if (verifyToken) setInitialVerifyToken(verifyToken);
                 if (tripId) setInitialVerifyTripId(tripId);
                 setCurrentView('driver-portal');
@@ -308,10 +306,6 @@ export default function App() {
               onBackToHome={() => setCurrentView('home')}
               onTrackBus={handleTrackBusFromRef}
               onOpenDriverPortal={(verifyToken?: string, tripId?: string) => {
-                if (!driverData) {
-                  setDriverData({ id: 'drv-frankline', name: 'Frankline Orora', licenseNumber: 'DL-FRK8492' });
-                  setUserRole('DRIVER');
-                }
                 if (verifyToken) setInitialVerifyToken(verifyToken);
                 if (tripId) setInitialVerifyTripId(tripId);
                 setCurrentView('driver-portal');
@@ -343,16 +337,23 @@ export default function App() {
           )}
 
           {currentView === 'driver-portal' && (
-            <DriverPortal
-              driverData={driverData}
-              onLogout={handleLogout}
-              initialVerifyToken={initialVerifyToken}
-              initialVerifyTripId={initialVerifyTripId}
-              onClearInitialVerify={() => {
-                setInitialVerifyToken(null);
-                setInitialVerifyTripId(null);
-              }}
-            />
+            userRole === 'DRIVER' || userRole === 'MANAGER' ? (
+              <DriverPortal
+                driverData={driverData}
+                onLogout={handleLogout}
+                initialVerifyToken={initialVerifyToken}
+                initialVerifyTripId={initialVerifyTripId}
+                onClearInitialVerify={() => {
+                  setInitialVerifyToken(null);
+                  setInitialVerifyTripId(null);
+                }}
+              />
+            ) : (
+              <DriverLogin
+                onLoginSuccess={handleDriverLoginSuccess}
+                onCancel={() => setCurrentView('home')}
+              />
+            )
           )}
 
           {currentView === 'manager-login' && (
@@ -363,7 +364,14 @@ export default function App() {
           )}
 
           {currentView === 'manager-portal' && (
-            <ManagerPortal managerData={managerData} onLogout={handleLogout} />
+            userRole === 'MANAGER' ? (
+              <ManagerPortal managerData={managerData} onLogout={handleLogout} />
+            ) : (
+              <ManagerLogin
+                onLoginSuccess={handleManagerLoginSuccess}
+                onCancel={() => setCurrentView('home')}
+              />
+            )
           )}
         </Suspense>
       </main>

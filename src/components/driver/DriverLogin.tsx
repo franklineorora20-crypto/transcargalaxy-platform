@@ -111,22 +111,15 @@ export const DriverLogin: React.FC<DriverLoginProps> = ({ onLoginSuccess, onCanc
           </p>
         </div>
 
-        {/* Quick Driver Profile Preset */}
+        {/* Active Roster Captain Info */}
         <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 flex items-center justify-between">
           <div>
             <span className="font-black block">Active Roster Captain:</span>
             <span className="font-bold text-amber-800">Captain Frankline Orora (KDE 416Q)</span>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              setEmail('frankline.orora');
-              setPassword('Transcar@2026');
-            }}
-            className="px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-black font-black text-[11px] rounded-lg border border-black shadow-sm transition-all cursor-pointer"
-          >
-            Fill Demo Pass
-          </button>
+          <span className="px-2.5 py-1 bg-amber-400/30 text-amber-950 font-black text-[11px] rounded-lg border border-amber-400">
+            Authorized Crew
+          </span>
         </div>
 
         {/* Standard Credentials Form */}

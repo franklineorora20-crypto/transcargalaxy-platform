@@ -1,36 +1,20 @@
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
-import { Booking, Passenger } from '../types';
+import { Booking } from '../types';
+import {
+  getTicketId,
+  getTicketQrToken,
+  getTicketVerificationUrl,
+  formatTicketIssueDate,
+  formatTravelDateLong,
+  formatDepartureTime,
+  formatTicketRouteDisplay,
+  TRANSCAR_COMPANY_NAME,
+  PDF_TICKET_HEADER_CONTACT,
+  PDF_BOARDING_INSTRUCTIONS,
+} from './ticketHelpers';
 
-export function getTicketId(booking: Booking, passenger?: Passenger): string {
-  if (passenger?.ticketId) return passenger.ticketId;
-  if (booking.passengers?.length === 1 && booking.passengers[0]?.ticketId) {
-    return booking.passengers[0].ticketId;
-  }
-  if (booking.ticketId) return booking.ticketId;
-  return booking.bookingReference.replace(/^TRP-/i, 'TCR-');
-}
-
-export function getTicketQrToken(booking: Booking, passenger?: Passenger): string {
-  if (passenger?.qrToken) return passenger.qrToken;
-  if (booking.passengers?.length === 1 && booking.passengers[0]?.qrToken) {
-    return booking.passengers[0].qrToken;
-  }
-  if (booking.qrToken) return booking.qrToken;
-  return getTicketId(booking, passenger);
-}
-
-export function getTicketVerificationUrl(
-  booking: Booking,
-  passenger?: Passenger,
-): string {
-  const origin =
-    typeof window !== 'undefined' && window.location?.origin
-      ? window.location.origin
-      : 'https://transcar.co.ke';
-  const token = getTicketQrToken(booking, passenger);
-  return `${origin}/ticket/verify/${encodeURIComponent(token)}`;
-}
+export { getTicketId, getTicketQrToken, getTicketVerificationUrl };
 
 export async function generateTicketPDF(booking: Booking, passengerIndex = 0) {
   const doc = new jsPDF({
@@ -47,20 +31,9 @@ export async function generateTicketPDF(booking: Booking, passengerIndex = 0) {
 
   const targetPax = booking.passengers[passengerIndex] || booking.passengers[0];
   const ticketNumber = getTicketId(booking, targetPax);
-  const issueDate = new Date(booking.createdAt).toLocaleString('en-KE', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
-  const travelDateStr = new Date(booking.departureTime).toLocaleDateString('en-KE', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-  const departureTimeStr = new Date(booking.departureTime).toLocaleTimeString('en-KE', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const issueDate = formatTicketIssueDate(booking.createdAt, 'medium');
+  const travelDateStr = formatTravelDateLong(booking.departureTime);
+  const departureTimeStr = formatDepartureTime(booking.departureTime);
 
   // Ticket Border
   doc.setDrawColor(203, 213, 225);
@@ -80,7 +53,7 @@ export async function generateTicketPDF(booking: Booking, passengerIndex = 0) {
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(20);
-  doc.text('TRANSCAR RONGAI LTD.', 23, 30);
+  doc.text(TRANSCAR_COMPANY_NAME, 23, 30);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
@@ -89,7 +62,7 @@ export async function generateTicketPDF(booking: Booking, passengerIndex = 0) {
 
   doc.setTextColor(203, 213, 225);
   doc.setFontSize(8);
-  doc.text('Rongai Terminal: Next to Isalu Center, Ongata Rongai | Tel: +254 724 626199 / +254 717 747626', 23, 44);
+  doc.text(PDF_TICKET_HEADER_CONTACT, 23, 44);
 
   // Ticket Status Badge
   if (booking.paymentStatus === 'PAID') {
@@ -152,7 +125,7 @@ export async function generateTicketPDF(booking: Booking, passengerIndex = 0) {
   doc.setTextColor(...darkColor);
   doc.setFontSize(13);
   doc.setFont('helvetica', 'bold');
-  doc.text(`${booking.routeOrigin} -> ${booking.routeDestination}`, 23, 103);
+  doc.text(formatTicketRouteDisplay(booking.routeOrigin, booking.routeDestination, '->'), 23, 103);
 
   doc.setFontSize(10.5);
   doc.text(travelDateStr, 110, 103);
@@ -282,21 +255,9 @@ export async function generateTicketPDF(booking: Booking, passengerIndex = 0) {
   doc.setTextColor(...grayColor);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.text(
-    '1. Please arrive at the boarding point at least 30 minutes prior to scheduled departure.',
-    23,
-    252
-  );
-  doc.text(
-    '2. Present this E-Ticket (printed, screenshot, or on mobile) and your National ID to the driver for QR verification.',
-    23,
-    257
-  );
-  doc.text(
-    '3. Cryptographically secured by TransCar Rongai Ltd. Each QR token allows one-time boarding verification.',
-    23,
-    262
-  );
+  doc.text(PDF_BOARDING_INSTRUCTIONS[0], 23, 252);
+  doc.text(PDF_BOARDING_INSTRUCTIONS[1], 23, 257);
+  doc.text(PDF_BOARDING_INSTRUCTIONS[2], 23, 262);
 
   doc.save(`TransCar-Ticket-${ticketNumber}.pdf`);
 }

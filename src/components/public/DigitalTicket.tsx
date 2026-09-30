@@ -22,10 +22,20 @@ import {
 import {
   generateTicketPDF,
   downloadTicketQrPng,
+} from '../../utils/pdfTicket';
+import {
   getTicketId,
   getTicketQrToken,
   getTicketVerificationUrl,
-} from '../../utils/pdfTicket';
+  formatTravelDateLong,
+  formatDepartureTime,
+  formatTicketIssueDate,
+  formatTicketRouteDisplay,
+  involvesRongaiTerminal,
+  RONGAI_TERMINAL_SUMMARY,
+  getBoardingTerminalLabel,
+  getBookingBoardingSummary,
+} from '../../utils/ticketHelpers';
 import { MobileBoardingPassModal } from './MobileBoardingPassModal';
 import { ApiService } from '../../services/api';
 
@@ -171,24 +181,11 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
     await generateTicketPDF(booking, selectedPaxIndex);
   };
 
-  const travelDateFormatted = new Date(
-    booking.departureTime,
-  ).toLocaleDateString('en-KE', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const travelDateFormatted = formatTravelDateLong(booking.departureTime);
 
-  const departureTimeFormatted = new Date(
-    booking.departureTime,
-  ).toLocaleTimeString('en-KE', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const departureTimeFormatted = formatDepartureTime(booking.departureTime);
 
-  const anyBoarded = booking.passengers.some((p) => p.hasBoarded);
-  const allBoarded = booking.passengers.every((p) => p.hasBoarded);
+  const { anyBoarded, allBoarded } = getBookingBoardingSummary(booking.passengers);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -395,11 +392,11 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
                     <MapPin className="w-3 h-3 text-amber-600" /> ROUTE
                   </span>
                   <p className="text-xl sm:text-2xl font-black text-black mt-0.5">
-                    {booking.routeOrigin} → {booking.routeDestination}
+                    {formatTicketRouteDisplay(booking.routeOrigin, booking.routeDestination, '→')}
                   </p>
-                  {(booking.routeOrigin === 'Rongai' || booking.routeDestination === 'Rongai') && (
+                  {involvesRongaiTerminal(booking.routeOrigin, booking.routeDestination) && (
                     <p className="text-[11px] font-bold text-neutral-600 mt-0.5">
-                      Rongai Terminal: Next to Isalu Center, Ongata Rongai
+                      {RONGAI_TERMINAL_SUMMARY}
                     </p>
                   )}
                 </div>
@@ -512,7 +509,7 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
                                 <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                                 BOARDED
                                 {p.boardedAt
-                                  ? ` (${new Date(p.boardedAt).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })})`
+                                  ? ` (${formatDepartureTime(p.boardedAt)})`
                                   : ''}
                               </span>
                             ) : (
@@ -628,7 +625,7 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
                 <span>Cryptographically Secured Pass</span>
               </div>
               <p className="text-[11px] text-neutral-600 leading-relaxed font-medium">
-                • Report at the terminal ({booking.routeOrigin === 'Rongai' ? 'Rongai — Next to Isalu Center' : `${booking.routeOrigin} Stage`}) 30 minutes before departure.
+                • Report at the terminal ({getBoardingTerminalLabel(booking.routeOrigin)}) 30 minutes before departure.
                 <br />• QR token:{' '}
                 <span className="font-mono text-[10px]">
                   {qrToken.slice(0, 18)}...
@@ -642,7 +639,7 @@ export const DigitalTicket: React.FC<DigitalTicketProps> = ({
         {/* Ticket Footer */}
         <div className="bg-neutral-900 px-6 py-3.5 border-t-2 border-black flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-neutral-400 font-medium">
           <span>
-            Issued on: {new Date(booking.createdAt).toLocaleString('en-KE')}
+            Issued on: {formatTicketIssueDate(booking.createdAt)}
           </span>
           <span className="text-amber-400 font-bold">
             TRANSCAR RONGAI LTD. • 24/7 Dispatch Hotline: +254 724 626199 / +254
