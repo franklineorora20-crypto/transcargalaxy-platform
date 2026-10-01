@@ -73,11 +73,9 @@ const searchLimiter = rateLimit({
 import {
   supabaseAdmin,
   isSupabaseAdminConfigured,
-} from './src/services/supabaseAdmin';
-
-import {
   getSupabaseProfile,
   getSupabaseUser,
+  getSupabaseAuthStatus,
   logSupabaseConfigurationWarning,
   supabaseAuth,
 } from './lib/supabaseAdmin';
@@ -2747,6 +2745,14 @@ app.post(
   },
 );
 
+
+// =============================================================
+// SUPABASE AUTH CONNECTION STATUS (PUBLIC DIAGNOSTIC)
+// =============================================================
+
+app.get('/api/auth/supabase-status', (_req, res) => {
+  res.json(getSupabaseAuthStatus());
+});
 
 // =============================================================
 // MANAGER LOGIN
