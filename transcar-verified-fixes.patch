@@ -1,0 +1,484 @@
+diff --git a/server.ts b/server.ts
+--- a/server.ts
++++ b/server.ts
+@@ -709,6 +709,9 @@ interface AuthUser {
+ const localSessions = new Map<string, { user: AuthUser; expiresAt: number }>();
+ 
+ function createLocalSession(user: AuthUser): string {
++  if (process.env.NODE_ENV === 'production') {
++    throw new Error('Local fallback session creation is strictly disabled in production.');
++  }
+   const prefix = user.role === 'DRIVER' ? 'tc_drv_sess_' : 'tc_mgr_sess_';
+   const token = `${prefix}${crypto.randomBytes(32).toString('hex')}`;
+   localSessions.set(token, {
+@@ -718,6 +721,9 @@ function createLocalSession(user: AuthUser): string {
+ }
+ 
+ function getLocalSessionUser(token: string): AuthUser | null {
++  if (process.env.NODE_ENV === 'production') {
++    return null;
++  }
+   const session = localSessions.get(token);
+   if (!session) return null;
+   if (Date.now() > session.expiresAt) {
+@@ -2441,17 +2447,37 @@ app.post(
+           }
+         }
+       } catch (err: any) {
+-        console.warn('[DRIVER LOGIN] Supabase Auth unavailable, checking local drivers:', err?.message);
++        console.warn('[DRIVER LOGIN] Supabase Auth error:', err?.message);
++        if (process.env.NODE_ENV === 'production') {
++          return res.status(401).json({
++            error: 'Invalid driver credentials. Please check your username and password.',
++          });
++        }
+       }
+     }
+ 
+-    // 2. Fallback to in-memory drivers store
++    // In production, strictly reject any fallback authentication
++    if (process.env.NODE_ENV === 'production') {
++      return res.status(401).json({
++        error: 'Invalid driver credentials. Please check your username and password.',
++      });
++    }
++
++    // 2. Development-only Fallback to in-memory drivers store
+     const localDriver = drivers.find(
+       (d) =>
+         d.email.toLowerCase() === authEmail ||
+         d.email.toLowerCase() === identifier ||
+         d.name.toLowerCase().includes(identifier) ||
+         d.id.toLowerCase() === identifier ||
+         (d.phone && d.phone.replace(/[^0-9]/g, '').includes(identifier.replace(/[^0-9]/g, ''))),
+-    ) || drivers[0]; // default to first driver if valid credential provided
++    );
++
++    const isDriverDevPassword =
++      password === 'Transcar@2026' ||
++      password === 'TransCar@2026!' ||
++      password === 'Driver@2026!' ||
++      password === '123456' ||
++      password === 'password' ||
++      (localDriver && (password === localDriver.licenseNumber || password === localDriver.id));
+ 
+-    if (localDriver && password.length >= 4) {
++    if (localDriver && isDriverDevPassword) {
+       const authUser: AuthUser = {
+         userId: localDriver.id,
+         name: localDriver.name,
+@@ -2469,7 +2495,7 @@ app.post(
+         'DRIVER_LOGIN',
+         'DRIVER',
+         localDriver.id,
+-        `Driver ${localDriver.name} logged in`,
++        `Driver ${localDriver.name} logged in (Development Fallback)`,
+       );
+ 
+       return res.json({
+@@ -2591,11 +2617,18 @@ async function createDriverAccount(input: {
+         return { user, dbDriver };
+       }
+     } catch (err) {
+-      console.warn('Supabase driver provisioning failed, using local registration:', err);
++      console.warn('Supabase driver provisioning failed:', err);
++      if (process.env.NODE_ENV === 'production') {
++        throw new Error('Driver account registration failed in Supabase Auth service.');
++      }
+     }
+   }
+ 
+-  // Local fallback registration
++  if (process.env.NODE_ENV === 'production') {
++    throw new Error('Supabase Auth service is required for driver account creation in production.');
++  }
++
++  // Local fallback registration (Development only)
+   const fallbackId = `drv-${Date.now()}`;
+   return {
+     user: { id: fallbackId, email },
+@@ -2806,11 +2839,23 @@ app.post(
+           }
+         }
+       } catch (err: any) {
+-        console.warn('[MANAGER LOGIN] Supabase Auth connection error; switching to manager operations fallback:', err?.message);
++        console.warn('[MANAGER LOGIN] Supabase Auth error:', err?.message);
++        if (process.env.NODE_ENV === 'production') {
++          return res.status(401).json({
++            error: 'Invalid manager credentials. Please check your username and password.',
++          });
++        }
+       }
+     }
+ 
+-    // 2. Manager Fallback Authentication
++    // In production, strictly reject any fallback authentication
++    if (process.env.NODE_ENV === 'production') {
++      return res.status(401).json({
++        error: 'Invalid manager credentials. Please check your username and password.',
++      });
++    }
++
++    // 2. Development-only Manager Fallback Authentication
+     const envManagerEmail = (process.env.INITIAL_MANAGER_EMAIL || '').trim().toLowerCase();
+     const envManagerPassword = process.env.INITIAL_MANAGER_PASSWORD;
+ 
+@@ -2851,19 +2896,15 @@ app.post(
+       authEmail === 'manager@transcarrongai.co.ke' ||
+       authEmail === 'admin@transcarrongai.co.ke' ||
+       authEmail === 'director@transcarrongai.co.ke' ||
+-      (envManagerEmail && (identifier === envManagerEmail || authEmail === envManagerEmail)) ||
+-      identifier.includes('admin') ||
+-      identifier.includes('manager');
++      (envManagerEmail && (identifier === envManagerEmail || authEmail === envManagerEmail));
+ 
+     const isValidPassword =
+       (envManagerPassword && password === envManagerPassword) ||
+       password === 'TransCar@2026!' ||
+       password === 'Admin@2026!' ||
+       password === 'Manager@2026!' ||
+       password === 'Director@2026!' ||
+-      password === 'admintranscar' ||
+-      password === 'admin123' ||
+-      password === 'password' ||
+-      (isRecognizedManagerUser && password.length >= 4);
++      password === 'admintranscar';
+ 
+     if (isRecognizedManagerUser && isValidPassword) {
+       const managerUser: AuthUser = {
+@@ -2854,7 +2895,7 @@ app.post(
+         'MANAGER_LOGIN',
+         'AUTH',
+         managerUser.userId,
+-        'Manager authenticated successfully via operations dashboard',
++        'Manager authenticated successfully via development operations fallback',
+       );
+ 
+       return res.json({
+diff --git a/src/components/manager/ManagerPortal.tsx b/src/components/manager/ManagerPortal.tsx
+--- a/src/components/manager/ManagerPortal.tsx
++++ b/src/components/manager/ManagerPortal.tsx
+@@ -2123,7 +2123,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({
+                   },
+                   {
+                     key: 'EXECUTIVE',
+-                    label: `Executive Shuttles (${vehicles.filter((v) => v.type === 'EXECUTIVE_SHUTTLE').length})`,
++                    label: `Executive Buses (${vehicles.filter((v) => v.type === 'EXECUTIVE_BUS').length})`,
+                   },
+                 ].map((tab) => (
+                   <button
+@@ -2167,7 +2167,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({
+                   if (fleetFilter === 'ROADWORTHY') return v.status === 'AVAILABLE' || v.status === 'ASSIGNED' || v.status === 'ON_TRIP';
+                   if (fleetFilter === 'MAINTENANCE') return v.status === 'MAINTENANCE';
+                   if (fleetFilter === 'LUXURY') return v.type === 'LUXURY_COACH';
+-                  if (fleetFilter === 'EXECUTIVE') return v.type === 'EXECUTIVE_SHUTTLE';
++                  if (fleetFilter === 'EXECUTIVE') return v.type === 'EXECUTIVE_BUS';
+                   return true;
+                 })
+                 .filter((v) => {
+diff --git a/src/components/layout/Navbar.tsx b/src/components/layout/Navbar.tsx
+--- a/src/components/layout/Navbar.tsx
++++ b/src/components/layout/Navbar.tsx
+@@ -1,6 +1,8 @@
+-import React from 'react';
+-import { Menu } from 'lucide-react';
++import React, { useState } from 'react';
++import { Menu, X } from 'lucide-react';
+ import { BrandName } from '../common/BrandName';
++import { PWAInstallButton } from '../common/PWAInstallButton';
++import { MobileMenuDropdown } from '../common/MobileMenuDropdown';
+ 
+ interface NavbarProps {
+   currentView: string;
+@@ -20,7 +22,14 @@ export const Navbar: React.FC<NavbarProps> = ({
+   driverName,
+   managerName,
+ }) => {
++  const [isMenuOpen, setIsMenuOpen] = useState(false);
++
++  const handleNavigate = (view: string) => {
++    setIsMenuOpen(false);
++    setCurrentView(view);
++  };
++
+   return (
+-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 transition-colors">
++    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 transition-colors relative">
+       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+         <div className="flex items-center justify-between h-14 sm:h-16 gap-3">
+           {/* Top Bar Left: Logo Only */}
+@@ -28,7 +37,7 @@ export const Navbar: React.FC<NavbarProps> = ({
+             id="brand-logo-btn"
+             type="button"
+-            onClick={() => setCurrentView('home')}
++            onClick={() => handleNavigate('home')}
+             className="flex items-center text-left group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-xl py-1 px-1 -ml-1 cursor-pointer shrink-0"
+           >
+             <BrandName className="font-extrabold text-base sm:text-lg tracking-tight text-slate-950" />
+@@ -36,25 +45,35 @@ export const Navbar: React.FC<NavbarProps> = ({
+ 
+           {/* Top Bar Right: PWAInstallButton ONLY + 1 Hamburger Icon */}
+           <div className="flex items-center gap-2">
+             <PWAInstallButton variant="header" />
+ 
+             {/* Hamburger Menu Toggle Button (min 44x44px touch target) */}
+             <button
+               id="main-hamburger-menu-btn"
+               type="button"
+               aria-label="Toggle navigation menu"
++              aria-expanded={isMenuOpen}
++              onClick={() => setIsMenuOpen((prev) => !prev)}
+               className="min-h-[44px] min-w-[44px] p-2.5 rounded-xl text-slate-800 hover:text-slate-950 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer flex items-center justify-center touch-manipulation focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+             >
+-              <Menu className="w-5 h-5" />
++              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+             </button>
+           </div>
+         </div>
+       </div>
++
++      {/* Navigation Dropdown Component */}
++      <MobileMenuDropdown
++        isOpen={isMenuOpen}
++        onClose={() => setIsMenuOpen(false)}
++        onNavigate={handleNavigate}
++        currentView={currentView}
++        userRole={userRole}
++        onLogout={onLogout}
++        driverName={driverName}
++        managerName={managerName}
++      />
+     </header>
+   );
+ };
+diff --git a/src/components/common/MobileMenuDropdown.tsx b/src/components/common/MobileMenuDropdown.tsx
+new file mode 100644
+--- /dev/null
++++ b/src/components/common/MobileMenuDropdown.tsx
+@@ -0,0 +1,228 @@
++import React, { useEffect, useRef } from 'react';
++import {
++  MapPin,
++  Search,
++  Navigation,
++  PhoneCall,
++  Bus,
++  Shield,
++  Sparkles,
++  Info,
++  Lock,
++  UserCheck,
++  LogOut,
++  ChevronRight,
++} from 'lucide-react';
++
++interface MobileMenuDropdownProps {
++  isOpen: boolean;
++  onClose: () => void;
++  onNavigate: (view: string) => void;
++  currentView: string;
++  userRole: 'CUSTOMER_PUBLIC' | 'DRIVER' | 'MANAGER';
++  onLogout: () => void;
++  driverName?: string;
++  managerName?: string;
++}
++
++export const MobileMenuDropdown: React.FC<MobileMenuDropdownProps> = ({
++  isOpen,
++  onClose,
++  onNavigate,
++  currentView,
++  userRole,
++  onLogout,
++  driverName,
++  managerName,
++}) => {
++  const dropdownRef = useRef<HTMLDivElement>(null);
++
++  // Close on outside click
++  useEffect(() => {
++    const handleClickOutside = (event: MouseEvent) => {
++      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
++        onClose();
++      }
++    };
++    if (isOpen) {
++      document.addEventListener('mousedown', handleClickOutside);
++    }
++    return () => {
++      document.removeEventListener('mousedown', handleClickOutside);
++    };
++  }, [isOpen, onClose]);
++
++  // Prevent background scroll on mobile when open
++  useEffect(() => {
++    if (isOpen && window.innerWidth < 768) {
++      document.body.style.overflow = 'hidden';
++    } else {
++      document.body.style.overflow = '';
++    }
++    return () => {
++      document.body.style.overflow = '';
++    };
++  }, [isOpen]);
++
++  if (!isOpen) return null;
++
++  const handleLinkClick = (view: string) => {
++    onNavigate(view);
++    onClose();
++  };
++
++  const handleContactClick = () => {
++    onClose();
++    const footerEl = document.querySelector('footer');
++    if (footerEl) {
++      footerEl.scrollIntoView({ behavior: 'smooth' });
++    } else {
++      window.location.href = 'tel:+254724626199';
++    }
++  };
++
++  const navLinks = [
++    { id: 'routes', label: 'Routes', icon: MapPin, action: () => handleLinkClick('routes') },
++    { id: 'search', label: 'Book', icon: Search, action: () => handleLinkClick('search') },
++    { id: 'tracking', label: 'Track', icon: Navigation, action: () => handleLinkClick('tracking') },
++    { id: 'contact', label: 'Contact', icon: PhoneCall, action: handleContactClick },
++    { id: 'fleet', label: 'Fleet', icon: Bus, action: () => handleLinkClick('fleet') },
++    { id: 'safety', label: 'Safety', icon: Shield, action: () => handleLinkClick('safety') },
++    { id: 'services', label: 'Services', icon: Sparkles, action: () => handleLinkClick('services') },
++    { id: 'about', label: 'About', icon: Info, action: () => handleLinkClick('about') },
++  ];
++
++  return (
++    <>
++      {/* Backdrop */}
++      <div
++        className="fixed inset-0 bg-black/20 z-40 transition-opacity animate-in fade-in duration-150"
++        onClick={onClose}
++        aria-hidden="true"
++      />
++
++      {/* Dropdown Container */}
++      <div
++        ref={dropdownRef}
++        role="dialog"
++        aria-modal="true"
++        aria-label="Site Navigation Menu"
++        className={`
++          z-50 bg-white shadow-xl border border-slate-200 transition-all duration-150
++          /* Mobile full menu layout */
++          fixed inset-0 top-14 sm:top-16 w-full h-[calc(100vh-56px)] sm:h-[calc(100vh-64px)] overflow-y-auto p-4 pb-28
++          /* Desktop compact dropdown layout */
++          md:absolute md:right-4 lg:md:right-8 md:top-full md:mt-2 md:w-[280px] md:max-w-[calc(100vw-32px)] md:h-auto md:max-h-[85vh] md:rounded-2xl md:p-2 md:shadow-xl
++        `}
++      >
++        {/* Navigation Section */}
++        <div className="space-y-1">
++          <div className="px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
++            Navigation
++          </div>
++
++          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-1">
++            {navLinks.map((item) => {
++              const Icon = item.icon;
++              const isActive = currentView === item.id || (item.id === 'search' && currentView === 'booking');
++              return (
++                <button
++                  key={item.id}
++                  type="button"
++                  onClick={item.action}
++                  className={`
++                    w-full min-h-[44px] px-4 py-3 rounded-xl text-left text-sm font-bold flex items-center justify-between transition-colors cursor-pointer touch-manipulation
++                    ${
++                      isActive
++                        ? 'bg-slate-950 text-amber-400 font-extrabold shadow-sm'
++                        : 'text-slate-800 hover:bg-slate-50 active:bg-slate-100'
++                    }
++                  `}
++                >
++                  <div className="flex items-center gap-3">
++                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-amber-400' : 'text-amber-500'}`} />
++                    <span>{item.label}</span>
++                  </div>
++                  <ChevronRight className={`w-4 h-4 opacity-40 shrink-0 ${isActive ? 'text-amber-400' : 'text-slate-400'}`} />
++                </button>
++              );
++            })}
++          </div>
++        </div>
++
++        {/* Staff Access Section */}
++        <div className="mt-3 pt-3 border-t border-slate-100 space-y-1.5">
++          <div className="px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
++            Staff Access
++          </div>
++
++          {userRole !== 'CUSTOMER_PUBLIC' ? (
++            <div className="p-3 bg-slate-950 text-white rounded-xl space-y-2.5">
++              <div className="flex items-center justify-between">
++                <div>
++                  <span className="text-xs font-bold text-amber-400 block">
++                    {userRole === 'DRIVER' ? 'Driver Portal Active' : 'Manager Portal Active'}
++                  </span>
++                  <span className="text-[11px] text-slate-300">
++                    {userRole === 'DRIVER' ? driverName || 'Driver' : managerName || 'Manager'}
++                  </span>
++                </div>
++              </div>
++
++              <div className="grid grid-cols-2 gap-2 pt-1">
++                <button
++                  type="button"
++                  onClick={() => handleLinkClick(userRole === 'DRIVER' ? 'driver-portal' : 'manager-portal')}
++                  className="craft-btn-amber text-xs py-2 px-2.5 font-bold min-h-[44px] flex items-center justify-center cursor-pointer"
++                >
++                  <span>Open Portal</span>
++                </button>
++                <button
++                  type="button"
++                  onClick={() => {
++                    onLogout();
++                    onClose();
++                  }}
++                  className="craft-btn-secondary text-xs py-2 px-2.5 text-red-500 border-slate-800 bg-slate-900 hover:bg-red-500/10 min-h-[44px] flex items-center justify-center gap-1.5 cursor-pointer"
++                >
++                  <LogOut className="w-3.5 h-3.5" />
++                  <span>Sign Out</span>
++                </button>
++              </div>
++            </div>
++          ) : (
++            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-1.5">
++              <button
++                type="button"
++                id="menu-manager-login-btn"
++                onClick={() => handleLinkClick('manager-login')}
++                className="w-full min-h-[44px] px-4 py-3 rounded-xl text-left text-sm font-semibold text-slate-800 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 flex items-center justify-between transition-colors cursor-pointer touch-manipulation"
++              >
++                <div className="flex items-center gap-3">
++                  <Lock className="w-4 h-4 text-slate-700 shrink-0" />
++                  <span>Manager Login</span>
++                </div>
++                <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
++              </button>
++
++              <button
++                type="button"
++                id="menu-driver-login-btn"
++                onClick={() => handleLinkClick('driver-login')}
++                className="w-full min-h-[44px] px-4 py-3 rounded-xl text-left text-sm font-semibold text-slate-800 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 flex items-center justify-between transition-colors cursor-pointer touch-manipulation"
++              >
++                <div className="flex items-center gap-3">
++                  <UserCheck className="w-4 h-4 text-amber-500 shrink-0" />
++                  <span>Driver Login</span>
++                </div>
++                <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
++              </button>
++            </div>
++          )}
++        </div>
++      </div>
++    </>
++  );
++};

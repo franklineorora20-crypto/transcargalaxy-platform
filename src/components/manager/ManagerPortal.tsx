@@ -59,6 +59,19 @@ import { ManagerAnalyticsComponent } from './ManagerAnalyticsComponent';
 interface ManagerPortalProps {
   managerData: any;
   onLogout: () => void;
+  initialTab?:
+    | 'overview'
+    | 'reports'
+    | 'announcements'
+    | 'routes'
+    | 'trips'
+    | 'bookings'
+    | 'fleet'
+    | 'drivers'
+    | 'inspections'
+    | 'finance'
+    | 'incidents'
+    | 'audit';
 }
 
 interface FinancialSummary {
@@ -101,7 +114,7 @@ interface ToastNotification {
   timestamp: string;
 }
 
-export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLogout }) => {
+export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLogout, initialTab }) => {
   const [activeTab, setActiveTab] = React.useState<
     | 'overview'
     | 'reports'
@@ -115,7 +128,13 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
     | 'finance'
     | 'incidents'
     | 'audit'
-  >('overview');
+  >(initialTab || 'overview');
+
+  React.useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -2104,7 +2123,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
                   },
                   {
                     key: 'EXECUTIVE',
-                    label: `Executive Shuttles (${vehicles.filter((v) => v.type === 'EXECUTIVE_SHUTTLE').length})`,
+                    label: `Executive Buses (${vehicles.filter((v) => v.type === 'EXECUTIVE_BUS').length})`,
                   },
                 ].map((tab) => (
                   <button
@@ -2148,7 +2167,7 @@ export const ManagerPortal: React.FC<ManagerPortalProps> = ({ managerData, onLog
                   if (fleetFilter === 'ROADWORTHY') return v.status === 'AVAILABLE' || v.status === 'ASSIGNED' || v.status === 'ON_TRIP';
                   if (fleetFilter === 'MAINTENANCE') return v.status === 'MAINTENANCE';
                   if (fleetFilter === 'LUXURY') return v.type === 'LUXURY_COACH';
-                  if (fleetFilter === 'EXECUTIVE') return v.type === 'EXECUTIVE_SHUTTLE';
+                  if (fleetFilter === 'EXECUTIVE') return v.type === 'EXECUTIVE_BUS';
                   return true;
                 })
                 .filter((v) => {

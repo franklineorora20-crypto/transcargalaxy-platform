@@ -140,7 +140,7 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({
   }, [fleetFilter]);
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 sm:space-y-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8 sm:space-y-12">
       {/* FLEET PAGE */}
       {page === 'fleet' && (
         <div className="space-y-12">

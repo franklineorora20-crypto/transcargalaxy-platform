@@ -26,14 +26,9 @@ import {
   INITIAL_BOOKINGS,
   INITIAL_ANNOUNCEMENTS,
 } from '../data/mockData';
-import {
-  TICKET_ID_ALPHABET,
-  formatQrTokenWithEntropy,
-  buildTicketRecordFromBooking,
-  resolvePassengerTicketStatus,
-} from '../utils/ticketHelpers';
 
 const API_BASE = '/api';
+const TICKET_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 class NonJsonResponseError extends Error {
   constructor(message: string) {
@@ -51,22 +46,68 @@ class ServerApiError extends Error {
   }
 }
 
-// Offline-only fallback ID/QR generators used when the backend is unreachable.
-// Note: Authoritative cryptographic ticket ID and QR token issuance remains server-side in server.ts.
 function generateClientTicketId(): string {
   let suffix = '';
   for (let i = 0; i < 8; i++) {
-    suffix += TICKET_ID_ALPHABET[Math.floor(Math.random() * TICKET_ID_ALPHABET.length)];
+    suffix += TICKET_ALPHABET[Math.floor(Math.random() * TICKET_ALPHABET.length)];
   }
   return `TCR-${suffix}`;
 }
 
 function generateClientQrToken(ticketId: string): string {
+  const shortTag = ticketId.replace(/[^A-Z0-9]/gi, '').slice(-8).toLowerCase();
   let hex = '';
   for (let i = 0; i < 32; i++) {
     hex += Math.floor(Math.random() * 16).toString(16);
   }
-  return formatQrTokenWithEntropy(ticketId, hex);
+  return `tcr_tok_${shortTag}_${hex}`;
+}
+
+function formatClientDepartureClock(isoString: string): string {
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return '05:00 AM';
+  return d.toLocaleTimeString('en-KE', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+}
+
+function buildClientTicketRecord(booking: Booking, passenger: Passenger, trip?: Trip): TicketRecord {
+  const departureIso = booking.departureTime || trip?.departureTime || new Date().toISOString();
+  const travelDate = departureIso.includes('T') ? departureIso.split('T')[0] : new Date().toISOString().slice(0, 10);
+  const isBoarded = Boolean(passenger.hasBoarded || passenger.boardingStatus === 'BOARDED');
+
+  return {
+    ticket_id: passenger.ticketId || booking.ticketId || booking.bookingReference,
+    booking_id: booking.id,
+    booking_reference: booking.bookingReference,
+    trip_id: booking.tripId || trip?.id || 'trip-rng-ksi-01',
+    trip_code: booking.tripCode || trip?.tripCode || 'TR-RNG-KSI-0500',
+    passenger_name: passenger.fullName || booking.contactName,
+    passenger_phone: booking.contactPhone || '',
+    passenger_id_number: passenger.idNumber || '',
+    route: `${booking.routeOrigin} → ${booking.routeDestination}`,
+    route_origin: booking.routeOrigin,
+    route_destination: booking.routeDestination,
+    travel_date: travelDate,
+    departure_time: formatClientDepartureClock(departureIso),
+    departure_iso: departureIso,
+    vehicle_id: booking.vehicleId || trip?.vehicleId || trip?.vehicle?.id || 'veh-1',
+    vehicle_registration: booking.busRegistration || trip?.vehicle?.registrationNumber || 'KDE 416Q',
+    seat_number: passenger.seatNumber,
+    fare: passenger.fareKsh || Math.round(booking.totalFareKsh / Math.max(1, booking.passengers.length)),
+    payment_status: booking.paymentStatus,
+    payment_method: booking.paymentMethod,
+    booking_status: booking.bookingStatus,
+    ticket_status: isBoarded ? 'BOARDED' : passenger.ticketStatus || 'ISSUED',
+    qr_token: passenger.qrToken || booking.qrToken || '',
+    created_at: booking.createdAt,
+    verified_at: passenger.verifiedAt || passenger.boardedAt || booking.verifiedAt || null,
+    verified_by: passenger.verifiedBy || booking.verifiedBy || null,
+    verified_by_name: passenger.verifiedByName || booking.verifiedByName || null,
+    boarding_status: isBoarded ? 'BOARDED' : 'NOT_BOARDED',
+  };
 }
 
 function enrichClientBookingTickets(booking: Booking, trip?: Trip): Booking {
@@ -79,7 +120,7 @@ function enrichClientBookingTickets(booking: Booking, trip?: Trip): Booking {
     }
     p.boardingStatus = p.hasBoarded || p.boardingStatus === 'BOARDED' ? 'BOARDED' : 'NOT_BOARDED';
     p.hasBoarded = p.boardingStatus === 'BOARDED';
-    p.ticketStatus = resolvePassengerTicketStatus(booking, p);
+    p.ticketStatus = p.hasBoarded ? 'BOARDED' : p.ticketStatus || 'ISSUED';
   });
 
   if (booking.passengers.length > 0) {
@@ -88,7 +129,7 @@ function enrichClientBookingTickets(booking: Booking, trip?: Trip): Booking {
   }
 
   booking.boardingStatus = booking.passengers.every((p) => p.hasBoarded) ? 'BOARDED' : 'NOT_BOARDED';
-  booking.tickets = booking.passengers.map((p) => buildTicketRecordFromBooking(booking, p, trip));
+  booking.tickets = booking.passengers.map((p) => buildClientTicketRecord(booking, p, trip));
   return booking;
 }
 
@@ -110,7 +151,7 @@ export class ApiService {
     }
   }
 
-  private static getHeaders(_role?: 'DRIVER' | 'MANAGER'): HeadersInit {
+  private static getHeaders(role?: 'DRIVER' | 'MANAGER'): HeadersInit {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -118,14 +159,18 @@ export class ApiService {
     const driverToken = localStorage.getItem('safariline_driver_token');
     const managerToken = localStorage.getItem('safariline_manager_token');
 
-    const accessToken =
-      _role === 'DRIVER'
-        ? driverToken || managerToken
-        : _role === 'MANAGER'
-          ? managerToken || driverToken
-          : managerToken || driverToken;
+    let accessToken: string | null = null;
+    if (role === 'MANAGER') {
+      accessToken = managerToken;
+    } else if (role === 'DRIVER') {
+      accessToken = driverToken;
+    } else {
+      accessToken = managerToken || driverToken;
+    }
 
-    if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
 
     return headers;
   }
@@ -636,18 +681,6 @@ export class ApiService {
   }
 
   static logout() {
-    const token =
-      localStorage.getItem('safariline_manager_token') ||
-      localStorage.getItem('safariline_driver_token');
-    if (token) {
-      fetch(`${API_BASE}/auth/logout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      }).catch(() => {});
-    }
     localStorage.removeItem('safariline_driver_token');
     localStorage.removeItem('safariline_driver_id');
     localStorage.removeItem('safariline_driver_name');
@@ -951,12 +984,13 @@ export class ApiService {
   }
 
   static async getManagerDashboardStats() {
-    const res = await fetch(`${API_BASE}/manager/dashboard-stats`, { headers: this.getHeaders('MANAGER') });
-    if (res.status === 401 || res.status === 403) {
-      throw new ServerApiError('Unauthorized manager access', res.status);
-    }
-    if (res.ok) {
-      return await this.parseJson(res, 'Failed to load dashboard stats');
+    try {
+      const res = await fetch(`${API_BASE}/manager/dashboard-stats`, { headers: this.getHeaders('MANAGER') });
+      if (res.ok) {
+        return await this.parseJson(res, 'Failed to load dashboard stats');
+      }
+    } catch {
+      // Fall through to fallback
     }
 
     return {

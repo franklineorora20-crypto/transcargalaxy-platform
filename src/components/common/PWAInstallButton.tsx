@@ -113,16 +113,16 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
     );
   }
 
-  // Default 'header' variant: compact button for top bar with 44px touch target
+  // Default 'header' variant: compact button for top bar
   return (
     <button
       type="button"
       onClick={handleClick}
-      className={`craft-btn-secondary text-xs px-3 py-2 inline-flex items-center justify-center gap-1.5 whitespace-nowrap font-semibold border-slate-300 hover:border-amber-400 hover:bg-amber-50/70 text-slate-800 transition-all cursor-pointer min-h-[44px] rounded-xl ${className}`}
+      className={`craft-btn-secondary text-xs px-2.5 sm:px-3 py-1.5 inline-flex items-center gap-1.5 whitespace-nowrap font-bold border-slate-300 hover:border-amber-400 hover:bg-amber-50/70 text-slate-800 transition-all cursor-pointer min-h-[40px] rounded-xl touch-manipulation ${className}`}
       title="Install TransCar App on your phone or computer for fast offline access"
     >
       <Download className="w-3.5 h-3.5 text-amber-600 shrink-0 stroke-[2.25]" />
-      <span>Install</span>
+      <span className="text-xs">Install</span>
       {isInstallable && (
         <span
           className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"
@@ -202,9 +202,16 @@ export const PWAInstallManager: React.FC = () => {
       .catch(() => {});
   }, [appUrl]);
 
-  // Keep bottom viewport clear for the single mobile sticky CTA
+  // Show non-intrusive bottom install bar after 12 seconds dwell if not installed and not dismissed
   useEffect(() => {
-    setShowFloatingBanner(false);
+    if (isInstalled || bannerDismissed) {
+      setShowFloatingBanner(false);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setShowFloatingBanner(true);
+    }, 12000);
+    return () => window.clearTimeout(timer);
   }, [isInstalled, bannerDismissed]);
 
   const handleDismissBanner = () => {
@@ -309,7 +316,7 @@ export const PWAInstallManager: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="pwa-install-modal-title"
-            className="w-full max-w-[calc(100vw-32px)] sm:max-w-lg rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col"
+            className="w-full max-w-lg rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}

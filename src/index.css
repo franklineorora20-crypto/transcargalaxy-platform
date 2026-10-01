@@ -50,6 +50,20 @@
     --z-toast: 80;
   }
 
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100%;
+  }
+
   html {
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
@@ -57,9 +71,6 @@
     text-rendering: optimizeLegibility;
     font-feature-settings: 'cv02' 1, 'cv03' 1, 'cv04' 1, 'cv11' 1, 'ss01' 1, 'ss02' 1;
     scroll-behavior: smooth;
-    width: 100%;
-    max-width: 100vw;
-    overflow-x: hidden;
     overscroll-behavior-x: none;
     -webkit-text-size-adjust: 100%;
   }
@@ -70,31 +81,53 @@
     line-height: 1.55;
     color: #0f172a;
     background-color: var(--surface-secondary);
-    width: 100%;
-    max-width: 100vw;
     min-height: 100vh;
     min-height: 100dvh;
-    overflow-x: hidden;
     overscroll-behavior-x: none;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
 
   img,
-  svg,
   video,
   canvas {
     max-width: 100%;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
   }
 
-  button,
-  a,
+  svg {
+    max-width: 100%;
+    flex-shrink: 0;
+  }
+
   input,
   select,
   textarea {
+    font-size: 16px !important; /* Prevents auto-zoom on mobile safari */
     touch-action: manipulation;
+  }
+
+  button,
+  a {
+    touch-action: manipulation;
+  }
+
+  /* Responsive Tables Container Constraint */
+  table {
+    border-collapse: collapse;
+  }
+
+  .table-responsive {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Typography Hierarchy & Optical Kerning */
@@ -102,6 +135,8 @@
     font-weight: 800;
     letter-spacing: -0.032em;
     text-wrap: balance;
+    overflow-wrap: break-word;
+    word-break: break-word;
     line-height: 1.1;
   }
 
@@ -109,6 +144,8 @@
     font-weight: 700;
     letter-spacing: -0.026em;
     text-wrap: balance;
+    overflow-wrap: break-word;
+    word-break: break-word;
     line-height: 1.18;
   }
 
@@ -116,6 +153,8 @@
     font-weight: 700;
     letter-spacing: -0.02em;
     text-wrap: balance;
+    overflow-wrap: break-word;
+    word-break: break-word;
     line-height: 1.25;
   }
 
@@ -123,6 +162,8 @@
     font-weight: 600;
     letter-spacing: -0.015em;
     text-wrap: balance;
+    overflow-wrap: break-word;
+    word-break: break-word;
     line-height: 1.3;
   }
 
