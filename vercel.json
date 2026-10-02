@@ -3,7 +3,8 @@
   "buildCommand": "npm run build",
   "functions": {
     "api/index.ts": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "{server.js,supabase/schema.sql}"
     }
   },
   "rewrites": [

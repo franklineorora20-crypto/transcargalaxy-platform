@@ -2378,6 +2378,7 @@ app.post(
     }
 
     // 1. Try Supabase Auth if configured
+    let lastSupabaseError: string | null = null;
     if (supabaseAuth) {
       try {
         const { data, error } = await supabaseAuth.auth.signInWithPassword({
@@ -2385,43 +2386,66 @@ app.post(
           password,
         });
 
-        if (!error && data?.user && data?.session) {
-          const metadataRole = String(data.user.user_metadata?.role || '').toLowerCase();
+        if (error) {
+          lastSupabaseError = error.message || 'Invalid Supabase Auth email or password.';
+          console.warn(`[DRIVER LOGIN] Supabase Auth rejected ${authEmail}: ${lastSupabaseError}`);
+        } else if (data?.user && data?.session) {
           const profile = await getSupabaseProfile(
             data.session.access_token,
             data.user.id,
           );
 
-          if (
-            metadataRole === 'driver' ||
-            String(profile?.role || '').toLowerCase() === 'driver'
-          ) {
-            const driver = supabaseAdmin
-              ? (
-                  await supabaseAdmin
-                    .from('drivers')
-                    .select('*')
-                    .eq('profile_id', data.user.id)
-                    .maybeSingle()
-                ).data
-              : null;
+          const driver = supabaseAdmin
+            ? (
+                await supabaseAdmin
+                  .from('drivers')
+                  .select('*')
+                  .eq('profile_id', data.user.id)
+                  .maybeSingle()
+              ).data
+            : null;
 
-            return res.json({
-              token: data.session.access_token,
-              user: {
-                id: data.user.id,
-                name: driver?.name || profile?.full_name || data.user.email,
-                email: data.user.email,
-                phone: driver?.phone || profile?.phone,
-                licenseNumber: driver?.license_number,
-                assignedVehicleId: driver?.assigned_vehicle_id,
-                role: 'DRIVER',
-              },
-            });
-          }
+          const fallbackDriver =
+            drivers.find((d) => d.email.toLowerCase() === authEmail) || drivers[0];
+
+          const supaDriverUser: AuthUser = {
+            userId: driver?.id || fallbackDriver?.id || data.user.id,
+            name:
+              driver?.name ||
+              profile?.full_name ||
+              data.user.user_metadata?.full_name ||
+              data.user.email ||
+              authEmail,
+            email: data.user.email || authEmail,
+            role: 'DRIVER',
+          };
+          const sessionToken = createLocalSession(supaDriverUser);
+
+          logAuditAction(
+            supaDriverUser.email,
+            'DRIVER',
+            'DRIVER_LOGIN',
+            'DRIVER',
+            supaDriverUser.userId,
+            `Driver ${supaDriverUser.name} authenticated via Supabase Auth`,
+          );
+
+          return res.json({
+            token: sessionToken,
+            user: {
+              id: supaDriverUser.userId,
+              name: supaDriverUser.name,
+              email: supaDriverUser.email,
+              phone: driver?.phone || profile?.phone || fallbackDriver?.phone,
+              licenseNumber: driver?.license_number || fallbackDriver?.licenseNumber,
+              assignedVehicleId: driver?.assigned_vehicle_id || fallbackDriver?.assignedVehicleId,
+              role: 'DRIVER',
+            },
+          });
         }
       } catch (err: any) {
-        console.warn('[DRIVER LOGIN] Supabase Auth error:', err?.message);
+        lastSupabaseError = err?.message || 'Unable to reach Supabase Auth server.';
+        console.warn('[DRIVER LOGIN] Supabase Auth error:', lastSupabaseError);
       }
     }
 
@@ -2441,7 +2465,8 @@ app.post(
       ) ||
       (identifier === 'driver' ||
       identifier === 'driver@transcargalaxy.com' ||
-      identifier === 'driver@transcarrongai.co.ke'
+      identifier === 'driver@transcarrongai.co.ke' ||
+      Boolean(configuredDriverSecret)
         ? drivers[0]
         : undefined);
 
@@ -2484,6 +2509,19 @@ app.post(
           assignedVehicleId: matchedDriver.assignedVehicleId,
           role: 'DRIVER',
         },
+      });
+    }
+
+    if (lastSupabaseError) {
+      return res.status(401).json({
+        error: `Supabase Auth rejected login for ${authEmail}: ${lastSupabaseError}`,
+      });
+    }
+
+    if (!supabaseAuth && !configuredDriverSecret && process.env.NODE_ENV === 'production') {
+      return res.status(401).json({
+        error:
+          'Supabase Auth is not connected in this environment because VITE_SUPABASE_ANON_KEY is missing. Add VITE_SUPABASE_ANON_KEY (for project vjhztgdkvrqfhsilhpda.supabase.co) or INITIAL_DRIVER_PASSWORD in Vercel Environment Variables.',
       });
     }
 
@@ -2777,6 +2815,7 @@ app.post(
     }
 
     // 1. Try Supabase Auth if available
+    let lastSupabaseError: string | null = null;
     if (supabaseAuth) {
       try {
         const {
@@ -2790,7 +2829,10 @@ app.post(
             },
           );
 
-        if (!error && data?.user && data?.session) {
+        if (error) {
+          lastSupabaseError = error.message || 'Invalid Supabase Auth email or password.';
+          console.warn(`[MANAGER LOGIN] Supabase Auth rejected ${authEmail}: ${lastSupabaseError}`);
+        } else if (data?.user && data?.session) {
           const metadataRole =
             String(
               data.user.user_metadata?.role || '',
@@ -2804,24 +2846,46 @@ app.post(
 
           const role = metadataRole || String(profile?.role || '').toLowerCase();
 
-          if (['admin', 'manager'].includes(role)) {
-            return res.json({
-              token: data.session.access_token,
-              user: {
-                id: data.user.id,
-                name:
-                  profile?.full_name ||
-                  data.user.user_metadata?.full_name ||
-                  data.user.email ||
-                  'Director Frankline Orora',
-                email: data.user.email,
-                role: 'MANAGER',
-              },
+          if (metadataRole === 'driver' || role === 'driver') {
+            return res.status(403).json({
+              error: 'This Supabase account is assigned the driver role and cannot access the Manager Portal.',
             });
           }
+
+          const supaManagerUser: AuthUser = {
+            userId: data.user.id,
+            name:
+              profile?.full_name ||
+              data.user.user_metadata?.full_name ||
+              data.user.email ||
+              'Director Frankline Orora',
+            email: data.user.email || authEmail,
+            role: 'MANAGER',
+          };
+          const sessionToken = createLocalSession(supaManagerUser);
+
+          logAuditAction(
+            supaManagerUser.email,
+            'MANAGER',
+            'MANAGER_LOGIN',
+            'AUTH',
+            supaManagerUser.userId,
+            'Manager authenticated via Supabase Auth',
+          );
+
+          return res.json({
+            token: sessionToken,
+            user: {
+              id: supaManagerUser.userId,
+              name: supaManagerUser.name,
+              email: supaManagerUser.email,
+              role: 'MANAGER',
+            },
+          });
         }
       } catch (err: any) {
-        console.warn('[MANAGER LOGIN] Supabase Auth error:', err?.message);
+        lastSupabaseError = err?.message || 'Unable to reach Supabase Auth server.';
+        console.warn('[MANAGER LOGIN] Supabase Auth error:', lastSupabaseError);
       }
     }
 
@@ -2836,6 +2900,7 @@ app.post(
       identifier === 'director' ||
       identifier === 'frankline' ||
       identifier === 'franklineorora20@gmail.com' ||
+      identifier === 'fgwaro@kabarak.ac.ke' ||
       identifier === 'manager@transcargalaxy.com' ||
       authEmail === 'manager@transcarrongai.co.ke' ||
       authEmail === 'admin@transcarrongai.co.ke' ||
@@ -2878,6 +2943,19 @@ app.post(
           email: managerUser.email,
           role: 'MANAGER',
         },
+      });
+    }
+
+    if (lastSupabaseError) {
+      return res.status(401).json({
+        error: `Supabase Auth rejected login for ${authEmail}: ${lastSupabaseError}`,
+      });
+    }
+
+    if (!supabaseAuth && !envManagerPassword && process.env.NODE_ENV === 'production') {
+      return res.status(401).json({
+        error:
+          'Supabase Auth is not connected in this environment because VITE_SUPABASE_ANON_KEY is missing. Add VITE_SUPABASE_ANON_KEY (for project vjhztgdkvrqfhsilhpda.supabase.co) or INITIAL_MANAGER_PASSWORD in Vercel Environment Variables.',
       });
     }
 

@@ -2,7 +2,6 @@ playwright-report/
 test-results/
 node_modules/
 dist/
-server.js
 server.js.map
 build/
 coverage/
