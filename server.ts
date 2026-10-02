@@ -525,6 +525,8 @@ function createLocalSession(user: AuthUser): string {
     process.env.NODE_ENV !== 'production' ||
     Boolean(
       process.env.JWT_SECRET ||
+        process.env.SUPABASE_SERVICE_ROLE_KEY ||
+        process.env.VITE_SUPABASE_ANON_KEY ||
         process.env.INITIAL_MANAGER_PASSWORD ||
         process.env.INITIAL_DRIVER_PASSWORD,
     );
@@ -560,6 +562,8 @@ function getLocalSessionUser(token: string): AuthUser | null {
     process.env.NODE_ENV !== 'production' ||
     Boolean(
       process.env.JWT_SECRET ||
+        process.env.SUPABASE_SERVICE_ROLE_KEY ||
+        process.env.VITE_SUPABASE_ANON_KEY ||
         process.env.INITIAL_MANAGER_PASSWORD ||
         process.env.INITIAL_DRIVER_PASSWORD,
     );
@@ -2451,6 +2455,24 @@ app.post(
 
     const configuredDriverSecret = process.env.INITIAL_DRIVER_PASSWORD;
 
+    // In production, strictly reject any in-memory/local authentication fallback
+    if (process.env.NODE_ENV === 'production' && !configuredDriverSecret) {
+      if (lastSupabaseError) {
+        return res.status(401).json({
+          error: `Supabase Auth rejected login for ${authEmail}: ${lastSupabaseError}`,
+        });
+      }
+      if (!supabaseAuth) {
+        return res.status(401).json({
+          error:
+            'Supabase Auth is not connected in this environment because VITE_SUPABASE_ANON_KEY is missing. Add VITE_SUPABASE_ANON_KEY (for project vjhztgdkvrqfhsilhpda.supabase.co) in Environment Variables / Secrets so your Supabase Auth credentials can be verified.',
+        });
+      }
+      return res.status(401).json({
+        error: 'Invalid driver credentials. Please check your username and password.',
+      });
+    }
+
     // 2. Authenticate via explicitly configured INITIAL_DRIVER_PASSWORD or development fallback
     const matchedDriver =
       drivers.find(
@@ -2892,6 +2914,24 @@ app.post(
     // 2. Authenticate via explicitly configured INITIAL_MANAGER_EMAIL + INITIAL_MANAGER_PASSWORD or development fallback
     const envManagerEmail = (process.env.INITIAL_MANAGER_EMAIL || '').trim().toLowerCase();
     const envManagerPassword = process.env.INITIAL_MANAGER_PASSWORD;
+
+    // In production, strictly reject any in-memory/local authentication fallback
+    if (process.env.NODE_ENV === 'production' && !envManagerPassword) {
+      if (lastSupabaseError) {
+        return res.status(401).json({
+          error: `Supabase Auth rejected login for ${authEmail}: ${lastSupabaseError}`,
+        });
+      }
+      if (!supabaseAuth) {
+        return res.status(401).json({
+          error:
+            'Supabase Auth is not connected in this environment because VITE_SUPABASE_ANON_KEY is missing. Add VITE_SUPABASE_ANON_KEY (for project vjhztgdkvrqfhsilhpda.supabase.co) in Environment Variables / Secrets so your Supabase Auth credentials can be verified.',
+        });
+      }
+      return res.status(401).json({
+        error: 'Invalid manager credentials. Please check your username and password.',
+      });
+    }
 
     const isRecognizedManagerUser =
       identifier === 'admintranscar' ||
@@ -7197,7 +7237,7 @@ else {
 //
 // IMPORTANT:
 // These exports are at the top level.
-// api/index.ts can therefore unambiguously use:
+// api/index.js can therefore unambiguously use:
 //
 // import app from '../server.js';
 // export default app;

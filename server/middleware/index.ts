@@ -2,7 +2,7 @@ export {
   limiter,
   stkLimiter,
   verificationLimiter,
-} from './rateLimiters';
+} from './rateLimiters.js';
 
 export {
   type AuthUser,
@@ -19,4 +19,4 @@ export {
   requireRole,
   requireManager,
   requireDriverOrManager,
-} from './auth';
+} from './auth.js';

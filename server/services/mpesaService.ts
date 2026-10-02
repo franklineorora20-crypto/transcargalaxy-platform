@@ -1,6 +1,6 @@
 import crypto from 'crypto';
-import { Booking } from '../../src/types';
-import { pendingMpesaRequests } from '../store';
+import type { Booking } from '../../src/types/index.js';
+import { pendingMpesaRequests } from '../store/index.js';
 
 export function ensureMpesaCallbackUrl(): void {
   if (!process.env.MPESA_CALLBACK_URL || process.env.MPESA_CALLBACK_URL.includes('your-domain')) {

@@ -1429,7 +1429,7 @@ var getSigningSecret = () => {
 };
 function createLocalSession(user) {
   const canIssueBootstrapToken = process.env.NODE_ENV !== "production" || Boolean(
-    process.env.JWT_SECRET || process.env.INITIAL_MANAGER_PASSWORD || process.env.INITIAL_DRIVER_PASSWORD
+    process.env.JWT_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.INITIAL_MANAGER_PASSWORD || process.env.INITIAL_DRIVER_PASSWORD
   );
   if (!canIssueBootstrapToken) {
     throw new Error("Local fallback session creation is strictly disabled in production.");
@@ -1454,7 +1454,7 @@ function getLocalSessionUser(token) {
     return null;
   }
   const canVerifyBootstrapToken = process.env.NODE_ENV !== "production" || Boolean(
-    process.env.JWT_SECRET || process.env.INITIAL_MANAGER_PASSWORD || process.env.INITIAL_DRIVER_PASSWORD
+    process.env.JWT_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.INITIAL_MANAGER_PASSWORD || process.env.INITIAL_DRIVER_PASSWORD
   );
   if (!canVerifyBootstrapToken) {
     return null;
@@ -2669,6 +2669,21 @@ app.post(
       }
     }
     const configuredDriverSecret = process.env.INITIAL_DRIVER_PASSWORD;
+    if (process.env.NODE_ENV === "production" && !configuredDriverSecret) {
+      if (lastSupabaseError) {
+        return res.status(401).json({
+          error: `Supabase Auth rejected login for ${authEmail}: ${lastSupabaseError}`
+        });
+      }
+      if (!supabaseAuth) {
+        return res.status(401).json({
+          error: "Supabase Auth is not connected in this environment because VITE_SUPABASE_ANON_KEY is missing. Add VITE_SUPABASE_ANON_KEY (for project vjhztgdkvrqfhsilhpda.supabase.co) in Environment Variables / Secrets so your Supabase Auth credentials can be verified."
+        });
+      }
+      return res.status(401).json({
+        error: "Invalid driver credentials. Please check your username and password."
+      });
+    }
     const matchedDriver = drivers.find(
       (d) => d.email.toLowerCase() === authEmail || d.email.toLowerCase() === identifier || d.name.toLowerCase().includes(identifier) || d.id.toLowerCase() === identifier || d.phone && identifier.replace(/[^0-9]/g, "").length >= 6 && d.phone.replace(/[^0-9]/g, "").includes(identifier.replace(/[^0-9]/g, ""))
     ) || (identifier === "driver" || identifier === "driver@transcargalaxy.com" || identifier === "driver@transcarrongai.co.ke" || Boolean(configuredDriverSecret) ? drivers[0] : void 0);
@@ -2954,6 +2969,21 @@ app.post(
     }
     const envManagerEmail = (process.env.INITIAL_MANAGER_EMAIL || "").trim().toLowerCase();
     const envManagerPassword = process.env.INITIAL_MANAGER_PASSWORD;
+    if (process.env.NODE_ENV === "production" && !envManagerPassword) {
+      if (lastSupabaseError) {
+        return res.status(401).json({
+          error: `Supabase Auth rejected login for ${authEmail}: ${lastSupabaseError}`
+        });
+      }
+      if (!supabaseAuth) {
+        return res.status(401).json({
+          error: "Supabase Auth is not connected in this environment because VITE_SUPABASE_ANON_KEY is missing. Add VITE_SUPABASE_ANON_KEY (for project vjhztgdkvrqfhsilhpda.supabase.co) in Environment Variables / Secrets so your Supabase Auth credentials can be verified."
+        });
+      }
+      return res.status(401).json({
+        error: "Invalid manager credentials. Please check your username and password."
+      });
+    }
     const isRecognizedManagerUser = identifier === "admintranscar" || identifier === "admin" || identifier === "manager" || identifier === "director" || identifier === "frankline" || identifier === "franklineorora20@gmail.com" || identifier === "fgwaro@kabarak.ac.ke" || identifier === "manager@transcargalaxy.com" || authEmail === "manager@transcarrongai.co.ke" || authEmail === "admin@transcarrongai.co.ke" || authEmail === "director@transcarrongai.co.ke" || envManagerEmail && (identifier === envManagerEmail || authEmail === envManagerEmail);
     const isValidPassword = envManagerPassword ? password === envManagerPassword : process.env.NODE_ENV !== "production" && (password === "TransCar@2026!" || password === "Admin@2026!" || password === "Manager@2026!" || password === "Director@2026!" || password === "admintranscar");
     if (isRecognizedManagerUser && isValidPassword) {

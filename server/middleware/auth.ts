@@ -1,12 +1,12 @@
 import crypto from 'crypto';
-import { Request, Response, NextFunction } from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import {
   supabaseAdmin,
   getSupabaseProfile,
   getSupabaseUser,
-} from '../../lib/supabaseAdmin';
-import { INITIAL_DRIVERS } from '../../src/data/mockData';
-import { Driver, Trip, UserRole } from '../../src/types';
+} from '../../lib/supabaseAdmin.js';
+import { INITIAL_DRIVERS } from '../../src/data/mockData.js';
+import type { Driver, Trip, UserRole } from '../../src/types/index.js';
 
 export interface AuthUser {
   email: string;

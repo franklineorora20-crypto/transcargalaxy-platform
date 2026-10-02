@@ -1,5 +1,5 @@
-import { Trip } from '../../../src/types';
-import { routes, trips } from '../../store';
+import type { Trip } from '../../../src/types/index.js';
+import { routes, trips } from '../../store/index.js';
 
 export function calculateTripFare(
   trip: Trip,

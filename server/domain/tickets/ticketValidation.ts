@@ -1,12 +1,12 @@
-import { Booking, Passenger, TicketVerificationResult, Trip } from '../../../src/types';
-import { isTripAssignedToDriver } from '../../middleware';
-import { bookings, trips } from '../../store';
+import type { Booking, Passenger, TicketVerificationResult, Trip } from '../../../src/types/index.js';
+import { isTripAssignedToDriver } from '../../middleware/index.js';
+import { bookings, trips } from '../../store/index.js';
 import {
   buildTicketRecord,
   ensureBookingTickets,
   formatDepartureClock,
   formatTravelDateIso,
-} from './ticketService';
+} from './ticketService.js';
 
 export function extractTokenOrIdentifier(rawInput: string): {
   identifier: string;
