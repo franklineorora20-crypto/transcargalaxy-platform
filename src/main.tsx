@@ -18,7 +18,7 @@ if (typeof window !== 'undefined') {
       .keys()
       .then((keys) => {
         keys.forEach((key) => {
-          if (key !== 'transcar-v8-network-first') {
+          if (key !== 'transcar-v9-network-first') {
             caches.delete(key).catch(() => {});
           }
         });

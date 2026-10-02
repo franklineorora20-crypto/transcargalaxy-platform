@@ -1,4 +1,4 @@
-const CACHE_NAME = 'transcar-v8-network-first';
+const CACHE_NAME = 'transcar-v9-network-first';
 const STATIC_ASSETS = [
   '/offline.html',
   '/manifest.json',
@@ -10,6 +10,23 @@ const STATIC_ASSETS = [
   '/icons/icon-512-3d.png',
   '/icons/icon-maskable-512.png'
 ];
+
+function offlineJsonResponse() {
+  return new Response(JSON.stringify({ error: 'offline' }), {
+    status: 503,
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
+function offlineHtmlResponse() {
+  return new Response(
+    '<!doctype html><html><head><meta charset="utf-8"><title>Offline</title></head><body><h1>Offline</h1><p>Please check your network connection and try again.</p></body></html>',
+    {
+      status: 503,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' }
+    }
+  );
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -30,6 +47,7 @@ self.addEventListener('activate', (event) => {
           if (key !== CACHE_NAME) {
             return caches.delete(key);
           }
+          return Promise.resolve(false);
         })
       );
     }).then(() => self.clients.claim())
@@ -40,11 +58,15 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Never intercept API calls, non-GET requests, or Vite dev module paths.
-  // API offline resilience is handled directly in ApiService via localStorage.
+  // 1. Early return (NetworkOnly) for all POST / non-GET requests, /api/*, /driver/*, /manager/*, and dev paths.
+  // Do NOT call event.respondWith so the browser executes native network requests directly.
   if (
+    request.method === 'POST' ||
     request.method !== 'GET' ||
+    url.origin !== self.location.origin ||
     url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/driver/') ||
+    url.pathname.startsWith('/manager/') ||
     url.pathname.startsWith('/src/') ||
     url.pathname.startsWith('/node_modules/') ||
     url.pathname.startsWith('/@') ||
@@ -54,7 +76,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Images & Icons: Cache First Strategy
+  // 2. Images & Icons: Cache First with guaranteed Response fallback (never undefined)
   if (
     request.destination === 'image' ||
     url.pathname.startsWith('/images/') ||
@@ -74,46 +96,54 @@ self.addEventListener('fetch', (event) => {
           .then((networkResponse) => {
             if (networkResponse && networkResponse.status === 200) {
               const clone = networkResponse.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, clone)).catch(() => {});
             }
-            return networkResponse;
+            return networkResponse || offlineJsonResponse();
           })
-          .catch(() => caches.match('/icons/icon-192.png'));
+          .catch(() =>
+            caches.match('/icons/icon-192.png').then((fallbackIcon) => fallbackIcon || offlineJsonResponse())
+          );
       })
     );
     return;
   }
 
-  // HTML Navigation: Network First with Offline fallback
+  // 3. HTML Navigation: Network First with guaranteed Response fallback (never undefined)
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const clone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone)).catch(() => {});
           }
-          return networkResponse;
+          return networkResponse || offlineHtmlResponse();
         })
-        .catch(() => {
-          return caches.match(request).then((cached) => {
-            return cached || caches.match('/offline.html').then((offline) => offline || caches.match('/index.html'));
-          });
-        })
+        .catch(() =>
+          caches.match(request).then((cached) => {
+            if (cached) return cached;
+            return caches.match('/offline.html').then((offline) => {
+              if (offline) return offline;
+              return caches.match('/index.html').then((indexFallback) => indexFallback || offlineHtmlResponse());
+            });
+          })
+        )
     );
     return;
   }
 
-  // Static production bundles: Network First with Cache Fallback (never serve stale JS)
+  // 4. Static assets: Network First with Cache Fallback and guaranteed 503 Response (never undefined)
   event.respondWith(
     fetch(request)
       .then((networkResponse) => {
         if (networkResponse && networkResponse.status === 200) {
           const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone)).catch(() => {});
         }
-        return networkResponse;
+        return networkResponse || offlineJsonResponse();
       })
-      .catch(() => caches.match(request))
+      .catch(() =>
+        caches.match(request).then((cached) => cached || offlineJsonResponse())
+      )
   );
 });
