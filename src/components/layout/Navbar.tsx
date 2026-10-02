@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import { BrandName } from '../common/BrandName';
 import { PWAInstallButton } from '../common/PWAInstallButton';
-import { MobileMenuDropdown } from '../common/MobileMenuDropdown';
+import { MobileMenuDropdown } from './MobileMenuDropdown';
 
 interface NavbarProps {
   currentView: string;
@@ -21,6 +21,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   driverName,
   managerName,
+  onOpenTutorial,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -72,6 +73,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         onLogout={onLogout}
         driverName={driverName}
         managerName={managerName}
+        onOpenTutorial={onOpenTutorial}
       />
     </header>
   );

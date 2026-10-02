@@ -57,14 +57,27 @@ export const ManagerLogin: React.FC<ManagerLoginProps> = ({ onLoginSuccess, onCa
           </p>
         </div>
 
-        {supaStatus && !supaStatus.connected && (
-          <div className="p-3.5 bg-amber-50 border border-amber-300 text-amber-950 text-xs rounded-xl space-y-1.5">
-            <p className="font-bold">Supabase Auth Key Missing in Environment</p>
-            <p className="leading-relaxed">
-              Project <span className="font-mono font-semibold">vjhztgdkvrqfhsilhpda.supabase.co</span> is linked, but <span className="font-mono font-bold">VITE_SUPABASE_ANON_KEY</span> is not set in AI Studio Environment Variables / Secrets. Copy your <span className="font-mono">anon public</span> key from <strong>Supabase Dashboard → Project Settings → API</strong> into <span className="font-mono">VITE_SUPABASE_ANON_KEY</span> to enable login.
+        {supaStatus && !supaStatus.connected ? (
+          <div className="p-3.5 bg-amber-50 border border-amber-300 text-amber-950 text-xs rounded-xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-bold">Operations Director:</span>
+              <button
+                type="button"
+                id="manager-fill-demo-btn"
+                onClick={() => {
+                  setEmail('admintranscar');
+                  setPassword('admintranscar');
+                }}
+                className="px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-black font-black text-[11px] rounded-lg border border-black shadow-sm transition-all cursor-pointer"
+              >
+                Fill Credentials
+              </button>
+            </div>
+            <p className="text-[11px] leading-relaxed text-amber-900">
+              Dev Mode: Sign in with username <span className="font-mono font-bold">admintranscar</span> and password <span className="font-mono font-bold">admintranscar</span>, or use your Supabase credentials when connected.
             </p>
           </div>
-        )}
+        ) : null}
 
         {supaStatus?.connected && (
           <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold rounded-xl text-center">

@@ -336,7 +336,7 @@ export const PWAInstallManager: React.FC = () => {
                     id="pwa-install-modal-title"
                     className="text-base sm:text-lg font-extrabold text-white truncate"
                   >
-                    Install TransCar rongai App
+                    Install TransCar Rongai App
                   </h3>
                 </div>
               </div>
@@ -659,7 +659,7 @@ export const PWAInstallManager: React.FC = () => {
                     </h4>
                     <p className="text-xs text-slate-600 leading-relaxed">
                       Point your Android or iPhone camera at this QR code to open{' '}
-                      <strong className="text-slate-900">TransCar rongai</strong> directly on your phone, then tap{' '}
+                      <strong className="text-slate-900">TransCar Rongai</strong> directly on your phone, then tap{' '}
                       <strong className="text-slate-900">Install App</strong>.
                     </p>
                     <div className="pt-1 flex flex-wrap items-center justify-center sm:justify-start gap-2">

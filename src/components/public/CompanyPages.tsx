@@ -24,7 +24,7 @@ const FULL_FLEET_ROSTER = [
   {
     id: 'fleet-kde416q',
     reg: 'KDE 416Q',
-    title: 'TransCar rongai VIP Shuttle',
+    title: 'TransCar Rongai VIP Shuttle',
     edition: '11-Seater Executive Shuttle',
     category: '11-Seater' as const,
     cap: 11 as const,
@@ -38,7 +38,7 @@ const FULL_FLEET_ROSTER = [
   {
     id: 'fleet-kdf520m',
     reg: 'KDF 520M',
-    title: 'TransCar rongai Direct HiAce',
+    title: 'TransCar Rongai Direct HiAce',
     edition: '11-Seater Express Shuttle',
     category: '11-Seater' as const,
     cap: 11 as const,
@@ -52,7 +52,7 @@ const FULL_FLEET_ROSTER = [
   {
     id: 'fleet-kdv149e',
     reg: 'KDV 149E',
-    title: 'TransCar rongai Stalker Intercity',
+    title: 'TransCar Rongai Stalker Intercity',
     edition: '14-Seater Standard Shuttle',
     category: '14-Seater' as const,
     cap: 14 as const,
@@ -66,7 +66,7 @@ const FULL_FLEET_ROSTER = [
   {
     id: 'fleet-kde832y',
     reg: 'KDE 832Y',
-    title: 'TransCar rongai Day Cruiser',
+    title: 'TransCar Rongai Day Cruiser',
     edition: '14-Seater Corridor Shuttle',
     category: '14-Seater' as const,
     cap: 14 as const,
@@ -80,7 +80,7 @@ const FULL_FLEET_ROSTER = [
   {
     id: 'fleet-kda123a',
     reg: 'KDA 123A',
-    title: 'TransCar rongai Highway Express',
+    title: 'TransCar Rongai Highway Express',
     edition: '14-Seater Express Shuttle',
     category: '14-Seater' as const,
     cap: 14 as const,
@@ -94,7 +94,7 @@ const FULL_FLEET_ROSTER = [
   {
     id: 'fleet-kdc789c',
     reg: 'KDC 789C',
-    title: 'TransCar rongai Maxi Cruiser',
+    title: 'TransCar Rongai Maxi Cruiser',
     edition: '16-Seater Long-Wheelbase Shuttle',
     category: '16-Seater' as const,
     cap: 16 as const,
@@ -149,7 +149,7 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({
             <div className="space-y-2 max-w-2xl">
               <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-600">
                 <Bus className="w-3.5 h-3.5" />
-                <span>TransCar rongai Official Vehicle Fleet</span>
+                <span>TransCar Rongai Official Vehicle Fleet</span>
               </span>
               <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
                 Vehicle Fleet & Kenyan PSV Seat Configurations
@@ -285,7 +285,7 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({
                 Compare 11-Seater, 14-Seater & 16-Seater Layouts
               </h2>
               <p className="text-xs sm:text-sm text-slate-600">
-                All TransCar rongai vehicles position the driver on the front-right with 2 passenger seats (P1, P2) on the front-left.
+                All TransCar Rongai vehicles position the driver on the front-right with 2 passenger seats (P1, P2) on the front-left.
               </p>
             </div>
 
@@ -440,7 +440,7 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({
           <div className="space-y-6">
             <div className="text-center max-w-2xl mx-auto space-y-2">
               <span className="text-xs font-black uppercase tracking-widest text-amber-500">
-                TransCar rongai Fleet
+                TransCar Rongai Fleet
               </span>
               <h2 className="text-2xl sm:text-3xl font-black font-serif text-black">
                 Our Certified Executive Shuttles

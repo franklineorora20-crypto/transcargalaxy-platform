@@ -220,10 +220,10 @@ export const INITIAL_VEHICLES: Vehicle[] = [
 
 export const INITIAL_DRIVERS: Driver[] = [
   { id: 'drv-frankline', name: 'Frankline Orora', email: 'franklineorora20@gmail.com', phone: '+254 724 626199', status: 'ACTIVE', licenseNumber: 'DL-FRK8492', licenseExpiry: '2028-12-31', totalTripsCompleted: 164, rating: 4.95, joinedDate: '2024-01-15' },
-  { id: 'drv-1', name: 'Frankline Orora', email: 'franklineorora20@gmail.com', phone: '+254 724 626199', status: 'ACTIVE', licenseNumber: 'DL123456', licenseExpiry: '2026-12-31', totalTripsCompleted: 100, rating: 4.8, joinedDate: '2025-01-01' },
-  { id: 'drv-2', name: 'Frankline Orora', email: 'franklineorora20@gmail.com', phone: '+254 724 626199', status: 'ACTIVE', licenseNumber: 'DL123456', licenseExpiry: '2026-12-31', totalTripsCompleted: 100, rating: 4.8, joinedDate: '2025-01-01' },
-  { id: 'drv-3', name: 'Frankline Orora', email: 'franklineorora20@gmail.com', phone: '+254 724 626199', status: 'ACTIVE', licenseNumber: 'DL123456', licenseExpiry: '2026-12-31', totalTripsCompleted: 100, rating: 4.8, joinedDate: '2025-01-01' },
-  { id: 'drv-4', name: 'Frankline Orora', email: 'franklineorora20@gmail.com', phone: '+254 724 626199', status: 'ACTIVE', licenseNumber: 'DL123456', licenseExpiry: '2026-12-31', totalTripsCompleted: 100, rating: 4.8, joinedDate: '2025-01-01' },
+  { id: 'drv-1', name: 'George Mogaka', email: 'george.mogaka@transcarrongai.co.ke', phone: '+254 717 747626', status: 'ACTIVE', licenseNumber: 'DL-GM9281', licenseExpiry: '2027-06-30', totalTripsCompleted: 142, rating: 4.88, joinedDate: '2024-03-01' },
+  { id: 'drv-2', name: 'Dennis Omwoyo', email: 'dennis.omwoyo@transcarrongai.co.ke', phone: '+254 720 112233', status: 'ACTIVE', licenseNumber: 'DL-DO4432', licenseExpiry: '2027-09-15', totalTripsCompleted: 128, rating: 4.90, joinedDate: '2024-04-10' },
+  { id: 'drv-3', name: 'Peter Nyabuto', email: 'peter.nyabuto@transcarrongai.co.ke', phone: '+254 722 998877', status: 'ACTIVE', licenseNumber: 'DL-PN7718', licenseExpiry: '2028-02-28', totalTripsCompleted: 115, rating: 4.85, joinedDate: '2024-06-15' },
+  { id: 'drv-4', name: 'Joseph Moracha', email: 'joseph.moracha@transcarrongai.co.ke', phone: '+254 733 445566', status: 'ACTIVE', licenseNumber: 'DL-JM5521', licenseExpiry: '2028-05-20', totalTripsCompleted: 98, rating: 4.92, joinedDate: '2024-08-01' },
 ];
 
 const TODAY_DATE = new Date().toISOString().split('T')[0];

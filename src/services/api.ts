@@ -217,8 +217,8 @@ export class ApiService {
         } catch {}
       }
       return {
-        name: 'TransCar rongai Ltd.',
-        brand: 'TransCar rongai',
+        name: 'TransCar Rongai Ltd.',
+        brand: 'TransCar Rongai',
         slogan: 'Premier Intercity & Rongai Regional Express Transportation',
         headquarters: 'TransCar Central Terminal, Maasai Mall / Ongata Rongai, Kenya',
         hotline: '+254 724 626 199',

@@ -400,7 +400,7 @@ export default function App() {
             fallback={
               <div className="min-h-[50vh] flex flex-col items-center justify-center gap-3 text-slate-800">
                 <div className="w-8 h-8 border-4 border-amber-400 border-t-slate-900 rounded-full animate-spin"></div>
-                <span className="text-xs font-black uppercase tracking-widest text-slate-700">Loading TransCar rongai...</span>
+                <span className="text-xs font-black uppercase tracking-widest text-slate-700">Loading TransCar Rongai...</span>
               </div>
             }
           >

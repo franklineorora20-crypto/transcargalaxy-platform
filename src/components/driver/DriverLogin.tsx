@@ -126,10 +126,23 @@ export const DriverLogin: React.FC<DriverLoginProps> = ({ onLoginSuccess, onCanc
         </div>
 
         {supaStatus && !supaStatus.connected ? (
-          <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-300 text-xs text-amber-950 space-y-1.5">
-            <span className="font-black block">Supabase Auth Key Missing in Environment</span>
-            <p className="leading-relaxed">
-              Project <span className="font-mono font-bold">vjhztgdkvrqfhsilhpda.supabase.co</span> is linked, but <span className="font-mono font-bold">VITE_SUPABASE_ANON_KEY</span> is not set in AI Studio Environment Variables / Secrets. Add your <span className="font-mono">anon public</span> key from <strong>Supabase Dashboard → Project Settings → API</strong> to enable Supabase Auth login.
+          <div className="p-3.5 bg-amber-50 rounded-2xl border border-amber-300 text-xs text-amber-950 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-black">Active Roster Captain:</span>
+              <button
+                type="button"
+                id="driver-fill-demo-btn"
+                onClick={() => {
+                  setEmail('franklineorora20@gmail.com');
+                  setPassword('Transcar@2026');
+                }}
+                className="px-2.5 py-1 bg-amber-400 hover:bg-amber-300 text-black font-black text-[11px] rounded-lg border border-black shadow-sm transition-all cursor-pointer"
+              >
+                Fill Credentials
+              </button>
+            </div>
+            <p className="text-[11px] leading-relaxed text-amber-900">
+              Dev Mode: Sign in as <strong>Frankline Orora</strong> with password <span className="font-mono font-bold">Transcar@2026</span>, or use your Supabase credentials when connected.
             </p>
           </div>
         ) : (
