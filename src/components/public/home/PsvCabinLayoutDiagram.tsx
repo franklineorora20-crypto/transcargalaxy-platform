@@ -74,14 +74,16 @@ export const PsvCabinLayoutDiagram: React.FC<{ capacity: 11 | 14 | 16 }> = ({ ca
             <>
               <div className="flex items-center justify-between">
                 <SeatBox label="3A" />
-                <span className="text-[8px] text-slate-600 font-mono">Door</span>
-                <SeatBox label="3C" />
+                <span className="text-[8px] text-slate-600 font-mono">|</span>
+                <div className="flex items-center gap-1">
+                  <SeatBox label="3B" />
+                  <SeatBox label="3C" />
+                </div>
               </div>
               <div className="pt-1.5 border-t border-slate-800 flex items-center justify-center gap-1">
                 <SeatBox label="4A" />
                 <SeatBox label="4B" />
                 <SeatBox label="4C" />
-                <SeatBox label="4D" />
               </div>
             </>
           )}
@@ -98,14 +100,15 @@ export const PsvCabinLayoutDiagram: React.FC<{ capacity: 11 | 14 | 16 }> = ({ ca
               </div>
               <div className="flex items-center justify-between">
                 <SeatBox label="4A" />
-                <span className="text-[8px] text-slate-600 font-mono">Pass</span>
-                <div className="w-7 sm:w-8 shrink-0" />
+                <span className="text-[8px] text-slate-600 font-mono">|</span>
+                <div className="flex items-center gap-1">
+                  <SeatBox label="4B" />
+                </div>
               </div>
               <div className="pt-1.5 border-t border-slate-800 flex items-center justify-center gap-1">
                 <SeatBox label="5A" />
                 <SeatBox label="5B" />
                 <SeatBox label="5C" />
-                <SeatBox label="5D" />
               </div>
             </>
           )}

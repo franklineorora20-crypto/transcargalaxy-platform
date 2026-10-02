@@ -1,8 +1,8 @@
 import crypto from 'crypto';
-import { Booking, Passenger, TicketRecord, Trip } from '../../../src/types';
-import { bookings, trips } from '../../store';
+import type { Booking, Passenger, Trip, TicketRecord } from '../../../src/types/index.js';
+import { bookings, trips } from '../../store/store.js';
 
-export const TICKET_ID_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+const TICKET_ID_ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 export function generateUniqueTicketId(): string {
   while (true) {

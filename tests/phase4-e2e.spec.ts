@@ -12,8 +12,8 @@ process.env.INITIAL_MANAGER_EMAIL = 'manager@transcargalaxy.com';
 process.env.INITIAL_MANAGER_PASSWORD = TEST_MANAGER_SECRET;
 process.env.INITIAL_DRIVER_PASSWORD = TEST_DRIVER_SECRET;
 
-import { app } from '../server';
-import { trips } from '../server/store';
+import { app } from '../server.js';
+import { trips } from '../server/store/index.js';
 
 let server: Server;
 let baseUrl = '';

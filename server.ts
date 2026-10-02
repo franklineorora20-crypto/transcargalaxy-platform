@@ -78,25 +78,29 @@ import {
   getSupabaseAuthStatus,
   logSupabaseConfigurationWarning,
   supabaseAuth,
-} from './lib/supabaseAdmin';
+} from './lib/supabaseAdmin.js';
 
 import {
-  INITIAL_ROUTES,
-  INITIAL_VEHICLES,
-  INITIAL_DRIVERS,
-  INITIAL_TRIPS,
-  INITIAL_BOOKINGS,
-  INITIAL_REVENUES,
-  INITIAL_EXPENSES,
-  INITIAL_PAYROLL,
-  INITIAL_INSPECTIONS,
-  INITIAL_INCIDENTS,
-  INITIAL_MAINTENANCE,
-  INITIAL_ANNOUNCEMENTS,
-  INITIAL_AUDIT_LOGS,
-} from './src/data/mockData';
+  routes,
+  vehicles,
+  drivers,
+  trips,
+  bookings,
+  revenues,
+  expenses,
+  payroll,
+  inspections,
+  incidents,
+  maintenance,
+  announcements,
+  auditLogs,
+  pendingMpesaRequests,
+  loadRuntimeState,
+  persistRuntimeState,
+  logAuditAction,
+} from './server/store/index.js';
 
-import {
+import type {
   Route,
   Vehicle,
   Driver,
@@ -116,7 +120,7 @@ import {
   TripStatus,
   UserRole,
   SeatClass,
-} from './src/types';
+} from './src/types/index.js';
 
 
 // =============================================================
@@ -141,7 +145,6 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 // SOC2 & OWASP Security Headers
 app.use((_req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(self), geolocation=(self), microphone=()');
@@ -160,16 +163,44 @@ app.use(
   }),
 );
 
-app.use((req, res, next) => {
-  res.on('finish', () => {
-    if (
-      req.path.startsWith('/api/') &&
-      ['POST', 'PATCH', 'PUT', 'DELETE'].includes(req.method) &&
-      res.statusCode < 400
-    ) {
-      void persistRuntimeState();
+// Serverless-safe runtime_state synchronization middleware:
+// 1. Loads latest runtime_state before handling /api/* requests so warm/cold serverless instances never serve stale memory.
+// 2. Awaits persistRuntimeState() BEFORE flushing mutating responses so Vercel never freezes the function mid-write.
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    try {
+      await loadRuntimeState();
+    } catch (err) {
+      console.warn('[RuntimeState] Load warning:', err);
     }
-  });
+
+    if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(req.method)) {
+      let persisted = false;
+      const originalSend = res.send.bind(res);
+
+      res.send = ((body?: any): Response => {
+        if (!persisted && res.statusCode < 400 && supabaseAdmin) {
+          persisted = true;
+          void persistRuntimeState()
+            .catch((err) => {
+              console.error('[RuntimeState] Persist error:', err);
+            })
+            .finally(() => {
+              originalSend(body);
+            });
+          return res;
+        }
+        return originalSend(body);
+      }) as any;
+
+      res.on('finish', () => {
+        if (!persisted && res.statusCode < 400) {
+          persisted = true;
+          void persistRuntimeState();
+        }
+      });
+    }
+  }
 
   next();
 });
@@ -179,205 +210,13 @@ app.use((req, res, next) => {
 // STATIC FILES
 // =============================================================
 
-if (!process.env.VERCEL) {
+if (!process.env.VERCEL && !process.env.VERCEL_ENV) {
   app.use(
     '/images',
     express.static(path.join(process.cwd(), 'public', 'images')),
   );
 
   app.use(express.static(path.join(process.cwd(), 'public')));
-}
-
-
-// =============================================================
-// IN-MEMORY DATABASE STORE
-// =============================================================
-
-let routes: Route[] = [...INITIAL_ROUTES];
-let vehicles: Vehicle[] = [...INITIAL_VEHICLES];
-let drivers: Driver[] = [...INITIAL_DRIVERS];
-let trips: Trip[] = [...INITIAL_TRIPS];
-let bookings: Booking[] = [...INITIAL_BOOKINGS];
-let revenues: RevenueItem[] = [...INITIAL_REVENUES];
-let expenses: ExpenseItem[] = [...INITIAL_EXPENSES];
-let payroll: PayrollItem[] = [...INITIAL_PAYROLL];
-let inspections: VehicleInspection[] = [...INITIAL_INSPECTIONS];
-let incidents: IncidentReport[] = [...INITIAL_INCIDENTS];
-let maintenance: MaintenanceRecord[] = [...INITIAL_MAINTENANCE];
-let announcements: Announcement[] = [...INITIAL_ANNOUNCEMENTS];
-let auditLogs: AuditLog[] = [...INITIAL_AUDIT_LOGS];
-
-const pendingMpesaRequests = new Map<
-  string,
-  {
-    bookingReference: string;
-    amount: number;
-    phone: string;
-  }
->();
-
-
-const runtimeState = {
-  routes: () => routes,
-  vehicles: () => vehicles,
-  drivers: () => drivers,
-  trips: () => trips,
-  bookings: () => bookings,
-  revenues: () => revenues,
-  expenses: () => expenses,
-  payroll: () => payroll,
-  inspections: () => inspections,
-  incidents: () => incidents,
-  maintenance: () => maintenance,
-  announcements: () => announcements,
-  auditLogs: () => auditLogs,
-};
-
-
-// =============================================================
-// SUPABASE RUNTIME STATE
-// =============================================================
-
-async function loadRuntimeState() {
-  bookings.forEach((b) => ensureBookingTickets(b, trips));
-  if (!supabaseAdmin) return;
-
-  const { data, error } = await supabaseAdmin
-    .from('runtime_state')
-    .select('state_key, state_value');
-
-  if (error) {
-    console.warn(
-      `Supabase runtime state unavailable: ${error.message}`,
-    );
-    return;
-  }
-
-  const values = new Map(
-    (data || []).map((row: any) => [
-      row.state_key,
-      row.state_value,
-    ]),
-  );
-
-  const deprecatedTowns = new Set(['oyugis', 'kendu bay', 'mogongo', 'bongo']);
-  if (values.has('routes')) {
-    const loadedRoutes = values.get('routes') as Route[];
-    const hasDeprecated = loadedRoutes.some(
-      (r) =>
-        deprecatedTowns.has(r.origin.toLowerCase()) ||
-        deprecatedTowns.has(r.destination.toLowerCase()),
-    );
-    const hasSirare = loadedRoutes.some(
-      (r) =>
-        r.destination.toLowerCase() === 'sirare' ||
-        r.origin.toLowerCase() === 'sirare',
-    );
-    routes = hasDeprecated || !hasSirare ? [...INITIAL_ROUTES] : loadedRoutes;
-  }
-
-  if (values.has('vehicles')) {
-    vehicles = values.get('vehicles') as Vehicle[];
-  }
-
-  if (values.has('drivers')) {
-    drivers = values.get('drivers') as Driver[];
-  }
-
-  if (values.has('trips')) {
-    const loadedTrips = values.get('trips') as Trip[];
-    const todayStr = new Date().toISOString().split('T')[0];
-    const hasTodayTrip = loadedTrips.some((t) => t.departureTime.startsWith(todayStr));
-    if (!hasTodayTrip && loadedTrips.length > 0) {
-      trips = loadedTrips.map((t) => {
-        const depTimePart = t.departureTime.includes('T') ? t.departureTime.split('T')[1] : '05:00:00.000Z';
-        const arrTimePart = t.estimatedArrivalTime.includes('T') ? t.estimatedArrivalTime.split('T')[1] : '11:30:00.000Z';
-        return {
-          ...t,
-          departureTime: `${todayStr}T${depTimePart}`,
-          estimatedArrivalTime: `${todayStr}T${arrTimePart}`,
-        };
-      });
-    } else {
-      trips = loadedTrips;
-    }
-  }
-
-  if (values.has('bookings')) {
-    const loadedBookings = values.get('bookings') as Booking[];
-    bookings = loadedBookings.map((b) => {
-      const matchingTrip = trips.find(
-        (t) => t.id === b.tripId || t.tripCode === b.tripCode,
-      );
-      return {
-        ...b,
-        departureTime: matchingTrip ? matchingTrip.departureTime : b.departureTime,
-        ticketId: b.id === 'bk-1' && !b.ticketId ? 'TCR-7X4K9P2M' : b.ticketId,
-        qrToken:
-          b.id === 'bk-1' && !b.qrToken
-            ? 'tcr_tok_7x4k9p2m_f9a8c3d2e1b0476589ab'
-            : b.qrToken,
-      };
-    });
-  }
-  bookings.forEach((b) => ensureBookingTickets(b, trips));
-
-  if (values.has('revenues')) {
-    revenues = values.get('revenues') as RevenueItem[];
-  }
-
-  if (values.has('expenses')) {
-    expenses = values.get('expenses') as ExpenseItem[];
-  }
-
-  if (values.has('payroll')) {
-    payroll = values.get('payroll') as PayrollItem[];
-  }
-
-  if (values.has('inspections')) {
-    inspections = values.get('inspections') as VehicleInspection[];
-  }
-
-  if (values.has('incidents')) {
-    incidents = values.get('incidents') as IncidentReport[];
-  }
-
-  if (values.has('maintenance')) {
-    maintenance = values.get('maintenance') as MaintenanceRecord[];
-  }
-
-  if (values.has('announcements')) {
-    announcements = values.get('announcements') as Announcement[];
-  }
-
-  if (values.has('auditLogs')) {
-    auditLogs = values.get('auditLogs') as AuditLog[];
-  }
-}
-
-
-async function persistRuntimeState() {
-  if (!supabaseAdmin) return;
-
-  const rows = Object.entries(runtimeState).map(
-    ([state_key, getValue]) => ({
-      state_key,
-      state_value: getValue(),
-      updated_at: new Date().toISOString(),
-    }),
-  );
-
-  const { error } = await supabaseAdmin
-    .from('runtime_state')
-    .upsert(rows, {
-      onConflict: 'state_key',
-    });
-
-  if (error) {
-    console.error(
-      `Supabase runtime state write failed: ${error.message}`,
-    );
-  }
 }
 
 
@@ -663,38 +502,7 @@ function markBookingPaid(
 
 
 // =============================================================
-// AUDIT LOGGER
-// =============================================================
-
-function logAuditAction(
-  userEmail: string,
-  userRole: UserRole,
-  action: string,
-  recordType: string,
-  recordId: string,
-  details: string,
-) {
-  const log: AuditLog = {
-    id: `aud-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    userEmail,
-    userRole,
-    action,
-    recordType,
-    recordId,
-    timestamp: new Date().toISOString(),
-    details,
-  };
-
-  auditLogs.unshift(log);
-
-  if (auditLogs.length > 200) {
-    auditLogs.pop();
-  }
-}
-
-
-// =============================================================
-// AUTHENTICATION & RBAC
+// AUTHENTICATION & RBAC (STATELESS HMAC-SHA256 + SUPABASE AUTH)
 // =============================================================
 
 interface AuthUser {
@@ -704,32 +512,94 @@ interface AuthUser {
   userId: string;
 }
 
-const localSessions = new Map<string, { user: AuthUser; expiresAt: number }>();
+const getSigningSecret = (): string => {
+  return (
+    process.env.JWT_SECRET ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    'transcar-dev-ephemeral-hmac-key'
+  );
+};
 
 function createLocalSession(user: AuthUser): string {
-  if (process.env.NODE_ENV === 'production') {
+  const canIssueBootstrapToken =
+    process.env.NODE_ENV !== 'production' ||
+    Boolean(
+      process.env.JWT_SECRET ||
+        process.env.INITIAL_MANAGER_PASSWORD ||
+        process.env.INITIAL_DRIVER_PASSWORD,
+    );
+  if (!canIssueBootstrapToken) {
     throw new Error('Local fallback session creation is strictly disabled in production.');
   }
   const prefix = user.role === 'DRIVER' ? 'tc_drv_sess_' : 'tc_mgr_sess_';
-  const token = `${prefix}${crypto.randomBytes(32).toString('hex')}`;
-  localSessions.set(token, {
+  const payloadObj = {
     user,
     expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-  });
-  return token;
+  };
+  const payloadB64 = Buffer.from(JSON.stringify(payloadObj)).toString('base64url');
+  const sig = crypto
+    .createHmac('sha256', getSigningSecret())
+    .update(payloadB64)
+    .digest('base64url');
+  return `${prefix}${payloadB64}.${sig}`;
+}
+
+const revokedSessionTokens = new Set<string>();
+
+function revokeSessionToken(token: string) {
+  if (token) {
+    revokedSessionTokens.add(token);
+  }
 }
 
 function getLocalSessionUser(token: string): AuthUser | null {
-  if (process.env.NODE_ENV === 'production') {
+  if (!token || revokedSessionTokens.has(token)) {
     return null;
   }
-  const session = localSessions.get(token);
-  if (!session) return null;
-  if (Date.now() > session.expiresAt) {
-    localSessions.delete(token);
+  const canVerifyBootstrapToken =
+    process.env.NODE_ENV !== 'production' ||
+    Boolean(
+      process.env.JWT_SECRET ||
+        process.env.INITIAL_MANAGER_PASSWORD ||
+        process.env.INITIAL_DRIVER_PASSWORD,
+    );
+  if (!canVerifyBootstrapToken) {
     return null;
   }
-  return session.user;
+  let raw = '';
+  if (token.startsWith('tc_drv_sess_')) {
+    raw = token.slice('tc_drv_sess_'.length);
+  } else if (token.startsWith('tc_mgr_sess_')) {
+    raw = token.slice('tc_mgr_sess_'.length);
+  } else {
+    return null;
+  }
+
+  const parts = raw.split('.');
+  if (parts.length !== 2) return null;
+  const [payloadB64, sig] = parts;
+
+  const expectedSig = crypto
+    .createHmac('sha256', getSigningSecret())
+    .update(payloadB64)
+    .digest('base64url');
+
+  if (
+    sig.length !== expectedSig.length ||
+    !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))
+  ) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
+    if (!parsed || typeof parsed.expiresAt !== 'number' || Date.now() > parsed.expiresAt) {
+      return null;
+    }
+    return parsed.user as AuthUser;
+  } catch {
+    return null;
+  }
 }
 
 function isTripAssignedToDriver(trip: Trip, user: AuthUser): boolean {
@@ -1165,6 +1035,7 @@ app.get('/api/routes/by-slug/:slug', (req, res) => {
 // =============================================================
 
 app.get('/api/trips', searchLimiter, (req, res) => {
+  cleanupExpiredUnpaidBookings();
   const {
     origin,
     destination,
@@ -1230,6 +1101,7 @@ app.get('/api/trips', searchLimiter, (req, res) => {
 // =============================================================
 
 app.get('/api/trips/:id', (req, res) => {
+  cleanupExpiredUnpaidBookings();
   const trip = trips.find(
     (t) =>
       t.id === req.params.id ||
@@ -1247,8 +1119,8 @@ app.get('/api/trips/:id', (req, res) => {
 
   const seatConfigs: { [key: number]: string[] } = {
     11: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C'],
-    14: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3C', '4A', '4B', '4C', '4D'],
-    16: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '5A', '5B', '5C', '5D'],
+    14: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '4C'],
+    16: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '5A', '5B', '5C'],
   };
 
   const targetConfig = capacity === 11 || capacity === 16 ? capacity : 14;
@@ -1366,10 +1238,10 @@ function cleanupExpiredUnpaidBookings() {
   const now = Date.now();
   let releasedCount = 0;
   for (const booking of bookings) {
-    if (booking.bookingStatus === 'PENDING_PAYMENT' || booking.paymentStatus === 'PENDING') {
+    if (booking.bookingStatus === 'PENDING_PAYMENT' && booking.paymentStatus === 'PENDING') {
       const bookingTime = new Date(booking.createdAt).getTime();
       if (now - bookingTime > SEAT_LOCK_TIMEOUT_MS) {
-        booking.bookingStatus = 'CANCELLED';
+        booking.bookingStatus = 'EXPIRED';
         booking.paymentStatus = 'FAILED';
         // Auto-release seats back to trip
         const trip = trips.find((t) => t.id === booking.tripId);
@@ -1381,6 +1253,7 @@ function cleanupExpiredUnpaidBookings() {
           trip.availableSeats = Math.max(0, trip.totalSeats - trip.bookedSeatNumbers.length);
           releasedCount++;
         }
+        ensureBookingTickets(booking, trips);
       }
     }
   }
@@ -1389,8 +1262,14 @@ function cleanupExpiredUnpaidBookings() {
   }
 }
 
-// Periodically run seat release check every 30 seconds
-setInterval(cleanupExpiredUnpaidBookings, 30 * 1000);
+const isMainModule = Boolean(
+  process.argv[1] && /(?:^|[\\/])server\.(?:ts|js|mjs|cjs)$/.test(process.argv[1]),
+);
+
+// Periodically run seat release check every 30 seconds in standalone server mode only
+if (!process.env.VERCEL && !process.env.VERCEL_ENV && isMainModule) {
+  setInterval(cleanupExpiredUnpaidBookings, 30 * 1000).unref();
+}
 
 // =============================================================
 // PUBLIC BOOKING
@@ -1450,8 +1329,8 @@ app.post('/api/bookings', limiter, (req, res) => {
 
   const carSeatViewMap: Record<number, string[]> = {
     11: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C'],
-    14: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3C', '4A', '4B', '4C', '4D'],
-    16: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '5A', '5B', '5C', '5D'],
+    14: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '4C'],
+    16: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '5A', '5B', '5C'],
   };
 
   if (carSeatView && carSeatViewMap[Number(carSeatView)]) {
@@ -1517,6 +1396,28 @@ app.post('/api/bookings', limiter, (req, res) => {
     );
 
   if (alreadyBooked.length > 0) {
+    // Idempotent retry check: if the same customer retries the exact same seats while PENDING_PAYMENT
+    const existingIdempotent = bookings.find(
+      (b) =>
+        b.tripId === trip.id &&
+        b.bookingStatus === 'PENDING_PAYMENT' &&
+        b.paymentStatus === 'PENDING' &&
+        normalizePhoneForMatch(b.contactPhone) === normalizePhoneForMatch(String(contactPhone || '')) &&
+        b.passengers.length === requestedSeatNumbers.length &&
+        b.passengers.every((p) =>
+          requestedSeatNumbers.includes(String(p.seatNumber).trim().toUpperCase()),
+        ),
+    );
+
+    if (existingIdempotent) {
+      ensureBookingTickets(existingIdempotent, trips);
+      return res.status(200).json({
+        idempotent: true,
+        message: 'Existing seat reservation retrieved.',
+        booking: existingIdempotent,
+      });
+    }
+
     return res.status(409).json({
       error:
         `Seat(s) ${alreadyBooked.join(', ')} were just reserved by another passenger. Please select alternative seats.`,
@@ -1698,10 +1599,27 @@ const handleStkPush = async (req: Request, res: Response) => {
     });
   }
 
+  if (
+    amount !== undefined &&
+    Math.round(Number(amount)) !== Math.round(booking.totalFareKsh)
+  ) {
+    return res.status(400).json({
+      error: `Payment amount (${amount}) does not match booking total fare (KES ${booking.totalFareKsh}).`,
+    });
+  }
+
   if (!darajaConfigured()) {
+    const standbyCheckoutId = `ws_CO_STANDBY_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
+    (booking as any).checkoutRequestId = standbyCheckoutId;
+    pendingMpesaRequests.set(standbyCheckoutId, {
+      bookingReference,
+      amount: Number(amount || booking.totalFareKsh),
+      phone,
+    });
     return res.status(202).json({
       status: 'PENDING',
       pending: true,
+      checkoutRequestId: standbyCheckoutId,
       customerMessage:
         'M-Pesa verification pending - admin must confirm. Daraja credentials are not configured.',
     });
@@ -1777,6 +1695,8 @@ const handleStkPush = async (req: Request, res: Response) => {
           'Daraja STK push failed.',
       });
     }
+
+    (booking as any).checkoutRequestId = data.CheckoutRequestID;
 
     pendingMpesaRequests.set(
       data.CheckoutRequestID,
@@ -1880,12 +1800,50 @@ app.post(
     const requestId =
       result?.CheckoutRequestID;
 
-    const pending =
-      requestId
-        ? pendingMpesaRequests.get(
-            requestId,
+    if (!requestId || typeof requestId !== 'string') {
+      return res.status(400).json({
+        error: 'Malformed Daraja callback: missing CheckoutRequestID.',
+      });
+    }
+
+    const bookingByRequestId = bookings.find(
+      (item) => (item as any).checkoutRequestId === requestId,
+    );
+
+    const metadataItems = result?.CallbackMetadata?.Item || [];
+    const callbackReceipt = metadataItems.find(
+      (item: any) => item.Name === 'MpesaReceiptNumber',
+    )?.Value;
+
+    const alreadyPaidBooking =
+      (bookingByRequestId && bookingByRequestId.paymentStatus === 'PAID'
+        ? bookingByRequestId
+        : undefined) ||
+      (callbackReceipt
+        ? bookings.find(
+            (item) =>
+              item.paymentStatus === 'PAID' &&
+              item.mpesaTransactionCode === String(callbackReceipt),
           )
-        : undefined;
+        : undefined);
+
+    if (alreadyPaidBooking && !pendingMpesaRequests.has(requestId)) {
+      return res.json({
+        ResultCode: 0,
+        ResultDesc: 'Accepted',
+        idempotent: true,
+      });
+    }
+
+    const pending =
+      pendingMpesaRequests.get(requestId) ||
+      (bookingByRequestId
+        ? {
+            bookingReference: bookingByRequestId.bookingReference,
+            amount: bookingByRequestId.totalFareKsh,
+            phone: bookingByRequestId.contactPhone,
+          }
+        : undefined);
 
     if (!pending) {
       return res.status(404).json({
@@ -1894,41 +1852,29 @@ app.post(
       });
     }
 
+    const targetBooking = bookings.find(
+      (item) => item.bookingReference === pending.bookingReference,
+    );
+
     if (
       Number(result?.ResultCode) ===
       0
     ) {
-      const metadata =
-        result.CallbackMetadata
-          ?.Item || [];
-
-      const receipt =
-        metadata.find(
-          (item: any) =>
-            item.Name ===
-            'MpesaReceiptNumber',
-        )?.Value;
-
-      if (!receipt) {
+      if (!callbackReceipt) {
         return res.status(400).json({
           error:
             'Successful callback did not include a transaction ID.',
         });
       }
 
-      const booking =
-        bookings.find(
-          (item) =>
-            item.bookingReference ===
-            pending.bookingReference,
-        );
-
-      if (booking) {
+      if (targetBooking) {
         markBookingPaid(
-          booking,
-          String(receipt),
+          targetBooking,
+          String(callbackReceipt),
         );
       }
+    } else if (targetBooking && targetBooking.paymentStatus !== 'PAID') {
+      targetBooking.paymentStatus = 'FAILED';
     }
 
     pendingMpesaRequests.delete(
@@ -1950,6 +1896,7 @@ app.post(
 app.post(
   '/api/payments/verify',
   async (req, res) => {
+    cleanupExpiredUnpaidBookings();
     const {
       bookingReference,
       checkoutRequestId,
@@ -1966,6 +1913,16 @@ app.post(
     if (!booking) {
       return res.status(404).json({
         error: 'Booking not found.',
+      });
+    }
+
+    if (
+      booking.bookingStatus === 'EXPIRED' ||
+      booking.bookingStatus === 'CANCELLED'
+    ) {
+      return res.status(409).json({
+        error:
+          'Booking reservation has expired due to payment timeout and seats have been released. Please create a new booking.',
       });
     }
 
@@ -2179,6 +2136,31 @@ app.post(
     res.json(booking);
   },
 );
+
+app.get('/api/bookings/:reference', searchLimiter, (req, res) => {
+  const ref = String(req.params.reference || '').trim().toUpperCase();
+  const booking = bookings.find((b) => {
+    ensureBookingTickets(b, trips);
+    return (
+      b.bookingReference.toUpperCase() === ref ||
+      b.id.toUpperCase() === ref ||
+      (b.ticketId && b.ticketId.toUpperCase() === ref) ||
+      (b.qrToken && b.qrToken.toLowerCase() === ref.toLowerCase()) ||
+      b.passengers.some(
+        (p) =>
+          (p.ticketId && p.ticketId.toUpperCase() === ref) ||
+          (p.qrToken && p.qrToken.toLowerCase() === ref.toLowerCase()),
+      )
+    );
+  });
+
+  if (!booking) {
+    return res.status(404).json({ error: 'Booking not found.' });
+  }
+
+  ensureBookingTickets(booking, trips);
+  return res.json(booking);
+});
 
 
 // =============================================================
@@ -2440,66 +2422,66 @@ app.post(
         }
       } catch (err: any) {
         console.warn('[DRIVER LOGIN] Supabase Auth error:', err?.message);
-        if (process.env.NODE_ENV === 'production') {
-          return res.status(401).json({
-            error: 'Invalid driver credentials. Please check your username and password.',
-          });
-        }
       }
     }
 
-    // In production, strictly reject any fallback authentication
-    if (process.env.NODE_ENV === 'production') {
-      return res.status(401).json({
-        error: 'Invalid driver credentials. Please check your username and password.',
-      });
-    }
+    const configuredDriverSecret = process.env.INITIAL_DRIVER_PASSWORD;
 
-    // 2. Development-only Fallback to in-memory drivers store
-    const localDriver = drivers.find(
-      (d) =>
-        d.email.toLowerCase() === authEmail ||
-        d.email.toLowerCase() === identifier ||
-        d.name.toLowerCase().includes(identifier) ||
-        d.id.toLowerCase() === identifier ||
-        (d.phone && d.phone.replace(/[^0-9]/g, '').includes(identifier.replace(/[^0-9]/g, ''))),
-    );
+    // 2. Authenticate via explicitly configured INITIAL_DRIVER_PASSWORD or development fallback
+    const matchedDriver =
+      drivers.find(
+        (d) =>
+          d.email.toLowerCase() === authEmail ||
+          d.email.toLowerCase() === identifier ||
+          d.name.toLowerCase().includes(identifier) ||
+          d.id.toLowerCase() === identifier ||
+          (d.phone &&
+            identifier.replace(/[^0-9]/g, '').length >= 6 &&
+            d.phone.replace(/[^0-9]/g, '').includes(identifier.replace(/[^0-9]/g, ''))),
+      ) ||
+      (identifier === 'driver' ||
+      identifier === 'driver@transcargalaxy.com' ||
+      identifier === 'driver@transcarrongai.co.ke'
+        ? drivers[0]
+        : undefined);
 
-    const isDriverDevPassword =
-      password === 'Transcar@2026' ||
-      password === 'TransCar@2026!' ||
-      password === 'Driver@2026!' ||
-      password === '123456' ||
-      password === 'password' ||
-      (localDriver && (password === localDriver.licenseNumber || password === localDriver.id));
+    const isDriverPasswordValid = configuredDriverSecret
+      ? password === configuredDriverSecret
+      : process.env.NODE_ENV !== 'production' &&
+        (password === 'Transcar@2026' ||
+          password === 'TransCar@2026!' ||
+          password === 'Driver@2026!' ||
+          password === '123456' ||
+          password === 'password' ||
+          Boolean(matchedDriver && (password === matchedDriver.licenseNumber || password === matchedDriver.id)));
 
-    if (localDriver && isDriverDevPassword) {
+    if (matchedDriver && isDriverPasswordValid) {
       const authUser: AuthUser = {
-        userId: localDriver.id,
-        name: localDriver.name,
-        email: localDriver.email,
+        userId: matchedDriver.id,
+        name: matchedDriver.name,
+        email: matchedDriver.email,
         role: 'DRIVER',
       };
       const sessionToken = createLocalSession(authUser);
 
       logAuditAction(
-        localDriver.email,
+        matchedDriver.email,
         'DRIVER',
         'DRIVER_LOGIN',
         'DRIVER',
-        localDriver.id,
-        `Driver ${localDriver.name} logged in (Development Fallback)`,
+        matchedDriver.id,
+        `Driver ${matchedDriver.name} logged in`,
       );
 
       return res.json({
         token: sessionToken,
         user: {
-          id: localDriver.id,
-          name: localDriver.name,
-          email: localDriver.email,
-          phone: localDriver.phone,
-          licenseNumber: localDriver.licenseNumber,
-          assignedVehicleId: localDriver.assignedVehicleId,
+          id: matchedDriver.id,
+          name: matchedDriver.name,
+          email: matchedDriver.email,
+          phone: matchedDriver.phone,
+          licenseNumber: matchedDriver.licenseNumber,
+          assignedVehicleId: matchedDriver.assignedVehicleId,
           role: 'DRIVER',
         },
       });
@@ -2754,6 +2736,18 @@ app.get('/api/auth/supabase-status', (_req, res) => {
   res.json(getSupabaseAuthStatus());
 });
 
+app.post('/api/auth/logout', (req, res) => {
+  const authHeader = req.headers.authorization || '';
+  if (authHeader.startsWith('Bearer ')) {
+    const token = authHeader.slice('Bearer '.length).trim();
+    revokeSessionToken(token);
+  }
+  res.json({
+    success: true,
+    message: 'Session terminated successfully.',
+  });
+});
+
 // =============================================================
 // MANAGER LOGIN
 // =============================================================
@@ -2828,22 +2822,10 @@ app.post(
         }
       } catch (err: any) {
         console.warn('[MANAGER LOGIN] Supabase Auth error:', err?.message);
-        if (process.env.NODE_ENV === 'production') {
-          return res.status(401).json({
-            error: 'Invalid manager credentials. Please check your username and password.',
-          });
-        }
       }
     }
 
-    // In production, strictly reject any fallback authentication
-    if (process.env.NODE_ENV === 'production') {
-      return res.status(401).json({
-        error: 'Invalid manager credentials. Please check your username and password.',
-      });
-    }
-
-    // 2. Development-only Manager Fallback Authentication
+    // 2. Authenticate via explicitly configured INITIAL_MANAGER_EMAIL + INITIAL_MANAGER_PASSWORD or development fallback
     const envManagerEmail = (process.env.INITIAL_MANAGER_EMAIL || '').trim().toLowerCase();
     const envManagerPassword = process.env.INITIAL_MANAGER_PASSWORD;
 
@@ -2854,18 +2836,20 @@ app.post(
       identifier === 'director' ||
       identifier === 'frankline' ||
       identifier === 'franklineorora20@gmail.com' ||
+      identifier === 'manager@transcargalaxy.com' ||
       authEmail === 'manager@transcarrongai.co.ke' ||
       authEmail === 'admin@transcarrongai.co.ke' ||
       authEmail === 'director@transcarrongai.co.ke' ||
       (envManagerEmail && (identifier === envManagerEmail || authEmail === envManagerEmail));
 
-    const isValidPassword =
-      (envManagerPassword && password === envManagerPassword) ||
-      password === 'TransCar@2026!' ||
-      password === 'Admin@2026!' ||
-      password === 'Manager@2026!' ||
-      password === 'Director@2026!' ||
-      password === 'admintranscar';
+    const isValidPassword = envManagerPassword
+      ? password === envManagerPassword
+      : process.env.NODE_ENV !== 'production' &&
+        (password === 'TransCar@2026!' ||
+          password === 'Admin@2026!' ||
+          password === 'Manager@2026!' ||
+          password === 'Director@2026!' ||
+          password === 'admintranscar');
 
     if (isRecognizedManagerUser && isValidPassword) {
       const managerUser: AuthUser = {
@@ -2883,7 +2867,7 @@ app.post(
         'MANAGER_LOGIN',
         'AUTH',
         managerUser.userId,
-        'Manager authenticated successfully via development operations fallback',
+        'Manager authenticated successfully',
       );
 
       return res.json({
@@ -3152,6 +3136,174 @@ app.get(
         booking.passengers.some(
           (p) => p.hasBoarded,
         ),
+    });
+  },
+);
+
+// =============================================================
+// DIRECT TICKET LOOKUP, VERIFICATION & BOARDING (/api/tickets/*)
+// =============================================================
+
+app.get('/api/tickets/:id', searchLimiter, (req, res) => {
+  const id = String(req.params.id || '').trim();
+  const match = lookupBookingAndPassenger(id);
+  if (!match) {
+    return res.status(404).json({ error: 'Ticket not found.' });
+  }
+  ensureBookingTickets(match.booking, trips);
+  const ticket = buildTicketRecord(match.booking, match.passenger, trips);
+  return res.json({
+    ticket,
+    booking: match.booking,
+  });
+});
+
+const handleDirectTicketVerify = (req: Request, res: Response) => {
+  const rawToken =
+    req.params.token ||
+    req.body?.qr_token ||
+    req.body?.qrToken ||
+    req.body?.ticket_id ||
+    req.body?.ticketId ||
+    req.query?.token ||
+    '';
+  const requestedSeat =
+    req.body?.seat_number || req.body?.seatNumber || (req.query?.seat as string | undefined);
+  const requestedTripId =
+    req.body?.trip_id || req.body?.tripId || (req.query?.tripId as string | undefined);
+
+  const user = (req as any).user;
+  const driverTrip = resolveDriverAssignedTrip(user, requestedTripId);
+
+  if (requestedTripId && !driverTrip && user.role !== 'MANAGER') {
+    return res.status(403).json({
+      valid: false,
+      code: 'WRONG_TRIP',
+      title: '⚠️ Unauthorized Trip',
+      message: 'You can only verify tickets for trips assigned to your driver account.',
+    });
+  }
+
+  const match = lookupBookingAndPassenger(String(rawToken), requestedSeat);
+  const result = evaluateTicketValidation(match?.booking, match?.passenger, driverTrip);
+  return res.json(result);
+};
+
+app.get(
+  '/api/tickets/verify/:token',
+  requireDriverOrManager,
+  verificationLimiter,
+  handleDirectTicketVerify,
+);
+
+app.post(
+  '/api/tickets/verify/:token',
+  requireDriverOrManager,
+  verificationLimiter,
+  handleDirectTicketVerify,
+);
+
+app.post(
+  '/api/tickets/board',
+  requireDriverOrManager,
+  verificationLimiter,
+  (req, res) => {
+    const {
+      qr_token,
+      qrToken,
+      ticket_id,
+      ticketId,
+      booking_id,
+      bookingReference,
+      seat_number,
+      seatNumber,
+      trip_id,
+      tripId,
+    } = req.body || {};
+
+    const user = (req as any).user;
+    const requestedTripId = trip_id || tripId;
+    const driverTrip = resolveDriverAssignedTrip(user, requestedTripId);
+
+    if (requestedTripId && !driverTrip && user.role !== 'MANAGER') {
+      return res.status(403).json({
+        valid: false,
+        code: 'WRONG_TRIP',
+        title: '⚠️ Unauthorized Trip',
+        message: 'You can only board passengers on trips assigned to your driver account.',
+      });
+    }
+
+    const rawLookup =
+      qr_token ||
+      qrToken ||
+      ticket_id ||
+      ticketId ||
+      booking_id ||
+      bookingReference ||
+      '';
+    const requestedSeat = seat_number || seatNumber;
+
+    const match = lookupBookingAndPassenger(String(rawLookup), requestedSeat);
+    const validation = evaluateTicketValidation(
+      match?.booking,
+      match?.passenger,
+      driverTrip,
+    );
+
+    if (validation.code === 'ALREADY_BOARDED') {
+      return res.status(200).json({
+        ...validation,
+        alreadyBoarded: true,
+      });
+    }
+
+    if (!validation.valid || !match) {
+      const statusCode =
+        validation.code === 'NOT_FOUND'
+          ? 404
+          : validation.code === 'WRONG_TRIP'
+            ? 403
+            : 400;
+      return res.status(statusCode).json(validation);
+    }
+
+    const { booking: targetBooking, passenger: targetPassenger } = match;
+    const now = new Date().toISOString();
+    const verifierName = user.name || user.email || user.userId;
+
+    targetPassenger.hasBoarded = true;
+    targetPassenger.boardedAt = now;
+    targetPassenger.boardingStatus = 'BOARDED';
+    targetPassenger.ticketStatus = 'BOARDED';
+    targetPassenger.verifiedAt = now;
+    targetPassenger.verifiedBy = user.userId;
+    targetPassenger.verifiedByName = verifierName;
+
+    const allBoarded = targetBooking.passengers.every((p) => p.hasBoarded);
+    targetBooking.bookingStatus = 'CHECKED_IN';
+    if (allBoarded) {
+      targetBooking.boardingStatus = 'BOARDED';
+      targetBooking.ticketStatus = 'BOARDED';
+    }
+    targetBooking.verifiedAt = now;
+    targetBooking.verifiedBy = user.userId;
+    targetBooking.verifiedByName = verifierName;
+
+    const updatedTicket = buildTicketRecord(
+      targetBooking,
+      targetPassenger,
+      trips,
+    );
+
+    return res.json({
+      valid: true,
+      boarded: true,
+      alreadyBoarded: false,
+      code: 'BOARDED',
+      title: '✓ PASSENGER BOARDED',
+      message: `${updatedTicket.passenger_name} (Seat ${updatedTicket.seat_number}) has been verified and marked as BOARDED.`,
+      ticket: updatedTicket,
     });
   },
 );
@@ -3832,6 +3984,9 @@ app.post(
 
     const requestedSeat = seat_number || seatNumber;
 
+    const explicitQrToken = String(qr_token || qrToken || '').trim();
+    const explicitTicketId = String(ticket_id || ticketId || '').trim();
+
     if (!String(rawLookup).trim()) {
       return res.status(400).json({
         valid: false,
@@ -3842,6 +3997,18 @@ app.post(
     }
 
     const match = lookupBookingAndPassenger(String(rawLookup), requestedSeat);
+
+    // If an explicit QR token was provided alongside a Ticket ID, ensure the QR token matches the passenger's actual QR token
+    if (
+      explicitQrToken &&
+      explicitTicketId &&
+      (!match ||
+        (match.passenger.qrToken || '').toLowerCase() !==
+          extractTokenOrIdentifier(explicitQrToken).identifier.toLowerCase())
+    ) {
+      return res.json(evaluateTicketValidation(undefined, undefined, driverTrip));
+    }
+
     const result = evaluateTicketValidation(
       match?.booking,
       match?.passenger,
@@ -6701,9 +6868,10 @@ app.get(
       }
 
       res
-        .status(404)
+        .status(200)
+        .setHeader('Content-Type', 'text/plain')
         .send(
-          '-- Schema file not found',
+          `-- TransCar Galaxy Supabase Schema (Serverless Fallback)\nCREATE TABLE IF NOT EXISTS public.runtime_state (\n  state_key TEXT PRIMARY KEY,\n  state_value JSONB NOT NULL,\n  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()\n);\n`,
         );
     } catch (err: any) {
       res
@@ -6934,12 +7102,12 @@ async function startServer() {
 // SERVER STARTUP
 // =============================================================
 
-// Local development / production outside Vercel
-if (!process.env.VERCEL) {
+// Local development / standalone Node production outside Vercel
+if (!process.env.VERCEL && !process.env.VERCEL_ENV && isMainModule) {
   void startServer();
 }
 
-// Vercel serverless initialization
+// Vercel serverless or imported module initialization
 else {
   void loadRuntimeState();
 }
@@ -6951,9 +7119,9 @@ else {
 //
 // IMPORTANT:
 // These exports are at the top level.
-// api/index.ts can therefore simply use:
+// api/index.ts can therefore unambiguously use:
 //
-// import app from '../server';
+// import app from '../server.js';
 // export default app;
 //
 

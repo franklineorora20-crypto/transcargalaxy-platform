@@ -4,8 +4,8 @@ import { Trip } from '../../types';
 
 export const CAR_SEAT_VIEW_SEATS: Record<11 | 14 | 16, string[]> = {
   11: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C'],
-  14: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3C', '4A', '4B', '4C', '4D'],
-  16: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '5A', '5B', '5C', '5D'],
+  14: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '4C'],
+  16: ['P1', 'P2', '1A', '1B', '1C', '2A', '2B', '2C', '3A', '3B', '3C', '4A', '4B', '5A', '5B', '5C'],
 };
 
 export function isValidSeatForCarView(seatNumber: string, carView: 11 | 14 | 16): boolean {
@@ -392,7 +392,7 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
           )}
 
           {/* =========================================================== */}
-          {/* 14-SEATER: Front (2) + Row 1 (3) + Row 2 (3) + Row 3 (2) + Last Row 4 (4) = 14 Seats */}
+          {/* 14-SEATER: Front (2) + Row 1 (3) + Row 2 (3) + Row 3 (3) + Last Row 4 (3) = 14 Seats */}
           {/* =========================================================== */}
           {isFourteenSeater && (
             <>
@@ -416,35 +416,32 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
                 </div>
               </div>
 
-              {/* Row 3 (Access Walkway Row) */}
+              {/* Row 3 */}
               <div className="flex items-center justify-center gap-2 sm:gap-2.5">
                 <div>{renderSeat('3A', bookedSet.has('3A'), true)}</div>
                 <div className="w-2.5 flex items-center justify-center text-[7px] font-mono text-slate-700 select-none">|</div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-11 sm:w-12 h-12 sm:h-13 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-[8px] font-mono text-slate-600">
-                    Pass
-                  </div>
+                  {renderSeat('3B', bookedSet.has('3B'), false)}
                   {renderSeat('3C', bookedSet.has('3C'), true)}
                 </div>
               </div>
 
-              {/* Last Row: 4-Seat Full Rear Bench Spanning Back Wall */}
+              {/* Last Row: 3-Seat Full Rear Bench */}
               <div className="pt-2 border-t border-slate-800/80">
                 <span className="text-[8px] font-mono uppercase tracking-wider text-slate-400 text-center block mb-1">
-                  Last Row: Rear Bench (4 Seats)
+                  Last Row: Rear Bench (3 Seats)
                 </span>
-                <div className="flex items-center justify-center gap-1 p-1 bg-slate-900/50 rounded-xl border border-slate-800/60">
+                <div className="flex items-center justify-center gap-1.5 p-1 bg-slate-900/50 rounded-xl border border-slate-800/60">
                   {renderSeat('4A', bookedSet.has('4A'), true)}
                   {renderSeat('4B', bookedSet.has('4B'), false)}
-                  {renderSeat('4C', bookedSet.has('4C'), false)}
-                  {renderSeat('4D', bookedSet.has('4D'), true)}
+                  {renderSeat('4C', bookedSet.has('4C'), true)}
                 </div>
               </div>
             </>
           )}
 
           {/* =========================================================== */}
-          {/* 16-SEATER: Front (2) + Row 1 (3) + Row 2 (3) + Row 3 (3) + Row 4 (1) + Last Row 5 (4) = 16 Seats */}
+          {/* 16-SEATER: Front (2) + Row 1 (3) + Row 2 (3) + Row 3 (3) + Row 4 (2) + Last Row 5 (3) = 16 Seats */}
           {/* =========================================================== */}
           {isSixteenSeater && (
             <>
@@ -482,26 +479,20 @@ export const SeatSelector: React.FC<SeatSelectorProps> = ({
               <div className="flex items-center justify-center gap-2 sm:gap-2.5">
                 <div>{renderSeat('4A', bookedSet.has('4A'), true)}</div>
                 <div className="w-2.5 flex items-center justify-center text-[7px] font-mono text-slate-700 select-none">|</div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-11 sm:w-12 h-12 sm:h-13 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-[8px] font-mono text-slate-600">
-                    Pass
-                  </div>
-                  <div className="w-11 sm:w-12 h-12 sm:h-13 rounded-xl border border-dashed border-slate-800 flex items-center justify-center text-[8px] font-mono text-slate-600">
-                    Pass
-                  </div>
+                <div className="flex items-center justify-end gap-1.5 w-[86px] sm:w-[102px]">
+                  {renderSeat('4B', bookedSet.has('4B'), true)}
                 </div>
               </div>
 
-              {/* Last Row: 4-Seat Full Rear Bench Spanning Back Wall */}
+              {/* Last Row: 3-Seat Full Rear Bench */}
               <div className="pt-2 border-t border-slate-800/80">
                 <span className="text-[8px] font-mono uppercase tracking-wider text-slate-400 text-center block mb-1">
-                  Last Row: Rear Bench (4 Seats)
+                  Last Row: Rear Bench (3 Seats)
                 </span>
-                <div className="flex items-center justify-center gap-1 p-1 bg-slate-900/50 rounded-xl border border-slate-800/60">
+                <div className="flex items-center justify-center gap-1.5 p-1 bg-slate-900/50 rounded-xl border border-slate-800/60">
                   {renderSeat('5A', bookedSet.has('5A'), true)}
                   {renderSeat('5B', bookedSet.has('5B'), false)}
-                  {renderSeat('5C', bookedSet.has('5C'), false)}
-                  {renderSeat('5D', bookedSet.has('5D'), true)}
+                  {renderSeat('5C', bookedSet.has('5C'), true)}
                 </div>
               </div>
             </>

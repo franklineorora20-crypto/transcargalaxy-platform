@@ -1,4 +1,4 @@
-import {
+import type {
   Route,
   Vehicle,
   Driver,
@@ -12,7 +12,7 @@ import {
   MaintenanceRecord,
   Announcement,
   AuditLog,
-} from '../types';
+} from '../types/index.js';
 
 export const INITIAL_ROUTES: Route[] = [
   {

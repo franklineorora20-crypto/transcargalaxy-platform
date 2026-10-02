@@ -1,50 +1,52 @@
-import { supabaseAdmin } from '../../lib/supabaseAdmin';
-import { INITIAL_ROUTES } from '../../src/data/mockData';
-import {
+import { supabaseAdmin } from '../../lib/supabaseAdmin.js';
+import { INITIAL_ROUTES } from '../../src/data/mockData.js';
+import type {
   Route,
   Vehicle,
   Driver,
   Trip,
   Booking,
-  RevenueItem,
   ExpenseItem,
+  RevenueItem,
   PayrollItem,
-  VehicleInspection,
   IncidentReport,
+  VehicleInspection,
   MaintenanceRecord,
   Announcement,
   AuditLog,
-} from '../../src/types';
+} from '../../src/types/index.js';
 import {
-  routes,
-  vehicles,
-  drivers,
-  trips,
   bookings,
-  revenues,
-  expenses,
-  payroll,
-  inspections,
-  incidents,
-  maintenance,
-  announcements,
-  auditLogs,
+  trips,
   runtimeState,
-  replaceArrayInPlace,
-} from './store';
+  setRoutes,
+  setVehicles,
+  setDrivers,
+  setTrips,
+  setBookings,
+  setRevenues,
+  setExpenses,
+  setPayroll,
+  setInspections,
+  setIncidents,
+  setMaintenance,
+  setAnnouncements,
+  setAuditLogs,
+} from './store.js';
+import { ensureBookingTickets } from '../domain/tickets/ticketService.js';
 
-type BookingNormalizer = (booking: Booking, tripsList?: Trip[]) => Booking;
+let activePersistPromise: Promise<void> | null = null;
 
-let bookingNormalizer: BookingNormalizer | null = null;
-
-export function registerBookingNormalizer(fn: BookingNormalizer): void {
-  bookingNormalizer = fn;
-}
-
-export async function loadRuntimeState(): Promise<void> {
-  if (bookingNormalizer) {
-    bookings.forEach((b) => bookingNormalizer!(b, trips));
+export async function loadRuntimeState() {
+  if (activePersistPromise) {
+    try {
+      await activePersistPromise;
+    } catch {
+      // Ignore prior persist error before loading
+    }
   }
+
+  bookings.forEach((b) => ensureBookingTickets(b, trips));
   if (!supabaseAdmin) return;
 
   const { data, error } = await supabaseAdmin
@@ -52,17 +54,12 @@ export async function loadRuntimeState(): Promise<void> {
     .select('state_key, state_value');
 
   if (error) {
-    console.warn(
-      `Supabase runtime state unavailable: ${error.message}`,
-    );
+    console.warn(`Supabase runtime state unavailable: ${error.message}`);
     return;
   }
 
   const values = new Map(
-    (data || []).map((row: any) => [
-      row.state_key,
-      row.state_value,
-    ]),
+    (data || []).map((row: any) => [row.state_key, row.state_value]),
   );
 
   const deprecatedTowns = new Set(['oyugis', 'kendu bay', 'mogongo', 'bongo']);
@@ -78,18 +75,15 @@ export async function loadRuntimeState(): Promise<void> {
         r.destination.toLowerCase() === 'sirare' ||
         r.origin.toLowerCase() === 'sirare',
     );
-    replaceArrayInPlace(
-      routes,
-      hasDeprecated || !hasSirare ? [...INITIAL_ROUTES] : loadedRoutes,
-    );
+    setRoutes(hasDeprecated || !hasSirare ? [...INITIAL_ROUTES] : loadedRoutes);
   }
 
   if (values.has('vehicles')) {
-    replaceArrayInPlace(vehicles, values.get('vehicles') as Vehicle[]);
+    setVehicles(values.get('vehicles') as Vehicle[]);
   }
 
   if (values.has('drivers')) {
-    replaceArrayInPlace(drivers, values.get('drivers') as Driver[]);
+    setDrivers(values.get('drivers') as Driver[]);
   }
 
   if (values.has('trips')) {
@@ -97,11 +91,14 @@ export async function loadRuntimeState(): Promise<void> {
     const todayStr = new Date().toISOString().split('T')[0];
     const hasTodayTrip = loadedTrips.some((t) => t.departureTime.startsWith(todayStr));
     if (!hasTodayTrip && loadedTrips.length > 0) {
-      replaceArrayInPlace(
-        trips,
+      setTrips(
         loadedTrips.map((t) => {
-          const depTimePart = t.departureTime.includes('T') ? t.departureTime.split('T')[1] : '05:00:00.000Z';
-          const arrTimePart = t.estimatedArrivalTime.includes('T') ? t.estimatedArrivalTime.split('T')[1] : '11:30:00.000Z';
+          const depTimePart = t.departureTime.includes('T')
+            ? t.departureTime.split('T')[1]
+            : '05:00:00.000Z';
+          const arrTimePart = t.estimatedArrivalTime.includes('T')
+            ? t.estimatedArrivalTime.split('T')[1]
+            : '11:30:00.000Z';
           return {
             ...t,
             departureTime: `${todayStr}T${depTimePart}`,
@@ -110,14 +107,13 @@ export async function loadRuntimeState(): Promise<void> {
         }),
       );
     } else {
-      replaceArrayInPlace(trips, loadedTrips);
+      setTrips(loadedTrips);
     }
   }
 
   if (values.has('bookings')) {
     const loadedBookings = values.get('bookings') as Booking[];
-    replaceArrayInPlace(
-      bookings,
+    setBookings(
       loadedBookings.map((b) => {
         const matchingTrip = trips.find(
           (t) => t.id === b.tripId || t.tripCode === b.tripCode,
@@ -134,63 +130,70 @@ export async function loadRuntimeState(): Promise<void> {
       }),
     );
   }
-  if (bookingNormalizer) {
-    bookings.forEach((b) => bookingNormalizer!(b, trips));
-  }
+  bookings.forEach((b) => ensureBookingTickets(b, trips));
 
   if (values.has('revenues')) {
-    replaceArrayInPlace(revenues, values.get('revenues') as RevenueItem[]);
+    setRevenues(values.get('revenues') as RevenueItem[]);
   }
 
   if (values.has('expenses')) {
-    replaceArrayInPlace(expenses, values.get('expenses') as ExpenseItem[]);
+    setExpenses(values.get('expenses') as ExpenseItem[]);
   }
 
   if (values.has('payroll')) {
-    replaceArrayInPlace(payroll, values.get('payroll') as PayrollItem[]);
+    setPayroll(values.get('payroll') as PayrollItem[]);
   }
 
   if (values.has('inspections')) {
-    replaceArrayInPlace(inspections, values.get('inspections') as VehicleInspection[]);
+    setInspections(values.get('inspections') as VehicleInspection[]);
   }
 
   if (values.has('incidents')) {
-    replaceArrayInPlace(incidents, values.get('incidents') as IncidentReport[]);
+    setIncidents(values.get('incidents') as IncidentReport[]);
   }
 
   if (values.has('maintenance')) {
-    replaceArrayInPlace(maintenance, values.get('maintenance') as MaintenanceRecord[]);
+    setMaintenance(values.get('maintenance') as MaintenanceRecord[]);
   }
 
   if (values.has('announcements')) {
-    replaceArrayInPlace(announcements, values.get('announcements') as Announcement[]);
+    setAnnouncements(values.get('announcements') as Announcement[]);
   }
 
   if (values.has('auditLogs')) {
-    replaceArrayInPlace(auditLogs, values.get('auditLogs') as AuditLog[]);
+    setAuditLogs(values.get('auditLogs') as AuditLog[]);
   }
 }
 
-export async function persistRuntimeState(): Promise<void> {
+export async function persistRuntimeState() {
   if (!supabaseAdmin) return;
 
-  const rows = Object.entries(runtimeState).map(
-    ([state_key, getValue]) => ({
+  const runPersist = async () => {
+    const rows = Object.entries(runtimeState).map(([state_key, getValue]) => ({
       state_key,
       state_value: getValue(),
       updated_at: new Date().toISOString(),
-    }),
-  );
+    }));
 
-  const { error } = await supabaseAdmin
-    .from('runtime_state')
-    .upsert(rows, {
+    const { error } = await supabaseAdmin.from('runtime_state').upsert(rows, {
       onConflict: 'state_key',
     });
 
-  if (error) {
-    console.error(
-      `Supabase runtime state write failed: ${error.message}`,
-    );
+    if (error) {
+      console.error(`Supabase runtime state write failed: ${error.message}`);
+    }
+  };
+
+  const nextPromise = (activePersistPromise || Promise.resolve())
+    .catch(() => {})
+    .then(runPersist);
+
+  activePersistPromise = nextPromise;
+  try {
+    await nextPromise;
+  } finally {
+    if (activePersistPromise === nextPromise) {
+      activePersistPromise = null;
+    }
   }
 }

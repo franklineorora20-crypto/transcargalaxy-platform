@@ -60,7 +60,7 @@ const FULL_FLEET_ROSTER = [
     corridor: 'Rongai • Suswa • Narok • Kisii Corridor',
     image: '/images/transcar_stalker_kdv149e.webp',
     frontSeats: '2 Front Seats (P1, P2) beside Driver (RHD)',
-    rearRows: 'Rows 1–2 (3 seats), Row 3 (2 seats + aisle), Row 4 (4 seats)',
+    rearRows: '4 Rear Rows × 3 Seats (1A–1C, 2A–2C, 3A–3C, 4A–4C)',
     features: ['Individual Reading Lamps', 'High-Speed Onboard Wi-Fi', '25 KG Baggage Allowance', 'Live GPS Telematics'],
   },
   {
@@ -74,7 +74,7 @@ const FULL_FLEET_ROSTER = [
     corridor: 'Rongai • Kiserian • Ngong • Suswa • Kisii',
     image: '/images/transcar_kde832y_day.webp',
     frontSeats: '2 Front Seats (P1, P2) beside Driver (RHD)',
-    rearRows: 'Rows 1–2 (3 seats), Row 3 (2 seats + aisle), Row 4 (4 seats)',
+    rearRows: '4 Rear Rows × 3 Seats (1A–1C, 2A–2C, 3A–3C, 4A–4C)',
     features: ['Certified PSV Captains', 'Overhead Luggage Bins', 'USB Phone Charging', 'Air Conditioning'],
   },
   {
@@ -88,7 +88,7 @@ const FULL_FLEET_ROSTER = [
     corridor: 'Rongai • Narok • Bomet • Kisii • Awendo',
     image: '/images/transcar_white_highway.webp',
     frontSeats: '2 Front Seats (P1, P2) beside Driver (RHD)',
-    rearRows: 'Rows 1–2 (3 seats), Row 3 (2 seats + aisle), Row 4 (4 seats)',
+    rearRows: '4 Rear Rows × 3 Seats (1A–1C, 2A–2C, 3A–3C, 4A–4C)',
     features: ['Reflective Highway Safety', '25 KG Baggage Allowance', 'Live GPS Tracking', 'Air Conditioning'],
   },
   {
@@ -102,7 +102,7 @@ const FULL_FLEET_ROSTER = [
     corridor: 'Rongai • Rongo • Awendo • Migori • Sirare',
     image: '/images/transcar_highway_rear.webp',
     frontSeats: '2 Front Seats (P1, P2) beside Driver (RHD)',
-    rearRows: 'Rows 1–3 (3 seats), Row 4 (1 window seat), Row 5 (4 rear seats)',
+    rearRows: 'Rows 1–3 (3 seats), Row 4 (2 seats), Row 5 (3-Seat Rear Bench)',
     features: ['High-Roof Cabin Comfort', 'Dedicated Luggage Bay', 'Individual AC Louvers', 'NTSA Certified Safety'],
   },
 ];
@@ -299,10 +299,10 @@ export const CompanyPages: React.FC<CompanyPagesProps> = ({
                     <span className="status-neutral font-bold">{cap}-Seater PSV</span>
                     <p className="text-xs text-slate-600 mt-1">
                       {cap === 11
-                        ? '2 Front + 9 Rear (3×3 Rows)'
+                        ? '2 Front + 9 Rear (3×3 Rows, 3-Seat Back Bench)'
                         : cap === 14
-                        ? '2 Front + 12 Rear (Aisle + 4-Seat Back)'
-                        : '2 Front + 14 Rear (Extended 5 Rows)'}
+                        ? '2 Front + 12 Rear (4×3 Rows, 3-Seat Back Bench)'
+                        : '2 Front + 14 Rear (5 Rows, 3-Seat Back Bench)'}
                     </p>
                   </div>
                   <PsvCabinLayoutDiagram capacity={cap} />
