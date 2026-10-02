@@ -27,12 +27,24 @@ if (typeof window !== 'undefined') {
   }
 
   if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+    const swResetKey = 'transcar_sw_reset_v9';
+    const needsForceUnregister = localStorage.getItem(swResetKey) !== '1';
+
     navigator.serviceWorker
       .getRegistrations()
-      .then((registrations) => {
-        registrations.forEach((reg) => {
-          reg.update().catch(() => {});
-        });
+      .then(async (registrations) => {
+        for (const reg of registrations) {
+          const scriptUrl =
+            reg.active?.scriptURL || reg.waiting?.scriptURL || reg.installing?.scriptURL || '';
+          if (needsForceUnregister || (scriptUrl && !scriptUrl.endsWith('/sw.js'))) {
+            await reg.unregister().catch(() => {});
+          } else {
+            await reg.update().catch(() => {});
+          }
+        }
+        if (needsForceUnregister) {
+          localStorage.setItem(swResetKey, '1');
+        }
       })
       .catch(() => {});
 
