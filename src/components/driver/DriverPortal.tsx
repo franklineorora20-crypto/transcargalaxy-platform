@@ -1771,20 +1771,6 @@ export const DriverPortal: React.FC<DriverPortalProps> = ({
                   className="hidden"
                   onChange={handleFileUpload}
                 />
-
-                <button
-                  type="button"
-                  onClick={() => setShowSampleQrCards((prev) => !prev)}
-                  className={`px-3 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 ${
-                    showSampleQrCards
-                      ? 'bg-amber-400/20 text-amber-300 border-amber-400'
-                      : 'bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-700'
-                  }`}
-                  title="Show scannable sample passenger QR codes to test camera or image scanner"
-                >
-                  <QrCode className="w-4 h-4 text-amber-400" />
-                  <span>{showSampleQrCards ? 'Hide Sample QRs' : 'Sample QR Codes'}</span>
-                </button>
               </div>
             </div>
 

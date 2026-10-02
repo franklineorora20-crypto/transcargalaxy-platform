@@ -1,5 +1,5 @@
 import React from 'react';
-import { Ticket, Phone, Search, ShieldCheck, AlertCircle, ArrowLeft, Copy } from 'lucide-react';
+import { Ticket, Phone, Search, ShieldCheck, AlertCircle, ArrowLeft } from 'lucide-react';
 import { Booking } from '../../types';
 import { ApiService } from '../../services/api';
 import { DigitalTicket } from './DigitalTicket';
@@ -8,6 +8,7 @@ import { useToast } from '../common/Toast';
 interface TicketRetrievalPageProps {
   onBackToHome: () => void;
   onTrackBus: (bookingRef: string) => void;
+  onOpenDriverPortal?: (verifyToken?: string, tripId?: string) => void;
 }
 
 export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
@@ -49,21 +50,13 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
     }
   };
 
-  const handleFillSampleCredentials = (ref: string, samplePhone: string) => {
-    setBookingReference(ref);
-    setPhone(samplePhone);
-    setError(null);
-    navigator.clipboard?.writeText(ref).catch(() => {});
-    toast.info('Copied to Clipboard', `Filled demo ticket ${ref} (${samplePhone}).`);
-  };
-
   if (retrievedBooking) {
     return (
       <div className="py-6">
         <div className="max-w-3xl mx-auto px-4 mb-4">
           <button
             onClick={() => setRetrievedBooking(null)}
-            className="flex items-center gap-1.5 text-xs font-black text-black hover:text-amber-500 cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-extrabold text-slate-900 hover:text-amber-600 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4 stroke-[2.5]" />
             <span>Search Another Ticket</span>
@@ -79,21 +72,31 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
   }
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-12">
-      <div className="bg-white rounded-3xl border-2 border-neutral-200 shadow-xl p-6 sm:p-8 space-y-6">
+    <div className="relative max-w-xl mx-auto px-4 py-12">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 w-[420px] h-[260px] rounded-full bg-amber-400/15 blur-3xl"
+      />
+
+      <div className="relative z-10 bg-white/85 supports-[backdrop-filter]:bg-white/80 backdrop-blur-2xl rounded-3xl border border-white/90 ring-1 ring-slate-900/10 shadow-[0_24px_48px_-12px_rgba(15,23,42,0.12)] p-6 sm:p-8 space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-black text-amber-400 border border-amber-400 flex items-center justify-center mx-auto shadow-md">
+          <div className="w-12 h-12 rounded-2xl bg-slate-950 text-amber-400 border border-slate-800 flex items-center justify-center mx-auto shadow-sm">
             <Ticket className="w-6 h-6" />
           </div>
-          <h2 className="text-2xl font-black text-black font-serif">My Trips & Tickets</h2>
-          <p className="text-xs text-neutral-600 font-medium max-w-sm mx-auto">
-            View your upcoming trips and retrieve your digital tickets. Enter your Booking Reference and phone number used during checkout.
+          <h2 className="text-2xl font-extrabold text-slate-950 tracking-tight">
+            Retrieve Your Boarding Pass
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-sm mx-auto">
+            Enter your Ticket ID or Booking Reference and the phone number used during reservation to download your digital boarding pass.
           </p>
         </div>
 
         <form onSubmit={handleRetrieve} className="space-y-4">
           <div>
-            <label className="block text-xs font-black uppercase tracking-wider text-black mb-1">
+            <label
+              htmlFor="retrieve-ref"
+              className="block text-xs font-bold text-slate-800 mb-1.5"
+            >
               Ticket ID or Booking Reference *
             </label>
             <div className="relative">
@@ -105,14 +108,19 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
                 placeholder="e.g. TCR-7X4K9P2M or TRP-48291"
                 value={bookingReference}
                 onChange={(e) => setBookingReference(e.target.value.toUpperCase())}
-                className="w-full pl-10 pr-3 py-2.5 text-sm uppercase font-mono font-bold border-2 border-neutral-300 bg-neutral-50 rounded-xl text-black focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none"
+                className="w-full min-h-[44px] pl-10 pr-3 py-2.5 text-sm uppercase font-mono font-bold border border-slate-300 bg-white/90 rounded-xl text-slate-950 focus:ring-2 focus:ring-amber-400/60 focus:border-slate-900 focus:outline-none transition-all"
               />
             </div>
-            <span className="text-[11px] text-neutral-500 mt-1 block font-medium">Found on your E-Ticket, M-Pesa SMS, or booking confirmation screen</span>
+            <span className="text-[11px] text-slate-500 mt-1 block font-medium">
+              Included in your M-Pesa confirmation SMS or receipt
+            </span>
           </div>
 
           <div>
-            <label className="block text-xs font-black uppercase tracking-wider text-black mb-1">
+            <label
+              htmlFor="retrieve-phone"
+              className="block text-xs font-bold text-slate-800 mb-1.5"
+            >
               Passenger Phone Number *
             </label>
             <div className="relative">
@@ -121,18 +129,20 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
                 id="retrieve-phone"
                 type="tel"
                 required
-                placeholder="e.g. 0722 998 877 or 254..."
+                placeholder="e.g. 0722 998 877"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 text-sm border-2 border-neutral-300 bg-neutral-50 rounded-xl text-black focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none font-semibold"
+                className="w-full min-h-[44px] pl-10 pr-3 py-2.5 text-sm border border-slate-300 bg-white/90 rounded-xl text-slate-950 focus:ring-2 focus:ring-amber-400/60 focus:border-slate-900 focus:outline-none font-semibold transition-all"
               />
             </div>
-            <span className="text-[11px] text-neutral-500 mt-1 block font-medium">Used to verify ticket ownership</span>
+            <span className="text-[11px] text-slate-500 mt-1 block font-medium">
+              Used to verify passenger ticket ownership
+            </span>
           </div>
 
           {error && (
-            <div className="p-3 bg-neutral-900 border-2 border-rose-500 text-rose-300 text-xs rounded-xl flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+            <div className="p-3 bg-rose-50/90 border border-rose-200 text-rose-800 text-xs font-semibold rounded-xl flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{error}</span>
             </div>
           )}
@@ -142,7 +152,7 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
               id="retrieve-submit-btn"
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-amber-400 hover:bg-amber-300 text-black font-black text-sm rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 border border-black cursor-pointer"
+              className="w-full min-h-[46px] py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               {loading ? (
                 <span>Locating Ticket...</span>
@@ -158,9 +168,9 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
 
         {/* Offline Cached Tickets Quick Selection */}
         {ApiService.getOfflineSavedTickets().length > 0 && (
-          <div className="pt-4 border-t border-neutral-200 space-y-2">
-            <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
-              Saved Offline Boarding Passes
+          <div className="pt-4 border-t border-slate-200/80 space-y-2">
+            <span className="text-[11px] font-bold text-slate-600 block">
+              Saved Boarding Passes on This Device
             </span>
             <div className="space-y-1.5">
               {ApiService.getOfflineSavedTickets().slice(0, 3).map((saved) => (
@@ -169,9 +179,9 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
                   type="button"
                   onClick={() => {
                     setRetrievedBooking(saved);
-                    toast.success('Offline Ticket Loaded', `Boarding pass ${saved.bookingReference} opened.`);
+                    toast.success('Ticket Loaded', `Boarding pass ${saved.bookingReference} opened.`);
                   }}
-                  className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center justify-between transition-colors text-xs cursor-pointer"
+                  className="w-full p-2.5 rounded-xl bg-white/80 hover:bg-white border border-slate-200/90 text-left flex items-center justify-between transition-colors text-xs cursor-pointer"
                 >
                   <div className="min-w-0">
                     <span className="font-mono font-bold text-slate-950 block">{saved.bookingReference}</span>
@@ -179,8 +189,8 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
                       {saved.routeOrigin || 'Rongai'} → {saved.routeDestination || 'Kisii'}
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md flex-shrink-0">
-                    Open Ticket
+                  <span className="text-[11px] font-bold text-amber-700 shrink-0">
+                    Open Pass →
                   </span>
                 </button>
               ))}
@@ -188,29 +198,14 @@ export const TicketRetrievalPage: React.FC<TicketRetrievalPageProps> = ({
           </div>
         )}
 
-        {/* Demo Help */}
-        <div className="pt-4 border-t-2 border-neutral-200 text-xs bg-[#0A0A0A] text-neutral-300 p-4 rounded-2xl border border-neutral-800 space-y-2">
-          <p className="font-black text-white flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-[#FFC300]" /> Demo Sample Verification Credentials:
-          </p>
-          <div className="font-mono text-[11px] space-y-1.5 text-neutral-300">
-            <button
-              type="button"
-              onClick={() => handleFillSampleCredentials('TCR-7X4K9P2M', '0724626199')}
-              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-left transition-colors cursor-pointer"
-            >
-              <span>Ticket ID: <strong className="text-[#FFC300]">TCR-7X4K9P2M</strong> • Phone: <strong className="text-white">0724626199</strong></span>
-              <Copy className="w-3.5 h-3.5 text-[#FFC300] flex-shrink-0" />
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFillSampleCredentials('TRP-91042', '0701234567')}
-              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-left transition-colors cursor-pointer"
-            >
-              <span>Reference: <strong className="text-[#FFC300]">TRP-91042</strong> • Phone: <strong className="text-white">0701234567</strong></span>
-              <Copy className="w-3.5 h-3.5 text-[#FFC300] flex-shrink-0" />
-            </button>
-          </div>
+        <div className="pt-3 border-t border-slate-200/70 flex items-center justify-between gap-2 text-[11px] text-slate-500">
+          <span className="inline-flex items-center gap-1.5">
+            <ShieldCheck className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <span>QR Boarding Verification Ready</span>
+          </span>
+          <a href="tel:+254724626199" className="font-mono font-semibold text-slate-700 hover:text-slate-950">
+            Support: +254 724 626199
+          </a>
         </div>
       </div>
     </div>

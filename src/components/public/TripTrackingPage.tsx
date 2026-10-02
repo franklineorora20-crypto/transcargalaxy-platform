@@ -59,17 +59,17 @@ export const TripTrackingPage: React.FC<TripTrackingPageProps> = ({
   return (
     <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-6 sm:space-y-8">
       {/* Tracker Banner */}
-      <div className="bg-black p-4 sm:p-8 rounded-2xl sm:rounded-3xl text-white shadow-xl border-2 border-amber-400/40">
+      <div className="bg-slate-950/90 supports-[backdrop-filter]:bg-slate-950/85 backdrop-blur-2xl p-4 sm:p-8 rounded-2xl sm:rounded-3xl text-white shadow-2xl border border-white/15 ring-1 ring-amber-400/20">
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-amber-400 text-black text-xs font-black mb-3 border border-black">
+          <div className="inline-flex items-center gap-2 text-amber-400 text-xs font-bold mb-2">
             <Navigation className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>LIVE TRACKING</span>
+            <span>Live Fleet Telemetry</span>
           </div>
-          <h1 className="text-xl sm:text-3xl font-black font-serif tracking-tight text-white">
+          <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white">
             Track Your Journey Live
           </h1>
-          <p className="text-xs sm:text-sm text-neutral-300 mt-1 font-medium">
-            Enter your Booking Reference (e.g. TRP-48291), Trip Code (e.g. SL-NBO-MBS-0700), or Bus Plate (e.g. KDA 123A) to view real-time location and arrival ETA.
+          <p className="text-xs sm:text-sm text-slate-300 mt-1 font-medium">
+            Enter your Booking Reference (e.g. TRP-48291), Trip Code, or Vehicle Registration to view real-time GPS location and arrival ETA.
           </p>
         </div>
 
@@ -81,46 +81,46 @@ export const TripTrackingPage: React.FC<TripTrackingPageProps> = ({
               id="tracking-search-input"
               type="text"
               required
-              placeholder="e.g. TRP-48291 or KDA 123A"
+              placeholder="e.g. TRP-48291 or KDE 416Q"
               value={searchCode}
               onChange={(e) => setSearchCode(e.target.value.toUpperCase())}
-              className="w-full pl-10 pr-4 py-2.5 sm:py-3 bg-neutral-900 border-2 border-neutral-700 rounded-xl text-white placeholder:text-neutral-500 font-mono font-bold text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none min-h-[44px]"
+              className="w-full pl-10 pr-4 py-2.5 sm:py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-slate-400 font-mono font-bold text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none min-h-[44px]"
             />
           </div>
           <button
             id="tracking-search-btn"
             type="submit"
             disabled={loading}
-            className="px-6 py-2.5 sm:py-3 bg-amber-400 hover:bg-amber-300 text-black font-black text-xs rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 border border-black cursor-pointer min-h-[44px]"
+            className="px-6 py-2.5 sm:py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 cursor-pointer min-h-[44px] whitespace-nowrap"
           >
-            {loading ? <RefreshCw className="w-4 h-4 animate-spin text-black" /> : <Navigation className="w-4 h-4 text-black stroke-[2.5]" />}
+            {loading ? <RefreshCw className="w-4 h-4 animate-spin text-slate-950" /> : <Navigation className="w-4 h-4 text-slate-950 stroke-[2.5]" />}
             <span>Track Status</span>
           </button>
         </form>
 
-        {/* Quick Demo links */}
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-neutral-400 font-medium">
-          <span>Quick Demo Tracking:</span>
+        {/* Active Corridor Feeds */}
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-400 font-medium">
+          <span>Active Corridors:</span>
           <button
             type="button"
             onClick={() => {
               setSearchCode('TRP-48291');
               fetchTracking('TRP-48291');
             }}
-            className="underline hover:text-amber-400 font-mono text-neutral-300 cursor-pointer"
+            className="underline hover:text-amber-400 font-mono text-slate-300 cursor-pointer"
           >
-            TRP-48291 (In Transit to Kisii)
+            TRP-48291 (Rongai → Kisii)
           </button>
-          <span>•</span>
+          <span aria-hidden="true">·</span>
           <button
             type="button"
             onClick={() => {
               setSearchCode('TR-RNG-KND-0100');
               fetchTracking('TR-RNG-KND-0100');
             }}
-            className="underline hover:text-amber-400 font-mono text-neutral-300 cursor-pointer"
+            className="underline hover:text-amber-400 font-mono text-slate-300 cursor-pointer"
           >
-            TR-RNG-KND-0100 (In Transit to Kendu Bay)
+            TR-RNG-KND-0100 (Rongai → Sirare)
           </button>
         </div>
       </div>

@@ -499,7 +499,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                       <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
                       Route Search Bar Spotlight
                     </span>
-                    <span>Simulated Preview</span>
+                    <span>Interactive Guide</span>
                   </div>
 
                   {/* Simulated Route Search Form */}
@@ -1048,7 +1048,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                       </div>
                       <div className="text-left sm:text-right font-mono text-xs text-slate-300">
                         <div>Seat {demoSelectedSeat} • KES 1,500</div>
-                        <div className="text-[10px] text-slate-400">Demo Preview Only</div>
+                        <div className="text-[10px] text-slate-400">Verified Boarding Pass</div>
                       </div>
                     </div>
                   </motion.div>

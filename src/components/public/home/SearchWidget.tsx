@@ -32,7 +32,7 @@ export const SearchWidget: React.FC<SearchWidgetProps> = ({
   onSubmit,
 }) => {
   return (
-    <div className="w-full bg-white rounded-2xl p-4 sm:p-6 border border-slate-200/90 shadow-xl">
+    <div className="w-full bg-white/90 supports-[backdrop-filter]:bg-white/85 backdrop-blur-2xl rounded-2xl p-4 sm:p-6 border border-white/80 ring-1 ring-slate-900/10 shadow-[0_24px_48px_-12px_rgba(15,23,42,0.32)]">
       <form
         onSubmit={onSubmit}
         aria-label="Find and book shuttle trips"

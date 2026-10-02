@@ -1258,15 +1258,6 @@ export const BookingFlow: React.FC<BookingFlowProps> = ({
                         Type the 10-character code from your Safaricom M-Pesa SMS to confirm your ticket immediately.
                       </p>
                     </div>
-
-                    {/* Quick Fill Test Code Button */}
-                    <button
-                      type="button"
-                      onClick={handleUseSampleCode}
-                      className="text-xs font-bold text-amber-900 bg-amber-200/80 hover:bg-amber-300 px-3 py-1.5 rounded-lg border border-amber-400/80 transition-colors cursor-pointer self-start sm:self-auto"
-                    >
-                      ⚡ Auto-Fill Demo Code
-                    </button>
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
